@@ -27,26 +27,27 @@ Ctrl + = will enable or disable auto killing and targeting
 numpad 0 will do the appropriate hunting attack.
   
 # Classes
-Nanoseer stuff:
+# Nanoseer stuff:
 hmulti, hfreeze, hfrenzy, and hdelay will trigger auto attacks to use those attacks. You will need to enable these for the System to use them.
 
-Fury stuff:
-
+# Fury stuff:
 hberserk will use berserk when it can.
 
 hfever will start combat with fever.
 
 Period key (.) on numpad will start combat with inferno (be careful with this is hits everyone, including players, in room)
 
-Beast stuff:
+# Beast stuff:
 Just aliases: con: Contingency, oc Overclock.
 
-Engineer stuff:
+# Engineer stuff:
 Nothing, engineer hunting is pretty simple
 
-Scoundrel stuff:
+# Scoundrel stuff:
 hambush - enable use of ambush
+
 hrapidfire - enable use of rapidfire
+
 Alias rip - make ripper
 
 # Extras
