@@ -39,11 +39,12 @@ Alias rip - make ripper
 
 # Extras
 This is not just a hunting system (although it mostly is at the moment), it also has some other nice things:
+
 MSys.log will do a display_notice except will convert objects and arrays and display all items in it, similar to Mudlet thing.  (It's not quite as robust but it's okay)
 
 MSys.alert(text, color, color) will do cool alert boxes similar to svo from mudlet.
 
-js <code> will run javascript and send back the return value, similar to lua from mudlet.
+js <codeToRun> will run javascript and send back the return value, similar to lua from mudlet.
   
 c<direction> will crash whatever direction and turn auto off
   
