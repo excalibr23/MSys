@@ -41,7 +41,8 @@ Period key (.) on numpad will start combat with inferno (be careful with this is
 Just aliases: con: Contingency, oc Overclock.
 
 # Engineer stuff:
-Nothing, engineer hunting is pretty simple
+  --Nothing, engineer hunting is pretty simple--
+Lies and slander. Added controls for managing burrowbots and repeated attacks
 
 # Scoundrel stuff:
 hambush - enable use of ambush
