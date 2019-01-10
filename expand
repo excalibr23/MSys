@@ -1,0 +1,103 @@
+#!/usr/bin/env node
+
+/*
+expand v1.0 - Expand Nexus Client settings .nxs file into .nexus file
+Get the latest version at: https://github.com/GustavBertram/nxs-tools
+
+Copyright (C) 2018 Gustav W. Bertram
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+"use strict";
+
+var fs = require("fs");
+
+// Print usage
+function usage() {
+    console.log("Usage: ./expand <file>.nxs");
+    process.exitCode = 1;
+}
+
+// Beautify with 4 spaces at each level
+function beautify(data) {
+    return JSON.stringify(JSON.parse(data), null, 4);
+}
+
+const S_START  = 0;  // Default state
+const S_STRING = 1;  // Inside a string
+const S_ESCAPE = 2;  // Encountered a \ inside string.
+const S_NEWLINE = 3; // Encountered a \ inside string.
+
+const F_APPEND = 0;  // Append input to output
+const F_NOP = 1;     // Do nothing
+const F_ESCAPE = 2;  // Append input to output with an escape character
+const F_NEWLINE = 3; // Append a newline to output
+
+// source, destination, condition, callback
+const RULES = [
+    {src:S_START,  dst:S_START,  re:/[^"]/,   callback:F_APPEND},
+    {src:S_START,  dst:S_STRING, re:/"/,      callback:F_APPEND},
+    {src:S_STRING, dst:S_STRING, re:/[^"\\]/, callback:F_APPEND},
+    {src:S_STRING, dst:S_START,  re:/"/,      callback:F_APPEND},
+    {src:S_STRING, dst:S_ESCAPE, re:/\\/,     callback:F_NOP},
+    {src:S_ESCAPE, dst:S_STRING, re:/[^n]/,   callback:F_ESCAPE},
+    {src:S_ESCAPE, dst:S_STRING, re:/n/,      callback:F_NEWLINE}];
+
+function nextRule(state, input) {
+    return RULES.find(function(rule){
+        return (rule.src===state && rule.re.test(input));
+    });
+}
+
+// Expand \n inside strings to actual newlines
+function expand(data) {
+    var iterator = data[Symbol.iterator]();
+    var i = iterator.next();
+    var state = S_START;
+    var newData = "";
+    var next;
+
+    while(!i.done) {
+        next = nextRule(state, i.value);
+
+        if (next.callback === F_APPEND) {
+            newData += i.value;
+        } else if (next.callback === F_ESCAPE) {
+            newData += "\\" + i.value;
+        } else if (next.callback === F_NEWLINE) {
+            newData += "\n";
+        }
+
+        state = next.dst;
+        i = iterator.next();
+    }
+
+    return newData;
+}
+
+function main(){
+    if (process.argv.length < 3) {
+        usage();
+    } else {
+        var filename = process.argv[2];
+        var file = fs.readFileSync(filename, "utf8");
+
+        // Create or replace existing file
+        fs.writeFileSync(filename.replace("nxs", "nexus"),
+                         expand(beautify(file)));
+    }
+}
+
+main();
