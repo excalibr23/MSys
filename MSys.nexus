@@ -1,0 +1,3233 @@
+{
+    "type": "group",
+    "name": "msys",
+    "enabled": true,
+    "id": 1,
+    "items": [
+        {
+            "type": "function",
+            "name": "onLoad",
+            "enabled": true,
+            "id": 2,
+            "code": "// Place any code here you'd like to autorun when the system is loaded
+// Changelog
+// 20190109--------: Add interrupt support for fury
+// 20190109--------: Cancel inferno if mob enters, fix inferno casting, add some QOL station transfer triggers
+// 20190106T0128EST: Added 'wakeup' command to onLoad to run personal defense ability setups
+// 20190106T0128EST: Modified hunting attack for Fury to exit if target is missing, but after suffuse and bladeshape buffs
+// 20190106T0128EST: Removed suffuse from queue attack trigger
+// 20190106T0128EST: Added queue attack to \"Heal Used\" trigger if auto is set to ensure attack occurs after variables being set
+// 20190106T0128EST: Added queue attack after \"Heal Ready\" to provide heal outside of combat
+// 20190106T0153EST: Removed empty target check from slain trigger to avoid incidentally disabled reflexes resulting in combat script being stuck
+// 20190106T0631EST: Changed launch banner, inverted colors, changed to Mindsim combat implant, and manually padded dashes
+// 20190106T0631EST: Modified heal ready highlight
+// 20190107T0550EST: Added reflexOn logic to healing triggers
+// 20190107T----EST: Added engineer configurations
+// 20190107T----EST: Set up engineer burrowbot functions
+// 20190107T----EST: Added utility scripts to build and deploy turrets
+// 20190107T----EST: Yes I know using waits suck, blow me. It's not an active combat feature
+// 20190107T----EST: Added engineer repeat attacks
+// 20190107T----EST: Incorporated recurring airdrops to fully refill parts
+// 20190109T1708EST: Rebranded as Starwraith Combat Package
+
+//send_command('wakeup')
+MSys = {
+//System Variables
+    goal: 'hunt2',
+    matchList: get_variable('matchList'),
+    systemEnabled: true,
+    offenseEnabled: false,
+    break: get_variable('break'),
+    itemsInRoom: [],
+    damageThisFight: 0,
+    ttk: 0,
+    targetHealth: 0,
+    interrupt: false,
+//Character    
+    attack: 'swarm ',
+    class: '',
+    health: 0,
+    maxHealth: 0,
+    useHeal: get_variable('useHeal'),
+    healReady: true,
+//Nano
+    multistrike: false,
+    frenzy: false,
+    freeze: false,
+    delaySwarm: false,
+    useDelay: get_variable('useDelay'),
+    useMultistrike: get_variable('useMultistrike'),
+    useFrenzy: get_variable('useFrenzy'),
+    useFreeze: get_variable('useFreeze'),
+//Fury
+    stance: '',
+    bladeshape: false,
+    rage: 0,
+    maxRage: 0,
+    unstoppable: false,
+    berserk: false,
+    useBerserk: get_variable('useBerserk'),
+    fever: false,
+    useFever: get_variable('useFever'),
+    hypertension: false,
+    infernoCharging: false,
+//Scoundrel
+    bullets: 0,
+    ambush: false,
+    useAmbush: get_variable('useAmbush'),
+    rapidfire: false,
+    useRapidfire: get_variable('useRapidfire'),
+//B.E.A.S.T.
+    backhand: false,
+//Engineer
+    parts: 0,
+    repeat: true,
+    wormDeployed: false,
+    
+//Functions
+    log: function (x, fgcolor, bgcolor) {
+        let type = typeof x
+        switch(type) {
+          case 'number':
+          case 'string':
+          case 'boolean':
+            display_notice(x.toString(), fgcolor, bgcolor)
+            break;
+          case 'object':
+            for (var prop in x) {
+              display_notice(`${prop}: ${x[prop]}`, fgcolor, bgcolor)
+            }
+            break;
+          case 'undefined':
+            display_notice('undefined', fgcolor, bgcolor)
+            break;
+          default:
+            display_notice('wtf is this')
+        }
+    },
+    alert: function (text, fgcolor, bgcolor) {
+    \ttext = text.toUpperCase()
+        let fullText = '-'.repeat(text.length+1) + '-------\\n--  '+ text + '  --\\n-------' + '-'.repeat(text.length+1)
+        
+        display_notice(fullText, fgcolor, bgcolor)
+    },
+    findTarget: function() {
+        var itemList = this.itemsInRoom
+        var killList = get_variable('killList')
+        var targetFound = false
+\t\t
+        //Match room order
+        if (!this.matchList) {
+            for (i=0; i<itemList.length; i++) {
+                for (x=0; x<killList.length; x++) {
+                    if (itemList[i].name.includes(killList[x]) && itemList[i].attrib === 'm' && targetFound === false) {
+                        set_variable('tar', itemList[i].id)
+                        send_command('settarget ' + itemList[i].id)
+                        targetFound = true
+                        display_notice('New target: '+itemList[i].name, 'red', 'black')
+                    }
+                }
+            }
+        } else { //Match priority/list order
+            for (i=0; i<killList.length; i++) {
+                for (x=0; x<itemList.length; x++) {
+                    if (itemList[x].name.includes(killList[i]) && itemList[x].attrib === 'm' && targetFound === false) {
+                        set_variable('tar', itemList[x].id)
+                        send_command('settarget ' + itemList[x].id)
+                        targetFound = true
+                        display_notice('New target: '+itemList[x].name, 'red', 'black')
+                    }
+                }
+            }
+        }
+
+        if (!targetFound) {
+            //display_notice('No Target Found', 'red', 'black')
+            set_variable('tar', '')
+        }
+    },
+    huntingAttack: function() {
+        
+        if (!this.systemEnabled) {return}
+        
+        //Nano
+        if (this.class == 'Nanoseer') {
+            this.log('nano hunt')
+            if (!this.frenzy && !this.freeze && this.useFrenzy) {
+                send_command('frenzy')  
+            }else if (!this.delaySwarm && this.useDelay) {
+                send_command('delay swarm ' + get_variable('tar'))
+            }else if (!this.multistrike && !this.freeze && this.targetHealth > 40 && this.useMultistrike) {
+                send_command('multistrike ' + get_variable('tar'))
+            }else if (!this.freeze && this.useFreeze && this.targetHealth > 20 ) {
+                send_command('freeze ' + get_variable('tar'))
+            }else {
+                send_command(this.attack + get_variable('tar'))
+            }
+            
+        //Fury
+        } else if (this.class == 'Fury') {
+        \tvar command = 'combo '
+            
+            if (this.interrupt && this.offenseEnabled) {
+                send_command('kith fever ' + get_variable('tar'))
+                return;
+            }
+            
+            if (this.health / this.maxHealth < .8 && this.healReady  && this.useHeal) {
+            \tsend_command('kith suffuse')
+                return;
+            }else if (!this.bladeshape && get_variable('kithbladeshape') !== undefined && get_variable('kithbladeshape') !== '') {
+                send_command(get_variable('kithbladeshape'))
+                return;
+            }else if (get_variable('tar') == '' || this.offenseEnabled == false) {
+                return;
+            }else if (!this.fever && this.useFever) {
+            \tcommand = 'kith fever '
+            }else if (this.goal == 'hunt1') {
+                //Battleflow attack
+                if (this.stance == 'Symmetry') {
+                    command += 'swiftcut '
+                } else if (this.stance == 'Flare') {
+                    command += 'wound '
+                } else if (this.stance == 'Eruption') {
+                    if (this.hypertension) {
+                        command += 'bloodburn '
+                    } else {
+                    \tcommand += 'hypertension '
+                    }
+                } else if (this.stance == 'Ember') {
+                    command += 'legspike '
+                }
+
+                //Rage Attack
+                if (this.unstoppable) {
+                    command += 'slice '
+                } else if (this.stance == 'Symmetry') {
+                    if (this.rage / this.maxRage > .13 && !this.berserk && this.useBerserk) {
+                    \tcommand += 'berserk '
+                    } else {
+                    \tcommand += 'flyinglash '
+                    }
+                } else if (this.stance == 'Flare') {
+                    command += 'rend '
+                } else if (this.stance == 'Eruption') {
+                    if (this.health / this.maxHealth < .7) {
+                        command += 'resistant '
+                    } else {
+                        command += 'upperlash '
+                    }
+                } else if (this.stance == 'Ember') {
+                    if (this.rage / this.maxRage > .73  && this.unstoppable == false) {
+                        command += 'unstoppable '
+                    } else {
+                        command += 'strike '
+                    }
+                }
+            }else if (this.goal == 'hunt2') {
+            \t//Battleflow attack
+                if (this.stance == 'Symmetry') {
+                    command += 'swiftcut '
+                } else if (this.stance == 'Flare') {
+                    command += 'wound '
+                } else if (this.stance == 'Eruption') {
+                    command += 'rupture '
+                }
+
+                //Rage Attack
+                if (this.unstoppable) {
+                    command += 'slice '
+                } else if (this.stance == 'Symmetry') {
+                    if (this.rage / this.maxRage > .13 && !this.berserk && this.useBerserk) {
+                    \tcommand += 'berserk '
+                    } else {
+                    \tcommand += 'flyinglash '
+                    }
+                } else if (this.stance == 'Flare') {
+                    command += 'rend '
+                } else if (this.stance == 'Eruption') {
+                    if (this.rage / this.maxRage > .73  && this.unstoppable == false) {
+                        command += 'unstoppable '
+                    } else {
+                        command += 'strike '
+                    }
+                }
+            }
+            
+            command += get_variable('tar')
+            send_command(command)
+            
+        //Scoundrel    
+        }else if (this.class == 'Scoundrel') {
+            if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
+            \tsend_command('stim')
+            }else if (this.bullets == 0) {
+            \tsend_command('ied fling ripper at ' + get_variable('tar'))
+            }else if (!this.ambush && this.useAmbush) {
+                send_command('gun ambush ' + get_variable('tar'))  
+            }else if (!this.rapidfire && this.bullets > 1 && this.useRapidfire) {
+                send_command('gun rapidfire ' + get_variable('tar'))
+            }else {
+                send_command('gun crackshot ' + get_variable('tar'))
+            }
+        }else if (this.class == 'B.E.A.S.T.'){
+            if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
+            \tsend_command('suit support')
+            }else if (!this.backhand) {
+                send_command('suit backhand ' + get_variable('tar'))
+            }else {
+                send_command('mwp wristblade ' + get_variable('tar'))
+            }
+            
+        //Engineer
+        }else if (this.class == 'Engineer'){
+            if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
+                if (get_variable('debug')) {MSys.log('Activating stimjector',  'white')}
+            \tsend_command('operate stimjector')
+                
+            }else if (!this.repeat && get_variable('useRepeat') && get_variable('repeatAttack') != '') {
+                if (get_variable('debug')) {
+                    MSys.log('Initiating repeat',  'white')
+                    MSys.log('Attempting command: ' + ('bot repeat ' + get_variable('repeatAttack') + ' ' + get_variable('tar')), 'white')
+                }
+                
+                send_command('bot repeat ' + get_variable('engineerRepeatAttack') + ' ' + get_variable('tar'))
+                
+            } else if (get_variable('useWorm') && this.targetHealth > 0.7 && !this.wormDeployed) {
+                if (get_variable('debug')) {MSys.log('Executing burrowbot worm attack',  'white')}
+                send_command('bot worm ' + get_variable('tar'))
+            
+            } else if (get_variable('useRelease') && this.wormDeployed && this.targetHealth < 0.3) {
+                if (get_variable('debug')) {MSys.log('Releasing burrowbot',  'white')}
+                send_command('bot release')
+                
+            }
+            else {
+                if (get_variable('debug')) {MSys.log('Executing default engineer attack',  'white')}
+                send_command('bot claw ' + get_variable('tar'))
+            }
+        }
+    },
+    disableGroup: function(name) {
+        var group = reflex_find_by_name('group', name, false, false, 'MSys')
+        reflex_disable(group)
+    },
+    enableGroup: function(name) {
+        var group = reflex_find_by_name('group', name, false, false, 'MSys')
+        reflex_enable(group)
+    }
+}
+
+//Send MSys to browser log for debugging
+console.log(MSys)
+
+MSys.alert('Starwraith Combat Package Loaded. Good hunting.', 'gold')",
+            "items": []
+        },
+        {
+            "type": "function",
+            "name": "onGMCP",
+            "enabled": true,
+            "id": 3,
+            "code": "// Place any code here you'd like to run when a GMCP message is received
+// - The GMCP message is received as \"args.gmcp_method\" and \"args.gmcp_args\"
+
+GMCP[args.gmcp_method] = args.gmcp_args
+
+/* ------------------------------------------ CHARACTER STUFF ----------------------------------- */
+
+if (args.gmcp_args.hp != undefined) {
+\tvar change = MSys.health - args.gmcp_args.hp;
+   
+    if (change > 0) {
+    \tMSys.log('Damage taken: ' + change, 'yellow')
+    } else if (change < 0) {
+        MSys.log('Damage healed: ' + Math.abs(change), '#6bdaee')
+    }
+    
+    MSys.health = args.gmcp_args.hp
+    MSys.maxHealth = args.gmcp_args.maxhp
+}
+
+if (args.gmcp_method == \"Char.Vitals\") {
+    // Check class
+    if (!MSys.class || MSys.class !== args.gmcp_args.class) {
+        MSys.class = args.gmcp_args.class
+        
+        MSys.disableGroup('Fury')
+        MSys.disableGroup('Nanoseer')
+        MSys.disableGroup('Scoundrel')
+        MSys.disableGroup('B.E.A.S.T.')
+        MSys.disableGroup('Engineer')
+        
+        MSys.enableGroup(MSys.class)
+    }
+ 
+    if (MSys.class === 'Fury') {
+        MSys.stance = args.gmcp_args.st
+        MSys.rage = args.gmcp_args.rg
+        MSys.maxRage = args.gmcp_args.maxrg
+    } else if (MSys.class === 'Scoundrel') {
+        MSys.bullets = args.gmcp_args.bl
+    } else if (MSys.class == 'Engineer') {
+        MSys.parts = args.gmcp_args.pt
+    }
+}
+
+/* -------------------------------------------- ITEMS IN ROOM ----------------------------------- */
+
+//Get Items In Room
+if (args.gmcp_method == \"Char.Items.List\") {
+    MSys.itemsInRoom = args.gmcp_args['items']
+}
+
+//Remove items when items leave
+if (args.gmcp_method == \"Char.Items.Remove\") {
+    let itemLeaving = args.gmcp_args['item']
+    
+    //Find index of item
+    MSys.itemsInRoom = MSys.itemsInRoom.filter(item => item.id !== itemLeaving.id);
+    
+}
+
+//Add items when items enter
+if (args.gmcp_method == \"Char.Items.Add\") {
+    let itemJoining = args.gmcp_args['item']
+    
+    //Find index of item
+    MSys.itemsInRoom.push(itemJoining);
+    
+    if (MSys.systemEnabled === true) {
+    \tif (!get_variable('tar')) {
+        \tMSys.findTarget()
+        }
+    }
+    
+    if (MSys.infernoCharging && itemJoining.attrib === 'm') {
+    \tsend_command('asdf')
+        MSys.infernoCharging = false
+        MSys.alert('mob entered - inferno cancelled', 'white', 'red')
+    }
+}
+
+/* -------------------------------------------- PLAYERS IN ROOM ----------------------------------- */
+if (args.gmcp_method == \"Room.Players\") {
+    MSys.playersInRoom = args.gmcp_args
+}
+
+/* --------------------------------------------- HELPERS --------------------------------- */
+if (args.gmcp_method == \"Room.Info\") {
+    if (MSys.systemEnabled === true) {
+        MSys.findTarget()
+    }
+}
+
+if (args.gmcp_method == \"IRE.Target.Info\") {
+\tMSys.targetHealth = args.gmcp_args['hpperc'].slice(0, -1)
+}
+
+//This is broken
+if (args.gmcp_method == \"IRE.CombatMessage\") {
+\tif (args.gmcp_args['target'] == 'montem') {
+    \tMSys.alert('you are being attacked by ' + args.gmcp_args['caster'] , 'yellow', 'red')
+    }
+}
+
+/* --------------------------------------------- CLASS HELPERS --------------------------------- */",
+            "items": []
+        },
+        {
+            "type": "group",
+            "name": "Auto Hunt",
+            "enabled": true,
+            "id": 8,
+            "items": [
+                {
+                    "type": "group",
+                    "name": "Setup",
+                    "enabled": true,
+                    "id": 41,
+                    "items": [
+                        {
+                            "type": "alias",
+                            "name": "Combat Implant Setup - hsetup",
+                            "enabled": true,
+                            "id": 25,
+                            "matching": "begins",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.log('-- Hunting List Setup.  Use \\'hsave\\' to keep a backup.  \\'hload\\' will load your backup.', 'white', 'black')
+MSys.log('-- Use \\'hadd\\' <name> to add to the list and \\'hremove\\' <name> to remove items from this list. \\'hshow\\' will show the items on your list.', 'white', 'black')
+MSys.log('-- Use \\'hattack\\' <attackName> to make it your primary attack that will be auto used.', 'white')
+MSys.log('-- Use \\'hlist\\' to switch between room and priority list. Use \\'hup\\' or \\'hdown\\' <name> to increase or decrease an item on the priority list.', 'white')
+MSys.log('-- Make sure you use \\'config usequeueing on\\'.  Then you can use other attacks to overwrite auto attacks.', 'white')
+
+if (get_variable('killList')       == undefined) {set_variable('killList', ['rockhopper'])}
+if (get_variable('debug')          == undefined) {set_variable('debug', false)}
+if (get_variable('matchList')      == undefined) {set_variable('matchList', true)}
+if (get_variable('break')          == undefined) {set_variable('break', true)}
+if (get_variable('useHeal')        == undefined) {set_variable('useHeal', true)}
+if (get_variable('useFreeze')      == undefined) {set_variable('useFreeze', false)}
+if (get_variable('useMultistrike') == undefined) {set_variable('useMultistrike', false)}
+if (get_variable('useFrenzy')      == undefined) {set_variable('useFrenzy', false)}
+if (get_variable('useDelay')       == undefined) {set_variable('useDelay', false)}
+if (get_variable('useBerserk')     == undefined) {set_variable('useBerserk', false)}
+if (get_variable('useFever')       == undefined) {set_variable('useFever', false)}
+if (get_variable('useAmbush')      == undefined) {set_variable('useAmbush', false)}
+if (get_variable('useRapidfire')   == undefined) {set_variable('useRapidfire', false)}"
+                                }
+                            ],
+                            "text": "hsetup",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "System Reset",
+                            "enabled": true,
+                            "id": 126,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.log('-- Combat Implant has been reset to factory settings.', 'white', 'black')
+MSys.log('-- If you have previously backed up your kill list you may use \\'hload\\' to reload it', 'white', 'black')
+
+set_variable('killList', ['rockhopper'])
+set_variable('debug', false)
+set_variable('useFreeze', false)
+set_variable('useMultistrike', false)
+set_variable('useFrenzy', false)
+set_variable('useDelay', false)
+set_variable('useBerserk', false)
+set_variable('useFever', false)
+set_variable('useAmbush', false)
+set_variable('useRapidfire', false)
+set_variable('useHeal', true)
+set_variable('matchList', true)
+set_variable('break', true)"
+                                }
+                            ],
+                            "text": "^hreset$",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Change Auto Attack",
+                            "enabled": false,
+                            "id": 26,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.attack = args[1] + ' '
+set_variable('huntingAttack', args[1] + ' ')
+display_notice('Attack set to: ' + args[1], 'white', 'black')"
+                                }
+                            ],
+                            "text": "hattack (.+)",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable List Mode - hlist",
+                            "enabled": true,
+                            "id": 56,
+                            "matching": "begins",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('matchList')) {
+    MSys.matchList = false
+    set_variable('matchList', false)
+    MSys.log('Will match room listing', 'white')
+} else {
+\tMSys.matchList = true
+    set_variable('matchList', true)
+    MSys.log('Will match priority listing', 'white')
+}"
+                                }
+                            ],
+                            "text": "hlist",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Break After Kill Mode - hbreak",
+                            "enabled": true,
+                            "id": 82,
+                            "matching": "begins",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('break')) {
+    MSys.break = false
+    set_variable('break', false)
+    MSys.log('Will continue after kill.', 'white')
+} else {
+\tMSys.break = true
+    set_variable('break', true)
+    MSys.log('Will break after kill.', 'white')
+}"
+                                }
+                            ],
+                            "text": "hbreak",
+                            "items": []
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Slain",
+                    "enabled": true,
+                    "id": 5,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^(You) have slain a.*$|^.*has been slain by (.+)\\.$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.freeze = false
+MSys.frenzy = false
+MSys.delaySwarm = false
+MSys.fever = false
+MSys.hypertension = false
+MSys.ambush = false
+MSys.backhand = false
+
+var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
+//a.play()
+
+var autoList = ['You', 'Chronoxi Starwraith', 'Feraluna Starwraith', 'Mee', 'Casimar', 'Albion']
+var onList = ''
+
+if (args[1]) {
+\tonList = autoList.includes(args[1])
+} else {
+\tonList = autoList.includes(args[2])
+}
+
+if (MSys.systemEnabled === true && onList) {
+    MSys.targetHealth = 0
+\tMSys.findTarget()
+    if (!MSys.break) {
+\t\tMSys.huntingAttack()
+    } else {
+    \tMSys.offenseEnabled = false
+    }
+}
+
+var slainMessage = ''
+var now = new Date()
+if (MSys.damageThisFight > 0 && MSys.ttk > 0){
+\tslainMessage = MSys.damageThisFight + ' damage done this fight. | TTK: ' + (now.getTime() - MSys.ttk)/1000 + 's | DPS: ' + Math.round(MSys.damageThisFight / ((now.getTime() - MSys.ttk)/1000))
+} else if (MSys.damageThisFight > 0) {
+\tslainMessage = MSys.damageThisFight + ' damage done this fight.'
+} else if (MSys.ttk > 0) {
+\tslainMessage = 'TTK: ' + (now.getTime() - MSys.ttk)/1000 + 's'
+}
+
+if (MSys.damageThisFight > 0 || MSys.ttk > 0){
+    MSys.alert(slainMessage, 'lightgreen', 'darkblue')
+}
+
+MSys.ttk = 0
+MSys.damageThisFight = 0
+MSys.interrupt = false"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Crash - AUTO OFF",
+                    "enabled": true,
+                    "id": 18,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^You prepare to crash out of the room.*$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.systemEnabled = false
+display_notice('AUTO OFF', 'white', 'black')"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "keybind",
+                    "name": "",
+                    "enabled": true,
+                    "id": 10,
+                    "key": 96,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('debug') == true) {MSys.log('I am attacking ' + get_variable('tar'), 'white')}
+MSys.systemEnabled = true
+MSys.offenseEnabled = true
+
+var dt = new Date()
+MSys.ttk = dt.getTime()
+
+MSys.huntingAttack()"
+                        }
+                    ],
+                    "key_alt": false,
+                    "key_ctrl": false,
+                    "key_shift": false,
+                    "items": []
+                },
+                {
+                    "type": "keybind",
+                    "name": "",
+                    "enabled": true,
+                    "id": 32,
+                    "key": 111,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (MSys.systemEnabled === true) {
+  MSys.systemEnabled = false
+  display_notice(\"Combat implant disabled\", 'white', 'black')
+} else {
+  MSys.systemEnabled = true
+  display_notice(\"Combat implant enabled\", 'white', 'black')
+}"
+                        }
+                    ],
+                    "key_alt": false,
+                    "key_ctrl": false,
+                    "key_shift": false,
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Heal",
+                    "enabled": true,
+                    "id": 115,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (MSys.class == 'Nanoseer') {
+  send_command('NANO REPAIR')
+} else if (MSys.class == 'Fury') {
+  send_command('KITH SUFFUSE')
+} else if (MSys.class == 'Scoundrel') {
+  send_command('STIM')
+} else if (MSys.class == 'B.E.A.S.T.') {
+  send_command('suit support')
+} else if (MSys.class == 'Engineer') {
+  send_command('operate stimjector')
+}"
+                        }
+                    ],
+                    "text": "h",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Add to hunting list - hadd <mob>",
+                    "enabled": true,
+                    "id": 13,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "display_notice('Adding: ' + args[1] + ' to list', 'white', 'black')
+let newList = get_variable('killList')
+newList.push(args[1])
+set_variable('killList', newList)"
+                        }
+                    ],
+                    "text": "hadd (.+)",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Remove from hunting list - hremove <mob>",
+                    "enabled": true,
+                    "id": 14,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "display_notice('Removing: ' + args[1] + ' from list', 'white', 'black')
+
+let newList = get_variable('killList')
+newList = newList.filter(item => item !== args[1]);
+
+set_variable('killList', newList)"
+                        }
+                    ],
+                    "text": "hremove (.+)",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Save Hunting List To Backup - hsave",
+                    "enabled": true,
+                    "id": 15,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "let newSave = get_variable('killList')
+set_variable('killListBackup', newSave)
+display_notice('Hunt List Saved', 'white', 'black')
+"
+                        }
+                    ],
+                    "text": "hsave",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Load Hunting List From Backup - hload",
+                    "enabled": true,
+                    "id": 16,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "let backupList = get_variable('killListBackup')
+set_variable('killList', backupList)
+display_notice('Hunt List Loaded from Backup', 'white', 'black')"
+                        }
+                    ],
+                    "text": "hload",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Show Hunting Targets - hshow",
+                    "enabled": true,
+                    "id": 17,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "let killList = get_variable('killList')
+for (i=0; i<killList.length; i++) {
+\tdisplay_notice(killList[i], 'white', 'black')
+}"
+                        }
+                    ],
+                    "text": "hshow",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Item Priority - hup/hdown <mob>",
+                    "enabled": true,
+                    "id": 52,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "var list = get_variable('killList')
+var nameIndex = list.indexOf(args[2])
+var name = list[nameIndex]
+
+if (list[nameIndex-1] && nameIndex && args[1] === 'hup') {
+\tlist[nameIndex] = list[nameIndex - 1]
+    list[nameIndex-1] = name
+} else if (list[nameIndex+1] && nameIndex && args[1] === 'hdown') {
+    list[nameIndex] = list[nameIndex + 1]
+    list[nameIndex+1] = name
+}
+
+set_variable('killList', list)
+
+for (i=0; i<list.length; i++) {
+\tif(list[i] === name){
+    \tdisplay_notice(list[i], 'gold', 'black')
+    } else {
+    \tdisplay_notice(list[i])
+    }
+}"
+                        }
+                    ],
+                    "text": "^(hup|hdown) (.+)$",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Heal Toggle - hheal",
+                    "enabled": true,
+                    "id": 81,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useHeal')) {
+\tset_variable('useHeal', false)
+    MSys.useHeal = false
+    MSys.log('HEAL OFF', 'white')
+} else {
+\tset_variable('useHeal', true)
+    MSys.useHeal = true
+    MSys.log('HEAL ON', 'white')
+}"
+                        }
+                    ],
+                    "text": "hheal",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Kill",
+                    "enabled": true,
+                    "id": 120,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('debug') == true) {MSys.log('I am attacking ' + get_variable('tar'), 'white')}
+MSys.systemEnabled = true
+MSys.offenseEnabled = true
+
+var dt = new Date()
+MSys.ttk = dt.getTime()
+
+MSys.huntingAttack()"
+                        }
+                    ],
+                    "text": "k",
+                    "items": []
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Generic",
+            "enabled": true,
+            "id": 4,
+            "items": [
+                {
+                    "type": "group",
+                    "name": "Interrupts",
+                    "enabled": true,
+                    "id": 147,
+                    "items": [
+                        {
+                            "type": "trigger",
+                            "name": "Super - Interrupt",
+                            "enabled": true,
+                            "id": 148,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "^Throwing back its grizzled head, a sly cania lets out a high-pitched, wavering howl.$|^A sluggish atzaparaki shakes off some of its torpor and draws in a deep breath, its sides beginning to swell alarmingly.$|^Light begins to focus deep within the body of a salt-crusted quartz creeper, growing to an almost painful radiance.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.interrupt = true
+
+MSys.alert('interrupting super', 'white', 'blue')
+MSys.huntingAttack()
+"
+                                }
+                            ],
+                            "items": []
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Travel",
+                    "enabled": true,
+                    "id": 149,
+                    "items": [
+                        {
+                            "type": "trigger",
+                            "name": "Battlemaster Engineer Return",
+                            "enabled": true,
+                            "id": 125,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "A tripod-mounted wormhole generator has been set up in the center of the cracked landing pad.",
+                            "actions": [
+                                {
+                                    "action": "linkify",
+                                    "linkify": "match",
+                                    "linkify_backref": "1",
+                                    "linkify_text_type": "capture",
+                                    "linkify_text": "",
+                                    "linkify_command_type": "value",
+                                    "linkify_command": "turn tripod&push tripod",
+                                    "linkify_color": "#26aa95"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Battlemaster Engineer Omni",
+                            "enabled": true,
+                            "id": 124,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "A tripod-mounted wormhole generator has been set up in the center of the repair bay.",
+                            "actions": [
+                                {
+                                    "action": "linkify",
+                                    "linkify": "match",
+                                    "linkify_backref": "1",
+                                    "linkify_text_type": "capture",
+                                    "linkify_text": "",
+                                    "linkify_command_type": "value",
+                                    "linkify_command": "turn tripod&push tripod",
+                                    "linkify_color": "#26aa95"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Gatewarp Destinations",
+                            "enabled": true,
+                            "id": 146,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "There is a voidgate here. GATEWARP DESTINATIONS to start your travel across the cosmos.",
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "Gatewarp Destinations"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Takeoff List - tl",
+                            "enabled": true,
+                            "id": 119,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "Takeoff List",
+                                    "prefix_suffix": true
+                                }
+                            ],
+                            "text": "tl",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Station Transfer List - stl",
+                            "enabled": true,
+                            "id": 83,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "Station Transfer List",
+                                    "prefix_suffix": true
+                                }
+                            ],
+                            "text": "stl",
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Station Transfer List",
+                            "enabled": true,
+                            "id": 144,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You can board a transport craft here, check STATION TRANSFER LIST.",
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "STATION TRANSFER LIST"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Javascript - js",
+                            "enabled": true,
+                            "id": 31,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.log(eval(args[1]))"
+                                }
+                            ],
+                            "text": "^js (.+)$",
+                            "items": []
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Left battle",
+                    "enabled": true,
+                    "id": 6,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You are no longer in the throes of battle.",
+                    "actions": [
+                        {
+                            "action": "highlight",
+                            "highlight": "match",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#9488f6",
+                            "highlight_bg": "#000000"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Hide Queue",
+                    "enabled": false,
+                    "id": 7,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "text": "^\\[Queue\\]: You will attempt to do.*$|^Your swarm is already focused upon a multistrike.*$",
+                    "actions": [
+                        {
+                            "action": "gag"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Add Damage Per Kill",
+                    "enabled": true,
+                    "id": 57,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "Damage Dealt: (.+) .+",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.damageThisFight += parseInt(args[1])"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Not following",
+                    "enabled": true,
+                    "id": 87,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "(.+) is no longer following you.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.log(args[1] + ' Stopped Following!', 'darkred')"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Junk Sell",
+                    "enabled": true,
+                    "id": 88,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "A heap of rusty equipment indicates a JUNK shop here.",
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "Junk Sell"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Crash + Direction - c<dir>",
+                    "enabled": true,
+                    "id": 33,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "send_command('cq')
+send_command('crash ' + args[1])"
+                        }
+                    ],
+                    "text": "c(nw|ne|se|sw|n|s|e|w|u|d|in|out)",
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Takeoff List",
+                    "enabled": true,
+                    "id": 145,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You can board a transport craft here, check TAKEOFF LIST.",
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "Takeoff List"
+                        }
+                    ],
+                    "items": []
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Spaceship",
+            "enabled": true,
+            "id": 11,
+            "items": [
+                {
+                    "type": "alias",
+                    "name": "Ship Beacon - sb",
+                    "enabled": true,
+                    "id": 12,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "SHIP BEACON",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "sb",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Incursion List - il",
+                    "enabled": true,
+                    "id": 60,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "Incursion List",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "il",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Incursion Map - im",
+                    "enabled": true,
+                    "id": 62,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "Incursion Map",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "im",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Starchart - sc <place>",
+                    "enabled": true,
+                    "id": 61,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "send_command('starchart ' + args[1])"
+                        }
+                    ],
+                    "text": "^sc (.*)$",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Cargo Recover - cr <dir>",
+                    "enabled": true,
+                    "id": 63,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "cargo recover @1",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "^cr (.+)$",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Cosmpiercer map - cpm",
+                    "enabled": true,
+                    "id": 51,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "Cosmpiercer map",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "cpm",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Cosmpiecer Liberate - cpl",
+                    "enabled": true,
+                    "id": 68,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "cosmpiercer liberate",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "cpl",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Cosmpiercer list - cp",
+                    "enabled": true,
+                    "id": 50,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "Cosmpiercer list",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "cp",
+                    "items": []
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Nanoseer",
+            "enabled": false,
+            "id": 21,
+            "items": [
+                {
+                    "type": "alias",
+                    "name": "Channel/Swap Empyreal",
+                    "enabled": true,
+                    "id": 22,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "var empyreal = {
+    a: \"architect\",
+    c: \"conqueror\",
+    p: \"progenitor\",
+    s: \"sunderer\",
+    t: \"traveller\"
+}
+
+var command = {
+    ch: \"oblivion channel \",
+    sw: \"oblivion swap \"
+}
+
+send_command(command[args[1]] + empyreal[args[2]])"
+                        }
+                    ],
+                    "text": "^(ch|sw)(a|c|p|s|t)$",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Void Soothe",
+                    "enabled": true,
+                    "id": 46,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "Void Soothe",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "vs",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Delay",
+                    "enabled": true,
+                    "id": 47,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "var command = {
+\ts: 'swarm'
+}
+
+send_command('delay ' + command[args[1]])"
+                        }
+                    ],
+                    "text": "^d(s)$",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "",
+                    "enabled": true,
+                    "id": 44,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "levitate",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "fly",
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Negation Down Alert",
+                    "enabled": true,
+                    "id": 36,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "The shadow of the Progenitor's protection springs to life around you, absorbing the damaging attack before lifting away from you, the air around you growing subtly lighter.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.alert('Negation Down', 'white', 'red')"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "",
+                    "enabled": true,
+                    "id": 38,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You break out of your frenzy.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.alert('Frenzy Down', 'white', 'red')"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Delay Swarm On",
+                    "enabled": true,
+                    "id": 54,
+                    "matching": "substring",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "Quickly, you program a delayed swarm attack",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.delaySwarm = true"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Freeze on",
+                    "enabled": true,
+                    "id": 29,
+                    "matching": "substring",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You brush your fingertips across",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.freeze = true"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Freeze off",
+                    "enabled": true,
+                    "id": 30,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^.+has cured the effects of Frozen.$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.freeze = false
+if (MSys.systemEnabled === true) {
+\tMSys.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Rage on",
+                    "enabled": true,
+                    "id": 39,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^A dark wave of madness rolls through your thoughts.*$|^To draw more of the Conquerer into your thoughts would utterly destroy your mind!$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.frenzy = true"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Rage off",
+                    "enabled": false,
+                    "id": 40,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You break out of your frenzy.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.frenzy = false"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Multistrike return",
+                    "enabled": true,
+                    "id": 19,
+                    "matching": "substring",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "The group of nanites returns back to you.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.multistrike = false"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Multistrike out",
+                    "enabled": true,
+                    "id": 20,
+                    "matching": "substring",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You focus intently to direct a portion of your swarm towards",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.multistrike = true"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Queue Attack Nano",
+                    "enabled": true,
+                    "id": 9,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "text": "^Focusing on becoming more attuned to your swarm.*$|^You inhale a cloud of your swarm.*$|^You focus intently to direct a portion of your swarm towards.*$|^Your swarm is already focused upon a multistrike.*$|^Electrical energy begins to discharge from the silvery mist of your swarm.*$|^You brush your fingertips across.*$|^Reaching into the void, you channel the collosal power of the Progenitor, and its aura descends over you like a giant, protective shadow.$|^A dark wave of madness rolls through your thoughts.*$|^Quickly, you program a delayed swarm attack.*$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (MSys.systemEnabled === true) {
+\tMSys.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Enable/Disable Freeze",
+                    "enabled": true,
+                    "id": 42,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useFreeze')) {
+\tset_variable('useFreeze', false)
+    MSys.useFreeze = false
+    MSys.log('FREEZE OFF', 'white')
+} else {
+\tset_variable('useFreeze', true)
+    MSys.useFreeze = true
+    MSys.log('FREEZE ON', 'white')
+}"
+                        }
+                    ],
+                    "text": "hfreeze",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Enable/Disable Multistrike",
+                    "enabled": true,
+                    "id": 43,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useMultistrike')) {
+\tset_variable('useMultistrike', false)
+    MSys.useMultistrike = false
+    MSys.log('MULTISTRIKE OFF', 'white')
+} else {
+\tset_variable('useMultistrike', true)
+    MSys.useMultistrike = true
+    MSys.log('MULTISTRIKE ON', 'white')
+}"
+                        }
+                    ],
+                    "text": "hmulti",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Enable/Disable Frenzy",
+                    "enabled": true,
+                    "id": 45,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useFrenzy')) {
+\tset_variable('useFrenzy', false)
+    MSys.useFrenzy = false
+    MSys.log('FRENZY OFF', 'white')
+} else {
+\tset_variable('useFrenzy', true)
+    MSys.useFrenzy = true
+    MSys.log('FRENZY ON', 'white')
+}"
+                        }
+                    ],
+                    "text": "hfrenzy",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Enable/Disable Delay Swarm",
+                    "enabled": true,
+                    "id": 55,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useDelay')) {
+\tset_variable('useDelay', false)
+    MSys.useDelay = false
+    MSys.log('DELAY OFF', 'white')
+} else {
+\tset_variable('useDelay', true)
+    MSys.useDelay = true
+    MSys.log('DELAY ON', 'white')
+}"
+                        }
+                    ],
+                    "text": "hdelay",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Limb drain",
+                    "enabled": true,
+                    "id": 53,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "limbs = {
+\tll: 'left leg',
+    rl: 'right leg',
+    ra: 'right arm',
+    la: 'left arm'
+}
+
+send_command('limbdrain ' + get_variable('tar') + ' ' + limbs[args[1]])"
+                        }
+                    ],
+                    "text": "l(ll|rl|la|ra)",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Nano Abilities - hnano",
+                    "enabled": true,
+                    "id": 90,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "var abilities = ''
+abilities += 'Freeze: ' + get_variable('useFreeze') + '\\n'
+abilities += 'Rage: ' + get_variable('useRage') + '\\n'
+abilities += 'Multistrike: ' + get_variable('useMultistrike') + '\\n'
+abilities += 'DelaySwarm: ' + get_variable('useDelay') + '\\n'
+
+MSys.log(abilities, 'white')"
+                        }
+                    ],
+                    "text": "hnano",
+                    "items": []
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Fury",
+            "enabled": false,
+            "id": 69,
+            "items": [
+                {
+                    "type": "trigger",
+                    "name": "Kithblade Shaped",
+                    "enabled": true,
+                    "id": 70,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "Resting your hand on the hilt of",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.bladeshape = true
+if (MSys.systemEnabled === true) {
+\tMSys.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Kithblade Unshaped",
+                    "enabled": true,
+                    "id": 86,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "text": "The blade of .+ shimmers and warps.+",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.alert('bladeshape off', 'white', 'lightred')
+MSys.bladeshape = false
+
+var a = new Audio('https://freesound.org/people/Stopmotionbros/sounds/438991/download/438991__stopmotionbros__wind.m4a')
+a.play()"
+                        },
+                        {
+                            "action": "highlight",
+                            "highlight": "line",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#ffbc78",
+                            "highlight_bg": "#000000"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Fever On",
+                    "enabled": true,
+                    "id": 79,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "Your mind extends towards the vulnerabilities of .+ body, and with your connection to the universe's energy, you begin to increase the heat in every cell, flushing .+ with a raging fever.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.fever = true
+MSys.interrupt = false"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Unstoppable On",
+                    "enabled": true,
+                    "id": 71,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "Your rage overwhelms you, you become unstoppable!",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.unstoppable = true
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'MSys').enabled
+
+if (MSys.systemEnabled && reflexOn) {
+\tMSys.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Unstoppable Off",
+                    "enabled": true,
+                    "id": 72,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You no longer feel unstoppable!",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.unstoppable = false
+MSys.log('NO UNSTOPPABLE', 'red')
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'MSys').enabled
+
+if (MSys.systemEnabled && reflexOn) {
+\tMSys.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Hypertension On",
+                    "enabled": true,
+                    "id": 85,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^Tossing .+ to your off hand, you extend a bloodied palm towards .+ and then clench it into a fist, feeling .+ heart spasm and beat more quickly within .+ chest.$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.hypertension = true"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Heal Ready",
+                    "enabled": true,
+                    "id": 77,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "It is safe to suffuse yourself with kith energy again.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.healReady = true
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'MSys').enabled
+
+if (MSys.systemEnabled && reflexOn) {
+\tMSys.huntingAttack()
+}"
+                        },
+                        {
+                            "action": "highlight",
+                            "highlight": "line",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#51d051",
+                            "highlight_bg": "#000000"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Heal Used",
+                    "enabled": true,
+                    "id": 78,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "The heart of distant stars and the fire at the center of every planet shimmers in your mind, and you draw upon that power, filling your body with an energy that heals your wounds and suffuses you with a flush of health.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.healReady = false
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'MSys').enabled
+
+if (MSys.systemEnabled && reflexOn) {
+\tMSys.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Berserk On",
+                    "enabled": true,
+                    "id": 74,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^You go berserk, flailing .*$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.berserk = true
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'MSys').enabled
+
+if (MSys.systemEnabled && reflexOn) {
+\tMSys.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Berserk Off",
+                    "enabled": true,
+                    "id": 75,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You are no longer berserk.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.berserk = false
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'MSys').enabled
+
+if (MSys.systemEnabled && reflexOn) {
+\tMSys.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Attack after Inferno",
+                    "enabled": true,
+                    "id": 118,
+                    "matching": "substring",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "The searing wave of your inferno engulfs",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.systemEnabled = true
+MSys.offenseEnabled = true
+MSys.infernoCharging = false
+
+MSys.huntingAttack()"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Queue Attack Fury",
+                    "enabled": true,
+                    "id": 73,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": true,
+                    "text": "^You flow smoothly into the.+stance.+|^You flow out of your stance.+|^Your mind extends towards the vulnerabilities of.*$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.huntingAttack()
+"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Awaken Fury",
+                    "enabled": true,
+                    "id": 143,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "kith harden",
+                            "prefix_suffix": true
+                        },
+                        {
+                            "action": "waitfor",
+                            "text": "^You focus on hardening your skin|^Your internals are already hardened",
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "expire": "10"
+                        },
+                        {
+                            "action": "command",
+                            "command": "kith warmth",
+                            "prefix_suffix": true
+                        },
+                        {
+                            "action": "waitfor",
+                            "text": "^You focus on warming up your skin|^You're already protected",
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "expire": "10"
+                        },
+                        {
+                            "action": "command",
+                            "command": "kith balancing",
+                            "prefix_suffix": true
+                        },
+                        {
+                            "action": "waitfor",
+                            "text": "^You focus on your kith to prevent falling.|^You're already balancing",
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "expire": "10"
+                        },
+                        {
+                            "action": "command",
+                            "command": "kith firewreathe",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "wakeup",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Berserk Toggle - hberserk",
+                    "enabled": true,
+                    "id": 76,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useBerserk')) {
+\tset_variable('useBerserk', false)
+    MSys.useBerserk = false
+    MSys.log('BERSERK OFF', 'white')
+} else {
+\tset_variable('useBerserk', true)
+    MSys.useBerserk = true
+    MSys.log('BERSERK ON', 'white')
+}"
+                        }
+                    ],
+                    "text": "hberserk",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Fever Toggle - hfever",
+                    "enabled": true,
+                    "id": 80,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useFever')) {
+\tset_variable('useFever', false)
+    MSys.useFever = false
+    MSys.log('FEVER OFF', 'white')
+} else {
+\tset_variable('useFever', true)
+    MSys.useFever = true
+    MSys.log('FEVER ON', 'white')
+}"
+                        }
+                    ],
+                    "text": "hfever",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Fury Abilities - hfury",
+                    "enabled": true,
+                    "id": 84,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "var abilities = ''
+abilities += 'Berserk: ' + get_variable('useBerserk') + '\\n'
+abilities += 'Fever: ' + get_variable('useFever') + '\\n'
+abilities += 'Heal: ' + get_variable('useHeal') + '\\n'
+abilities += 'Bladeshape: ' + MSys.bladeshape + '\\n'
+abilities += 'Desired blade shape set to: ' + get_variable('kithbladeshape') + '\\n'
+abilities += 'Goal: ' + MSys.goal + '\\n'
+
+MSys.log(abilities, 'white')"
+                        }
+                    ],
+                    "text": "hfury",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Set Bladeshape",
+                    "enabled": true,
+                    "id": 121,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "set_variable('kithbladeshape', args[1])
+MSys.log('Set desired kithblade shape to: ' + get_variable('kithbladeshape'))"
+                        }
+                    ],
+                    "text": "^hblade (.+)",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Inferno - inf",
+                    "enabled": true,
+                    "id": 116,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "KITH INFERNO",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "inf",
+                    "items": []
+                },
+                {
+                    "type": "keybind",
+                    "name": "",
+                    "enabled": true,
+                    "id": 117,
+                    "key": 110,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "var dt = new Date()
+MSys.ttk = dt.getTime()
+
+MSys.infernoCharging = true
+
+send_command('kith inferno')"
+                        }
+                    ],
+                    "key_alt": false,
+                    "key_ctrl": false,
+                    "key_shift": false,
+                    "items": []
+                },
+                {
+                    "type": "keybind",
+                    "name": "",
+                    "enabled": true,
+                    "id": 122,
+                    "key": 106,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "kith suffuse"
+                        }
+                    ],
+                    "key_alt": false,
+                    "key_ctrl": false,
+                    "key_shift": false,
+                    "items": []
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Scoundrel",
+            "enabled": false,
+            "id": 89,
+            "items": [
+                {
+                    "type": "trigger",
+                    "name": "Ambush Used",
+                    "enabled": true,
+                    "id": 91,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^Without warning, you snatch .* from your belt and fire it from the hip at .*, moving too rapidly to be spotted until the bullet is already leaving the barrel.$|^You cannot ambush anyone, as you already are fighting!$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.ambush = true
+
+if (MSys.systemEnabled === true) {
+\tMSys.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Rapidfire Used",
+                    "enabled": true,
+                    "id": 92,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "Placing your hand on the hammer of .*, you quickly fire off two shots at .* in rapid succession.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.rapidfire = true"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Rapidfire Ready",
+                    "enabled": true,
+                    "id": 93,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You are again ready to dualshoot.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.rapidfire = false"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Stim Used",
+                    "enabled": true,
+                    "id": 95,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You jam a stim into your vein and healing nanites surge through your body.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.healReady = false"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Stim Ready",
+                    "enabled": true,
+                    "id": 96,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You can again use a stim.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.healReady = true
+MSys.alert('stim ready', 'white', 'green')"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Queue Attack Scoundrel",
+                    "enabled": false,
+                    "id": 94,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^Drawing your shoulder back, you fling a handful.*$|^.*kicks in your grip and an explosive noise cracks.*$|^.*you quickly fire off two shots at.*$|^You jam a stim into your vein and healing nanites surge through your body.$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (MSys.systemEnabled === true) {
+\tMSys.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Spin if empty and no target",
+                    "enabled": true,
+                    "id": 98,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "There is nothing and nobody here of that name - find a different target for your bomb.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (MSys.bullets == 0) {
+\tsend_command('gun spin')
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Construct Ripper - rip",
+                    "enabled": true,
+                    "id": 97,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "ied construct ripper",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "rip",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Ambush Toggle - hambush",
+                    "enabled": true,
+                    "id": 99,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useAmbush')) {
+\tset_variable('useAmbush', false)
+    MSys.useAmbush = false
+    MSys.log('AMBUSH OFF', 'white')
+} else {
+\tset_variable('useAmbush', true)
+    MSys.useAmbush = true
+    MSys.log('AMBUSH ON', 'white')
+}"
+                        }
+                    ],
+                    "text": "hambush",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Rapidfire Toggle - hrapidfire ",
+                    "enabled": true,
+                    "id": 100,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useRapidfire')) {
+\tset_variable('useRapidfire', false)
+    MSys.useRapidfire = false
+    MSys.log('RAPIDFIRE OFF', 'white')
+} else {
+\tset_variable('useRapidfire', true)
+    MSys.useRapidfire = true
+    MSys.log('RAPIDFIRE ON', 'white')
+}"
+                        }
+                    ],
+                    "text": "hrapidfire",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Scoundrel Abilities - hscoundrel",
+                    "enabled": true,
+                    "id": 101,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "var abilities = ''
+abilities += 'Ambush: ' + get_variable('useAmbush') + '\\n'
+abilities += 'Rapidfire: ' + get_variable('useRapidfire') + '\\n'
+abilities += 'Heal: ' + get_variable('useHeal') + '\\n'
+abilities += 'Bullets: ' + MSys.bullets + '\\n'
+
+MSys.log(abilities, 'white')"
+                        }
+                    ],
+                    "text": "hscoundrel",
+                    "items": []
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "B.E.A.S.T.",
+            "enabled": false,
+            "id": 102,
+            "items": [
+                {
+                    "type": "trigger",
+                    "name": "Backhand Used",
+                    "enabled": true,
+                    "id": 103,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You overdrive your suit's movement circuits, delivering a vicious backhanded blow.*",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.backhand = true"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Support Used",
+                    "enabled": true,
+                    "id": 107,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^You activate your suit's emergency life support system.*$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.healReady = false"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Support Ready",
+                    "enabled": true,
+                    "id": 108,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "Your HUD indicates that you may use your life support system once again.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.healReady = true
+MSys.alert('support ready', 'white', 'green')"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Queue Attack BEAST",
+                    "enabled": false,
+                    "id": 106,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^You overdrive your suit's movement circuits.*$|^With servo-assisted might, you drive your wristblade.*$|^You activate your suit's emergency life support system.*$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (MSys.systemEnabled === true) {
+\tMSys.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Suit Contingency",
+                    "enabled": true,
+                    "id": 104,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "suit contingency",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "con",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Overclock",
+                    "enabled": true,
+                    "id": 105,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "suit overclock",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "oc",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "",
+                    "enabled": true,
+                    "id": 110,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "var abilities = ''
+abilities += 'Heal: ' + get_variable('useHeal') + '\\n'
+
+MSys.log(abilities, 'white')"
+                        }
+                    ],
+                    "text": "hbeast",
+                    "items": []
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Engineer",
+            "enabled": true,
+            "id": 109,
+            "items": [
+                {
+                    "type": "group",
+                    "name": "Turret Construction",
+                    "enabled": true,
+                    "id": 129,
+                    "items": [
+                        {
+                            "type": "alias",
+                            "name": "Construct Turret",
+                            "enabled": true,
+                            "id": 128,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (args[1] == '' || args[2] == '') {
+    MSys.log('Usage: hturret <mod> <weapon> <follow up command>', 'darkyellow')
+} else {
+    set_variable('turretMod', args[1])
+    set_variable('turretWeapon', args[2])
+    set_variable('turretFollowup', args[3])
+    set_variable('turretAlias', true)
+\tsend_command('turret construct turret')
+}
+"
+                                }
+                            ],
+                            "text": "hturret ([a-z]+) ([a-z]+)[ ]?(.*)",
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Frame Constructed",
+                            "enabled": true,
+                            "id": 130,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^Circuitboards, robotic servos, power sources, and an operating system come together under your capable hands to form a modular weapons turret",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('turretAlias') == true) {
+    send_command('turret install ' + get_variable('turretWeapon'))
+}"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Weapon Mounted",
+                            "enabled": true,
+                            "id": 131,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^Smoothly, you socket the .* barrel|That barrel is already installed on the turret",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('turretAlias') != true) {return;}
+
+if (get_variable('turretMod') == 'QPC') {
+    send_command('gadget construct qpc')
+} else {
+    send_command('turret mod ' + get_variable('turretMod'))
+\tif (get_variable('turretFollowup') != '') {send_command(get_variable('turretFollowup'))}
+    set_variable('turretAlias', false)
+}"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Mod Mounted",
+                            "enabled": true,
+                            "id": 133,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^Metal ratchets satisfyingly into place and code whirrs down",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.log('Turret ready!', 'white')"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "QPC Ready",
+                            "enabled": true,
+                            "id": 132,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^Using your vast engineering knowledge, you effortlessly construct a cylindrical quantum power cell",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('turretAlias') != true) {
+    return;
+}
+
+if (get_variable('turretMod') == 'QPC') {
+    send_command('turret mod qpc)
+    set_variable('turretAlias', false)
+    MSys.log('Turret Ready!', 'white')
+    send_command(get_variable('turretFollowup'))
+}"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Deploy Sentry Turret",
+                            "enabled": true,
+                            "id": 134,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "send_command('turret deploy ' + args[1])"
+                                },
+                                {
+                                    "action": "waitfor",
+                                    "text": "Dropping a turret with a mounted flamethrower barrel",
+                                    "matching": "substring",
+                                    "whole_words": false,
+                                    "case_sensitive": false,
+                                    "expire": "10"
+                                },
+                                {
+                                    "action": "command",
+                                    "command": "workstation deploy",
+                                    "prefix_suffix": false
+                                },
+                                {
+                                    "action": "waitfor",
+                                    "text": "You fold down the legs of your workstation",
+                                    "matching": "substring",
+                                    "whole_words": false,
+                                    "case_sensitive": false,
+                                    "expire": "10"
+                                },
+                                {
+                                    "action": "command",
+                                    "command": "turret sentrymode",
+                                    "prefix_suffix": true
+                                },
+                                {
+                                    "action": "waitfor",
+                                    "text": "Fingers whirring across the holokeyboard",
+                                    "matching": "substring",
+                                    "whole_words": false,
+                                    "case_sensitive": false,
+                                    "expire": "10"
+                                },
+                                {
+                                    "action": "command",
+                                    "command": "workstation pack",
+                                    "prefix_suffix": true
+                                }
+                            ],
+                            "text": "^deploysentry ([0-9]+)$",
+                            "items": []
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Utility",
+                    "enabled": true,
+                    "id": 136,
+                    "items": [
+                        {
+                            "type": "trigger",
+                            "name": "Airdrop Return",
+                            "enabled": true,
+                            "id": 123,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "^An aerodynamic drone flies in, decelerating rapidly. It drops a supply of spare parts into your hands.$",
+                            "actions": [
+                                {
+                                    "action": "highlight",
+                                    "highlight": "line",
+                                    "highlight_backref": "1",
+                                    "highlight_fg": "#00c7ff",
+                                    "highlight_bg": "#000000"
+                                },
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('refillParts') == true) {
+    if (MSys.parts < 60) {
+        send_command('bot airdrop')
+    } else {
+        set_variable('refillParts', false)
+    }
+}"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Refill Parts",
+                            "enabled": true,
+                            "id": 127,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "set_variable('refillParts', true)
+send_command('bot airdrop')
+"
+                                }
+                            ],
+                            "text": "^hfillParts$",
+                            "items": []
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Stimjector Used",
+                    "enabled": true,
+                    "id": 111,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You activate your stimjector, feeling a rush of vitality as it releases healing nanites into your bloodstream.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.healReady = false"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Stimjector Ready",
+                    "enabled": true,
+                    "id": 112,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You can again use a stimjector.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.healReady = true
+MSys.huntingAttack()
+//MSys.log('stimjector ready', 'cyan')"
+                        },
+                        {
+                            "action": "highlight",
+                            "highlight": "line",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#00efff",
+                            "highlight_bg": "#000000"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Repeat Active",
+                    "enabled": true,
+                    "id": 137,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "text": "^You build an instruction loop",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.repeat = false
+MSys.huntingAttack()"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Repeat Available",
+                    "enabled": true,
+                    "id": 138,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "text": "^You can again order a repeated attack.$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.repeat = true"
+                        },
+                        {
+                            "action": "highlight",
+                            "highlight": "line",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#fbbe80",
+                            "highlight_bg": "#000000"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Burrowbot Active",
+                    "enabled": true,
+                    "id": 139,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "text": "and starts burrowing into its flesh.$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.wormDeployed = true
+MSys.huntingAttack()"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Burrowbot Returned",
+                    "enabled": true,
+                    "id": 140,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "text": "^A knife-mawed burrowbot violently emerges|ceases burrowing",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.wormDeployed = false
+MSys.huntingAttack()"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Queue Attack Engineer",
+                    "enabled": true,
+                    "id": 114,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^A crane-armed carrybot claws .* shredding .* skin.$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.huntingAttack()"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "List Ability Configuration",
+                    "enabled": true,
+                    "id": 113,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "var abilities = ''
+abilities += 'Heal:          ' + get_variable('useHeal') + '\\n'
+abilities += 'Repeat Attack: ' + get_variable('engineerRepeatAttack') + '\\n'
+abilities += 'Use Repeat:    ' + get_variable('useRepeat') + '\\n'
+abilities += 'Repeat Avail:  ' + MSys.repeat + '\\n'
+abilities += 'Use Worm:      ' + get_variable('useWorm') + '\\n'
+abilities += 'Worm Deployed: ' + MSys.wormDeployed + '\\n'
+abilities += 'Use Release:   ' + get_variable('useRelease') + '\\n'
+
+MSys.log(abilities, 'white')"
+                        }
+                    ],
+                    "text": "hengineer",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Enable/Disable Repeat",
+                    "enabled": true,
+                    "id": 135,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (args[1] != 'clear') {
+    set_variable('engineerRepeatAttack', args[1])
+    set_variable('useRepeat', true)
+    MSys.log('Enabled bot repeat with attack: ' + args[1], 'white')
+} else {
+    set_variable('engineerRepeatAttack', '')
+    set_variable('useRepeat', false)
+    MSys.log('Disabled bot repeat command', 'white')
+}"
+                        }
+                    ],
+                    "text": "hrepeat (.+)",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Enable/Disable Worm",
+                    "enabled": true,
+                    "id": 141,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useWorm')) {
+\tset_variable('useWorm', false)
+    MSys.log('Burrowbot Worm Attack disabled', 'white')
+} else {
+\tset_variable('useWorm', true)
+    MSys.log('Burrowbot Worm Attack enabled', 'white')
+}"
+                        }
+                    ],
+                    "text": "hworm",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Enable/Disable Worm Release",
+                    "enabled": true,
+                    "id": 142,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useRelease')) {
+\tset_variable('useRelease', false)
+    MSys.log('Burrowbot Worm Release Attack disabled', 'white')
+} else {
+\tset_variable('useRelease', true)
+    MSys.log('Burrowbot Worm Release Attack enabled', 'white')
+}"
+                        }
+                    ],
+                    "text": "hrelease",
+                    "items": []
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Combat",
+            "enabled": true,
+            "id": 64,
+            "items": [
+                {
+                    "type": "group",
+                    "name": "Chat",
+                    "enabled": true,
+                    "id": 65,
+                    "items": [
+                        {
+                            "type": "alias",
+                            "name": "Target call - tt <name>",
+                            "enabled": false,
+                            "id": 67,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.target = args[1]
+set_variable('tar', args[1])
+send_command('st ' + args[1])
+send_command('crt Target: ' + args[1])"
+                                }
+                            ],
+                            "text": "tt (.+)",
+                            "items": []
+                        }
+                    ],
+                    "actions": []
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "description": "Exported reflexes: MSys"
+}
