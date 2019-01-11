@@ -361,8 +361,10 @@ GMCP[args.gmcp_method] = args.gmcp_args
 
 /* ------------------------------------------ CHARACTER STUFF ----------------------------------- */
 
-if (args.gmcp_args.hp != undefined) {
-\tvar change = MSys.health - args.gmcp_args.hp;
+if (args.gmcp_method == \"Char.Vitals\") {
+
+    // Track health changes
+    var change = MSys.health - args.gmcp_args.hp;
    
     if (change > 0) {
     \tMSys.log('Damage taken: ' + change, 'yellow')
@@ -372,9 +374,7 @@ if (args.gmcp_args.hp != undefined) {
     
     MSys.health = args.gmcp_args.hp
     MSys.maxHealth = args.gmcp_args.maxhp
-}
 
-if (args.gmcp_method == \"Char.Vitals\") {
     // Check class
     if (!MSys.class || MSys.class !== args.gmcp_args.class) {
         MSys.class = args.gmcp_args.class
