@@ -393,7 +393,7 @@ GMCP[args.gmcp_method] = args.gmcp_args
 /* ------------------------------------------ CHARACTER STUFF ----------------------------------- */
 
 // Seen when doing score
-if (args.gmcp_method == \"Char.Status\") {
+if (args.gmcp_method == \"Char.Status\" && args.gmcp_args.first_name) {
     MSys.first_name = args.gmcp_args.first_name;
 }
 
