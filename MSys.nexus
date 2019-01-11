@@ -34,7 +34,7 @@
 //send_command('wakeup')
 MSys = {
 //System Variables
-    goal: 'hunt2',
+    goal: 'kith',
     matchList: get_variable('matchList'),
     systemEnabled: true,
     offenseEnabled: false,
@@ -56,9 +56,14 @@ MSys = {
     frenzy: false,
     freeze: false,
     delaySwarm: false,
+    pointZero: false,
+    speedUp: false,
+    empyreal: '',
     useDelay: get_variable('useDelay'),
     useMultistrike: get_variable('useMultistrike'),
     useFrenzy: get_variable('useFrenzy'),
+    usePointZero: get_variable('usePointZero'),
+    useSpeedUp: get_variable('useSpeedUp'),
     useFreeze: get_variable('useFreeze'),
 //Fury
     stance: '',
@@ -410,7 +415,7 @@ if (args.gmcp_method == \"Char.Vitals\") {
     
     MSys.health = args.gmcp_args.hp
     MSys.maxHealth = args.gmcp_args.maxhp
-    
+
     // Check class
     if (!MSys.class || MSys.class !== args.gmcp_args.class) {
         MSys.class = args.gmcp_args.class
@@ -432,6 +437,24 @@ if (args.gmcp_method == \"Char.Vitals\") {
         MSys.bullets = args.gmcp_args.bl
     } else if (MSys.class == 'Engineer') {
         MSys.parts = args.gmcp_args.pt
+    }
+}
+
+/* ----------------------------------- DEFENCES AND BUFFS --------------------------------------- */
+
+if (args.gmcp_method == 'Char.Defences.Add') {
+    
+    //Fury
+    if (args.gmcp_args.name == 'Oblivion: Conqueror')  {
+        MSys.empyreal = 'Conqueror'
+    } else if (args.gmcp_args.name == 'Oblivion: Traveller')  {
+        MSys.empyreal = 'Traveller'
+    } else if (args.gmcp_args.name == 'Oblivion: Architect')  {
+        MSys.empyreal = 'Architect'
+    } else if (args.gmcp_args.name == 'Oblivion: Progenitor') {
+        MSys.empyreal = 'Progenitor'
+    } else if (args.gmcp_args.name == 'Oblivion: Sunderer')   {
+        MSys.empyreal = 'Sunderer'
     }
 }
 
@@ -1453,22 +1476,184 @@ send_command('crash ' + args[1])"
         {
             "type": "group",
             "name": "Nanoseer",
-            "enabled": false,
+            "enabled": true,
             "id": 21,
             "items": [
                 {
-                    "type": "alias",
-                    "name": "Channel/Swap Empyreal",
+                    "type": "group",
+                    "name": "Configuration",
                     "enabled": true,
-                    "id": 22,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
+                    "id": 153,
+                    "items": [
                         {
-                            "action": "script",
-                            "script": "var empyreal = {
+                            "type": "alias",
+                            "name": "Enable/Disable Freeze",
+                            "enabled": true,
+                            "id": 42,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('useFreeze')) {
+\tset_variable('useFreeze', false)
+    MSys.useFreeze = false
+    MSys.log('FREEZE OFF', 'white')
+} else {
+\tset_variable('useFreeze', true)
+    MSys.useFreeze = true
+    MSys.log('FREEZE ON', 'white')
+}"
+                                }
+                            ],
+                            "text": "hfreeze",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Multistrike",
+                            "enabled": true,
+                            "id": 43,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('useMultistrike')) {
+\tset_variable('useMultistrike', false)
+    MSys.useMultistrike = false
+    MSys.log('MULTISTRIKE OFF', 'white')
+} else {
+\tset_variable('useMultistrike', true)
+    MSys.useMultistrike = true
+    MSys.log('MULTISTRIKE ON', 'white')
+}"
+                                }
+                            ],
+                            "text": "hmulti",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Frenzy",
+                            "enabled": true,
+                            "id": 45,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('useFrenzy')) {
+\tset_variable('useFrenzy', false)
+    MSys.useFrenzy = false
+    MSys.log('FRENZY OFF', 'white')
+} else {
+\tset_variable('useFrenzy', true)
+    MSys.useFrenzy = true
+    MSys.log('FRENZY ON', 'white')
+}"
+                                }
+                            ],
+                            "text": "hfrenzy",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Delay Swarm",
+                            "enabled": true,
+                            "id": 55,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('useDelay')) {
+\tset_variable('useDelay', false)
+    MSys.useDelay = false
+    MSys.log('DELAY OFF', 'white')
+} else {
+\tset_variable('useDelay', true)
+    MSys.useDelay = true
+    MSys.log('DELAY ON', 'white')
+}"
+                                }
+                            ],
+                            "text": "hdelay",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Nano Abilities - hnano",
+                            "enabled": true,
+                            "id": 90,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "var abilities = ''
+abilities += 'Freeze: ' + get_variable('useFreeze') + '\\n'
+abilities += 'Rage: ' + get_variable('useRage') + '\\n'
+abilities += 'Multistrike: ' + get_variable('useMultistrike') + '\\n'
+abilities += 'DelaySwarm: ' + get_variable('useDelay') + '\\n'
+
+MSys.log(abilities, 'white')"
+                                }
+                            ],
+                            "text": "hnano",
+                            "items": []
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Shortcut",
+                    "enabled": true,
+                    "id": 154,
+                    "items": [
+                        {
+                            "type": "alias",
+                            "name": "Void Soothe",
+                            "enabled": true,
+                            "id": 46,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "Void Soothe",
+                                    "prefix_suffix": true
+                                }
+                            ],
+                            "text": "vs",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Channel/Swap Empyreal",
+                            "enabled": true,
+                            "id": 22,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "var empyreal = {
     a: \"architect\",
     c: \"conqueror\",
     p: \"progenitor\",
@@ -1482,226 +1667,443 @@ var command = {
 }
 
 send_command(command[args[1]] + empyreal[args[2]])"
-                        }
-                    ],
-                    "text": "^(ch|sw)(a|c|p|s|t)$",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Void Soothe",
-                    "enabled": true,
-                    "id": 46,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
+                                }
+                            ],
+                            "text": "^(ch|sw)(a|c|p|s|t)$",
+                            "items": []
+                        },
                         {
-                            "action": "command",
-                            "command": "Void Soothe",
-                            "prefix_suffix": true
-                        }
-                    ],
-                    "text": "vs",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Delay",
-                    "enabled": true,
-                    "id": 47,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
+                            "type": "alias",
+                            "name": "Limb drain",
+                            "enabled": true,
+                            "id": 53,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "limbs = {
+\tll: 'left leg',
+    rl: 'right leg',
+    ra: 'right arm',
+    la: 'left arm'
+}
+
+send_command('limbdrain ' + get_variable('tar') + ' ' + limbs[args[1]])"
+                                }
+                            ],
+                            "text": "l(ll|rl|la|ra)",
+                            "items": []
+                        },
                         {
-                            "action": "script",
-                            "script": "var command = {
+                            "type": "alias",
+                            "name": "Fly",
+                            "enabled": true,
+                            "id": 44,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "levitate",
+                                    "prefix_suffix": true
+                                }
+                            ],
+                            "text": "fly",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Heal",
+                            "enabled": true,
+                            "id": 152,
+                            "matching": "exact",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "nano repair",
+                                    "prefix_suffix": false
+                                }
+                            ],
+                            "text": "heal"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Delay",
+                            "enabled": true,
+                            "id": 47,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "var command = {
 \ts: 'swarm'
 }
 
 send_command('delay ' + command[args[1]])"
+                                }
+                            ],
+                            "text": "^d(s)$",
+                            "items": []
                         }
                     ],
-                    "text": "^d(s)$",
-                    "items": []
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Ability Activations",
+                    "enabled": true,
+                    "id": 161,
+                    "items": [
+                        {
+                            "type": "trigger",
+                            "name": "Leaving Room",
+                            "enabled": true,
+                            "id": 156,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You walk to the",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.speedUp = false
+MSys.pointZero = false"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Delay Swarm On",
+                            "enabled": true,
+                            "id": 54,
+                            "matching": "substring",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "Quickly, you program a delayed swarm attack",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.delaySwarm = true"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Freeze on",
+                            "enabled": true,
+                            "id": 29,
+                            "matching": "substring",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You brush your fingertips across",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.freeze = true"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Freeze off",
+                            "enabled": true,
+                            "id": 30,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "^.+has cured the effects of Frozen.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.freeze = false
+if (MSys.systemEnabled === true) {
+\tMSys.huntingAttack()
+}"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Rage on",
+                            "enabled": true,
+                            "id": 39,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "^A dark wave of madness rolls through your thoughts.*$|^To draw more of the Conquerer into your thoughts would utterly destroy your mind!$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.frenzy = true"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Rage off",
+                            "enabled": false,
+                            "id": 40,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You break out of your frenzy.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.frenzy = false"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Frenzy Down",
+                            "enabled": true,
+                            "id": 38,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You break out of your frenzy.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.alert('Frenzy Down', 'white', 'red')"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Negation Down",
+                            "enabled": true,
+                            "id": 36,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "The shadow of the Progenitor's protection springs to life around you, absorbing the damaging attack before lifting away from you, the air around you growing subtly lighter.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.alert('Negation Down', 'white', 'red')"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Multistrike Active",
+                            "enabled": true,
+                            "id": 20,
+                            "matching": "substring",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You focus intently to direct a portion of your swarm towards",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.multistrike = true"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Multistrike Return",
+                            "enabled": true,
+                            "id": 19,
+                            "matching": "substring",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "The group of nanites returns back to you.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.multistrike = false"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Speedup Active",
+                            "enabled": true,
+                            "id": 157,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^You snap your fingers, and time starts flowing faster",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.speedUp = true"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Speedup Inactive",
+                            "enabled": true,
+                            "id": 159,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^The time distortion effect ends.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.speedUp = false"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Point Zero Active",
+                            "enabled": true,
+                            "id": 158,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^The air crackles and contracts",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.pointZero = true"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Point Zero Inactive",
+                            "enabled": true,
+                            "id": 160,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^The swirling point zero suddenly collapses",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.pointZero = false"
+                                }
+                            ]
+                        }
+                    ],
+                    "actions": []
                 },
                 {
                     "type": "alias",
-                    "name": "",
+                    "name": "Wakeup Nanoseer",
                     "enabled": true,
-                    "id": 44,
+                    "id": 155,
                     "matching": "exact",
                     "whole_words": true,
                     "case_sensitive": true,
                     "prefix_suffix": true,
                     "actions": [
                         {
+                            "action": "script",
+                            "script": "MSys.offenseEnabled = false"
+                        },
+                        {
                             "action": "command",
-                            "command": "levitate",
+                            "command": "nano charge",
+                            "prefix_suffix": true
+                        },
+                        {
+                            "action": "waitfor",
+                            "text": "^You start generating nanites.$|^You're already repairing your nanites.$",
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "expire": "6"
+                        },
+                        {
+                            "action": "command",
+                            "command": "nano rush on",
+                            "prefix_suffix": true
+                        },
+                        {
+                            "action": "waitfor",
+                            "text": "^Inhaling a cloud of your swarm|^Your nanites are already boosting|haven.t learned",
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "expire": "6"
+                        },
+                        {
+                            "action": "command",
+                            "command": "nano protect on",
+                            "prefix_suffix": true
+                        },
+                        {
+                            "action": "waitfor",
+                            "text": "^Your goggles flash as you instruct your swarm|^Your nanites are already protecting",
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "expire": "6"
+                        },
+                        {
+                            "action": "command",
+                            "command": "chp",
+                            "prefix_suffix": true
+                        },
+                        {
+                            "action": "waitfor",
+                            "text": "^You reach into your connection to the void|^You are already channeling",
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "expire": "6"
+                        },
+                        {
+                            "action": "command",
+                            "command": "oblivion negation",
+                            "prefix_suffix": true
+                        },
+                        {
+                            "action": "waitfor",
+                            "text": "^You cannot perform aggressive actions|^Reaching into the void|^You are already prepared",
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "expire": "6"
+                        },
+                        {
+                            "action": "command",
+                            "command": "chc",
+                            "prefix_suffix": true
+                        },
+                        {
+                            "action": "waitfor",
+                            "text": "^You reach into your connection to the void|^You are already channeling",
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "expire": "6"
+                        },
+                        {
+                            "action": "command",
+                            "command": "oblivion frenzy",
                             "prefix_suffix": true
                         }
                     ],
-                    "text": "fly",
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Negation Down Alert",
-                    "enabled": true,
-                    "id": 36,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "The shadow of the Progenitor's protection springs to life around you, absorbing the damaging attack before lifting away from you, the air around you growing subtly lighter.",
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "MSys.alert('Negation Down', 'white', 'red')"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "",
-                    "enabled": true,
-                    "id": 38,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "You break out of your frenzy.",
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "MSys.alert('Frenzy Down', 'white', 'red')"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Delay Swarm On",
-                    "enabled": true,
-                    "id": 54,
-                    "matching": "substring",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "Quickly, you program a delayed swarm attack",
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "MSys.delaySwarm = true"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Freeze on",
-                    "enabled": true,
-                    "id": 29,
-                    "matching": "substring",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "You brush your fingertips across",
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "MSys.freeze = true"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Freeze off",
-                    "enabled": true,
-                    "id": 30,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "^.+has cured the effects of Frozen.$",
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "MSys.freeze = false
-if (MSys.systemEnabled === true) {
-\tMSys.huntingAttack()
-}"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Rage on",
-                    "enabled": true,
-                    "id": 39,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "^A dark wave of madness rolls through your thoughts.*$|^To draw more of the Conquerer into your thoughts would utterly destroy your mind!$",
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "MSys.frenzy = true"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Rage off",
-                    "enabled": false,
-                    "id": 40,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "You break out of your frenzy.",
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "MSys.frenzy = false"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Multistrike return",
-                    "enabled": true,
-                    "id": 19,
-                    "matching": "substring",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "The group of nanites returns back to you.",
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "MSys.multistrike = false"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Multistrike out",
-                    "enabled": true,
-                    "id": 20,
-                    "matching": "substring",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "You focus intently to direct a portion of your swarm towards",
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "MSys.multistrike = true"
-                        }
-                    ],
-                    "items": []
+                    "text": "wakeup"
                 },
                 {
                     "type": "trigger",
@@ -1721,159 +2123,6 @@ if (MSys.systemEnabled === true) {
                         }
                     ],
                     "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Enable/Disable Freeze",
-                    "enabled": true,
-                    "id": 42,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "if (get_variable('useFreeze')) {
-\tset_variable('useFreeze', false)
-    MSys.useFreeze = false
-    MSys.log('FREEZE OFF', 'white')
-} else {
-\tset_variable('useFreeze', true)
-    MSys.useFreeze = true
-    MSys.log('FREEZE ON', 'white')
-}"
-                        }
-                    ],
-                    "text": "hfreeze",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Enable/Disable Multistrike",
-                    "enabled": true,
-                    "id": 43,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "if (get_variable('useMultistrike')) {
-\tset_variable('useMultistrike', false)
-    MSys.useMultistrike = false
-    MSys.log('MULTISTRIKE OFF', 'white')
-} else {
-\tset_variable('useMultistrike', true)
-    MSys.useMultistrike = true
-    MSys.log('MULTISTRIKE ON', 'white')
-}"
-                        }
-                    ],
-                    "text": "hmulti",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Enable/Disable Frenzy",
-                    "enabled": true,
-                    "id": 45,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "if (get_variable('useFrenzy')) {
-\tset_variable('useFrenzy', false)
-    MSys.useFrenzy = false
-    MSys.log('FRENZY OFF', 'white')
-} else {
-\tset_variable('useFrenzy', true)
-    MSys.useFrenzy = true
-    MSys.log('FRENZY ON', 'white')
-}"
-                        }
-                    ],
-                    "text": "hfrenzy",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Enable/Disable Delay Swarm",
-                    "enabled": true,
-                    "id": 55,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "if (get_variable('useDelay')) {
-\tset_variable('useDelay', false)
-    MSys.useDelay = false
-    MSys.log('DELAY OFF', 'white')
-} else {
-\tset_variable('useDelay', true)
-    MSys.useDelay = true
-    MSys.log('DELAY ON', 'white')
-}"
-                        }
-                    ],
-                    "text": "hdelay",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Limb drain",
-                    "enabled": true,
-                    "id": 53,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "limbs = {
-\tll: 'left leg',
-    rl: 'right leg',
-    ra: 'right arm',
-    la: 'left arm'
-}
-
-send_command('limbdrain ' + get_variable('tar') + ' ' + limbs[args[1]])"
-                        }
-                    ],
-                    "text": "l(ll|rl|la|ra)",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Nano Abilities - hnano",
-                    "enabled": true,
-                    "id": 90,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "var abilities = ''
-abilities += 'Freeze: ' + get_variable('useFreeze') + '\\n'
-abilities += 'Rage: ' + get_variable('useRage') + '\\n'
-abilities += 'Multistrike: ' + get_variable('useMultistrike') + '\\n'
-abilities += 'DelaySwarm: ' + get_variable('useDelay') + '\\n'
-
-MSys.log(abilities, 'white')"
-                        }
-                    ],
-                    "text": "hnano",
-                    "items": []
                 }
             ],
             "actions": []
@@ -1881,7 +2130,7 @@ MSys.log(abilities, 'white')"
         {
             "type": "group",
             "name": "Fury",
-            "enabled": true,
+            "enabled": false,
             "id": 69,
             "items": [
                 {
