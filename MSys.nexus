@@ -188,7 +188,7 @@ MSys = {
                 return;
             }else if (get_variable('tar') == '' || this.offenseEnabled == false) {
                 return;
-            }else if (MSys.first_name != 'Oga' && !this.fever && this.useFever) {
+            }else if (!this.fever && this.useFever) {
                 command = 'kith fever ';
             }else if (this.goal == 'hunt1') {
                 //Battleflow attack
@@ -1245,6 +1245,13 @@ MSys.huntingAttack()
                         {
                             "action": "script",
                             "script": "MSys.damageThisFight += parseInt(args[1])"
+                        },
+                        {
+                            "action": "highlight",
+                            "highlight": "match",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#ff0000",
+                            "highlight_bg": "#000000"
                         }
                     ],
                     "items": []
