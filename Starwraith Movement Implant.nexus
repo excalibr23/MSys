@@ -1,7 +1,7 @@
 {
-    "name": "starwraith ship and walk numpad movement",
+    "name": "starwraith movement implant",
     "enabled": true,
-    "description": "v1.0. Fly your ship with the same numpad movement keys you use to walk around. See MOVEHELP for more info.",
+    "description": "v1.1. Use numpad to fly your ship and walk around. See MOVEHELP for more info.",
     "type": "group",
     "id": 1,
     "items": [
@@ -11,170 +11,142 @@
             "enabled": true,
             "id": 47,
             "code": "//Commands to send on login
-noticetext  = '------------------------------------------------------------------------------------------------' + '\\n'
-noticetext += '-- Starwraith Movement Implant v1.0 Loaded. See MOVEHELP for more information. --' + '\\n'
-noticetext += '------------------------------------------------------------------------------------------------'
-display_notice(noticetext, 'gold')"
+
+// Starwraith Movement Implant
+SMI = {
+    noticecolor: 'gold',
+    packagename: 'starwraith movement implant',
+    disableGroup: function(name) {
+        var group = reflex_find_by_name('group', name, false, false, SMI.packagename)
+        reflex_disable(group)
+    },
+    enableGroup: function(name) {
+        var group = reflex_find_by_name('group', name, false, false, SMI.packagename)
+        reflex_enable(group)
+    },
+    notice: function(text) {
+        display_notice(\"[SMI] \" + text, SMI.noticecolor);
+    },
+    helpbox: function(title,text) {
+        var helptext = \"<div class=\\\"mono\\\"><span style=\\\"color: #ffffff; \\\"><span style=\\\"background-color: #0000a0 \\\">\" + title + \"</span></span></div>\";
+        helptext += \"<div class=\\\"mono\\\">\" + text.replace(\"\\n\",\"</div><div class=\\\"mono\\\">\") + \"</div>\";
+        client.display_help_window(helptext);
+\t},
+    loaded: function() {
+\t\tSMI.notice(\"Starwraith Movement Implant v1.0 Loaded. See MOVEHELP for more information.\\n\");
+    }
+}
+
+SMI.loaded();"
         },
         {
             "type": "function",
             "name": "movehelp",
             "enabled": true,
             "id": 48,
-            "code": "smi_help = \"<div class=\\\"mono\\\"><span style=\\\"color: #ffffff; \\\"><span style=\\\"background-color: #0000a0 \\\">Starwraith Movement Implant v1.0</span></span><span style=\\\"color: #aaaaaa; \\\"><span style=\\\"background-color:  \\\"></span></span></div><div class=\\\"mono\\\"></div><div class=\\\"mono\\\">  Welcome to your Starwraith Movement Implant. This implant allows you to use your</div><div class=\\\"mono\\\">  keyboard's numpad to fly your ship, and to move around on land.</div><div class=\\\"mono\\\"></div><div class=\\\"mono\\\">  When moving around on land:</div><div class=\\\"mono\\\"></div><div class=\\\"mono\\\">  7=northwest, 8=north, 9=northeast, etc. </div><div class=\\\"mono\\\">  Alt+7=glance northwest, Alt+8=glance north, etc.</div><div class=\\\"mono\\\">  '/' for in, '*' for out, '-' for up, '+' for down.</div><div class=\\\"mono\\\">  The 5 key looks at the room you're in.</div><div class=\\\"mono\\\"></div><div class=\\\"mono\\\">  Ship movement is triggered by embarking or disembarking, and some keys change:</div><div class=\\\"mono\\\"></div><div class=\\\"mono\\\">  '/'=halt, '*'=slow, '-'=cruise, '+'=full speed, '0'=starchart, '.'=fire cannon.</div><div class=\\\"mono\\\">  The 5 key sends out a ship beacon.</div></div>\"
+            "code": "helptext  = \"  Welcome to your Starwraith Movement Implant. This implant allows you to use your\\n\"
+helptext += \"  keyboard's numpad to fly your ship, and to move around on land.\\n\\n\"
+helptext += \"  When moving around on land:\\n\\n\"
+helptext += \"  7=northwest, 8=north, 9=northeast, etc.\\n\"
+helptext += \"  Alt+7=glance northwest, Alt+8=glance north, etc.\\n\"
+helptext += \"  '/' for in, '*' for out, '-' for up, '+' for down.\\n\"
+helptext += \"  The 5 key looks at the room you're in.\\n\\n\"
+helptext += \"  Ship movement is triggered by embarking or disembarking. Some keys change:\\n\\n\"
+helptext += \"  '/'=halt, '*'=slow, '-'=cruise, '+'=full speed, '0'=starchart, '.'=fire cannon.\\n\"
+helptext += \"  The 5 key sends out a ship beacon.\\n\\n\"
+helptext += \"  Finally, to manually switch movement control:\\n\"
+helptext += \"  Ctrl+0=Disable, Ctrl+1=Land movement, Ctrl+2=Ship movement.\\n\"
 
-client.display_help_window(smi_help);"
+SMI.helpbox(\"Starwraith Movement Implant v1.0\",helptext);
+"
         },
         {
-            "type": "keybind",
-            "name": "",
+            "type": "group",
+            "name": "Control",
             "enabled": true,
-            "id": 22,
-            "key": 96,
-            "actions": [
+            "id": 52,
+            "items": [
                 {
-                    "action": "disable",
-                    "type": "group",
-                    "name": "Keybinds_MoveShip"
+                    "type": "function",
+                    "name": "onShip",
+                    "enabled": true,
+                    "id": 50,
+                    "code": "SMI.disableGroup(\"Keybinds_MoveWalk\");
+SMI.disableGroup(\"Glance\");
+SMI.enableGroup(\"Keybinds_MoveShip\");
+SMI.notice(\"Setting Ship Numpad Movement Bindings\", SMI.noticecolor)"
                 },
                 {
-                    "action": "disable",
-                    "type": "group",
-                    "name": "Keybinds_MoveWalk"
+                    "type": "function",
+                    "name": "onLand",
+                    "enabled": true,
+                    "id": 51,
+                    "code": "SMI.disableGroup(\"Keybinds_MoveShip\");
+SMI.enableGroup(\"Keybinds_MoveWalk\");
+SMI.enableGroup(\"Glance\");
+SMI.notice(\"Setting Land Numpad Movement Bindings\", SMI.noticecolor)"
                 },
                 {
-                    "action": "disable",
+                    "type": "function",
+                    "name": "onNothing",
+                    "enabled": true,
+                    "id": 53,
+                    "code": "SMI.disableGroup(\"Keybinds_MoveWalk\");
+SMI.disableGroup(\"Glance\");
+SMI.disableGroup(\"Keybinds_MoveShip\");
+SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to reenable.\", SMI.noticecolor)"
+                },
+                {
                     "type": "keybind",
-                    "name": "0"
+                    "name": "",
+                    "enabled": true,
+                    "id": 22,
+                    "key": 96,
+                    "actions": [
+                        {
+                            "action": "function",
+                            "fn": "onNothing"
+                        }
+                    ],
+                    "key_alt": false,
+                    "key_ctrl": true,
+                    "key_shift": false
                 },
                 {
-                    "action": "notify",
-                    "notice": "Disabling numpad bindings",
-                    "notice_fg": "#ff0000",
-                    "notice_bg": "#000000"
-                }
-            ],
-            "key_alt": false,
-            "key_ctrl": true,
-            "key_shift": false
-        },
-        {
-            "type": "keybind",
-            "name": "",
-            "enabled": true,
-            "id": 16,
-            "key": 97,
-            "actions": [
-                {
-                    "action": "disable",
-                    "type": "group",
-                    "name": "Keybinds_MoveShip"
-                },
-                {
-                    "action": "enable",
-                    "type": "group",
-                    "name": "Keybinds_MoveWalk"
-                },
-                {
-                    "action": "enable",
                     "type": "keybind",
-                    "name": "0"
+                    "name": "",
+                    "enabled": true,
+                    "id": 16,
+                    "key": 97,
+                    "actions": [
+                        {
+                            "action": "function",
+                            "fn": "onLand"
+                        }
+                    ],
+                    "key_alt": false,
+                    "key_ctrl": true,
+                    "key_shift": false,
+                    "items": []
                 },
                 {
-                    "action": "notify",
-                    "notice": "Setting walking keybinds",
-                    "notice_fg": "#ff0000",
-                    "notice_bg": "#000000"
+                    "type": "keybind",
+                    "name": "",
+                    "enabled": true,
+                    "id": 21,
+                    "key": 98,
+                    "actions": [
+                        {
+                            "action": "function",
+                            "fn": "onShip"
+                        }
+                    ],
+                    "key_alt": false,
+                    "key_ctrl": true,
+                    "key_shift": false
                 }
             ],
-            "key_alt": false,
-            "key_ctrl": true,
-            "key_shift": false,
-            "items": []
-        },
-        {
-            "type": "keybind",
-            "name": "",
-            "enabled": true,
-            "id": 21,
-            "key": 98,
-            "actions": [
-                {
-                    "action": "disable",
-                    "type": "group",
-                    "name": "Keybinds_MoveWalk"
-                },
-                {
-                    "action": "enable",
-                    "type": "group",
-                    "name": "Keybinds_MoveShip"
-                },
-                {
-                    "action": "notify",
-                    "notice": "Setting ship bindings",
-                    "notice_fg": "#ff0000",
-                    "notice_bg": "#000000"
-                }
-            ],
-            "key_alt": false,
-            "key_ctrl": true,
-            "key_shift": false
-        },
-        {
-            "type": "trigger",
-            "name": "Ship Disembarkation",
-            "enabled": true,
-            "id": 34,
-            "matching": "substring",
-            "whole_words": false,
-            "case_sensitive": true,
-            "text": "You disembark from the ship.",
-            "actions": [
-                {
-                    "action": "disable",
-                    "type": "group",
-                    "name": "Keybinds_MoveShip"
-                },
-                {
-                    "action": "enable",
-                    "type": "group",
-                    "name": "Keybinds_MoveWalk"
-                },
-                {
-                    "action": "notify",
-                    "notice": "Setting walking keybinds",
-                    "notice_fg": "#ff0000",
-                    "notice_bg": "#000000"
-                }
-            ]
-        },
-        {
-            "type": "trigger",
-            "name": "Ship Embarkation",
-            "enabled": true,
-            "id": 33,
-            "matching": "substring",
-            "whole_words": false,
-            "case_sensitive": true,
-            "text": "You embark the ship.",
-            "actions": [
-                {
-                    "action": "disable",
-                    "type": "group",
-                    "name": "Keybinds_MoveWalk"
-                },
-                {
-                    "action": "enable",
-                    "type": "group",
-                    "name": "Keybinds_MoveShip"
-                },
-                {
-                    "action": "notify",
-                    "notice": "Setting ship bindings",
-                    "notice_fg": "#ff0000",
-                    "notice_bg": "#000000"
-                }
-            ]
+            "actions": []
         },
         {
             "type": "group",
@@ -182,6 +154,22 @@ client.display_help_window(smi_help);"
             "enabled": true,
             "id": 15,
             "items": [
+                {
+                    "type": "trigger",
+                    "name": "Ship Embarkation",
+                    "enabled": true,
+                    "id": 33,
+                    "matching": "substring",
+                    "whole_words": false,
+                    "case_sensitive": true,
+                    "text": "You embark the ship.",
+                    "actions": [
+                        {
+                            "action": "function",
+                            "fn": "onShip"
+                        }
+                    ]
+                },
                 {
                     "type": "keybind",
                     "name": "sw",
@@ -362,6 +350,38 @@ client.display_help_window(smi_help);"
             "enabled": false,
             "id": 18,
             "items": [
+                {
+                    "type": "trigger",
+                    "name": "Not On Ship",
+                    "enabled": true,
+                    "id": 49,
+                    "matching": "substring",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You are not on a ship. You can use SHIP BOARD <ship> at a dock to board.",
+                    "actions": [
+                        {
+                            "action": "function",
+                            "fn": "onLand"
+                        }
+                    ]
+                },
+                {
+                    "type": "trigger",
+                    "name": "Ship Disembarkation",
+                    "enabled": true,
+                    "id": 34,
+                    "matching": "substring",
+                    "whole_words": false,
+                    "case_sensitive": true,
+                    "text": "You disembark from the ship.",
+                    "actions": [
+                        {
+                            "action": "function",
+                            "fn": "onLand"
+                        }
+                    ]
+                },
                 {
                     "type": "keybind",
                     "name": "",
