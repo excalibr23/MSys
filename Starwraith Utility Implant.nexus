@@ -1,0 +1,68 @@
+{
+    "name": "starwraith utility implant",
+    "enabled": true,
+    "description": "v0.1 Does various useful things like autoselling junk.",
+    "type": "group",
+    "id": 1,
+    "items": [
+        {
+            "type": "function",
+            "name": "onLoad",
+            "enabled": true,
+            "id": 2,
+            "code": "//Commands to send on login
+
+// Starwraith Movement Implant
+SUI = {
+    noticecolor: 'gold',
+    packagename: 'starwraith utility implant',
+    disableGroup: function(name) {
+        var group = reflex_find_by_name('group', name, false, false, SUI.packagename)
+        reflex_disable(group)
+    },
+    enableGroup: function(name) {
+        var group = reflex_find_by_name('group', name, false, false, SUI.packagename)
+        reflex_enable(group)
+    },
+    notice: function(text) {
+        display_notice(\"[SUI] \" + text, SUI.noticecolor);
+    },
+    helpbox: function(title,text) {
+        var helptext = \"<div class=\\\"mono\\\"><span style=\\\"color: #ffffff; \\\"><span style=\\\"background-color: #0000a0 \\\">\" + title + \"</span></span></div>\";
+        helptext += \"<div class=\\\"mono\\\">\" + text.replace(\"\\n\",\"</div><div class=\\\"mono\\\">\") + \"</div>\";
+        client.display_help_window(helptext);
+\t},
+    loaded: function() {
+\t\tSUI.notice(\"Starwraith Utility Implant v0.1 Loaded. See UTILITYHELP for more information.\\n\");
+    }
+}
+
+SUI.loaded();"
+        },
+        {
+            "type": "group",
+            "name": "Utility",
+            "enabled": true,
+            "id": 3,
+            "items": [
+                {
+                    "type": "trigger",
+                    "name": "Autosell Junk",
+                    "enabled": true,
+                    "id": 4,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "A heap of rusty equipment indicates a JUNK shop here.",
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "SELL JUNK"
+                        }
+                    ]
+                }
+            ],
+            "actions": []
+        }
+    ]
+}
