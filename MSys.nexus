@@ -374,7 +374,7 @@ if (args.gmcp_method == \"Char.Vitals\") {
     
     MSys.health = args.gmcp_args.hp
     MSys.maxHealth = args.gmcp_args.maxhp
-
+    
     // Check class
     if (!MSys.class || MSys.class !== args.gmcp_args.class) {
         MSys.class = args.gmcp_args.class
@@ -1133,24 +1133,6 @@ MSys.huntingAttack()
                                 }
                             ],
                             "items": []
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Javascript - js",
-                            "enabled": true,
-                            "id": 31,
-                            "matching": "regexp",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.log(eval(args[1]))"
-                                }
-                            ],
-                            "text": "^js (.+)$",
-                            "items": []
                         }
                     ],
                     "actions": []
@@ -1226,23 +1208,6 @@ MSys.huntingAttack()
                     "items": []
                 },
                 {
-                    "type": "trigger",
-                    "name": "Junk Sell",
-                    "enabled": true,
-                    "id": 88,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "A heap of rusty equipment indicates a JUNK shop here.",
-                    "actions": [
-                        {
-                            "action": "command",
-                            "command": "Junk Sell"
-                        }
-                    ],
-                    "items": []
-                },
-                {
                     "type": "alias",
                     "name": "Crash + Direction - c<dir>",
                     "enabled": true,
@@ -1262,20 +1227,21 @@ send_command('crash ' + args[1])"
                     "items": []
                 },
                 {
-                    "type": "trigger",
-                    "name": "Takeoff List",
+                    "type": "alias",
+                    "name": "Javascript - js",
                     "enabled": true,
-                    "id": 145,
-                    "matching": "exact",
+                    "id": 31,
+                    "matching": "regexp",
                     "whole_words": true,
                     "case_sensitive": true,
-                    "text": "You can board a transport craft here, check TAKEOFF LIST.",
+                    "prefix_suffix": true,
                     "actions": [
                         {
-                            "action": "command",
-                            "command": "Takeoff List"
+                            "action": "script",
+                            "script": "MSys.log(eval(args[1]))"
                         }
                     ],
+                    "text": "^js (.+)$",
                     "items": []
                 }
             ],
@@ -1444,7 +1410,7 @@ send_command('crash ' + args[1])"
         {
             "type": "group",
             "name": "Nanoseer",
-            "enabled": true,
+            "enabled": false,
             "id": 21,
             "items": [
                 {
@@ -1872,7 +1838,7 @@ MSys.log(abilities, 'white')"
         {
             "type": "group",
             "name": "Fury",
-            "enabled": false,
+            "enabled": true,
             "id": 69,
             "items": [
                 {

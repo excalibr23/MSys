@@ -33,7 +33,7 @@ SMI = {
         client.display_help_window(helptext);
 \t},
     loaded: function() {
-\t\tSMI.notice(\"Starwraith Movement Implant v1.0 Loaded. See MOVEHELP for more information.\\n\");
+\t\tSMI.notice(\"Starwraith Movement Implant v1.0 Loaded. Enter movehelp for more information.\\n\");
     }
 }
 
@@ -45,7 +45,8 @@ SMI.loaded();"
             "enabled": true,
             "id": 48,
             "code": "helptext  = \"  Welcome to your Starwraith Movement Implant. This implant allows you to use your\\n\"
-helptext += \"  keyboard's numpad to fly your ship, and to move around on land.\\n\\n\"
+helptext += \"  keyboard's numpad to fly your ship, and to move around on land. The implant\\n\"
+helptext += \"  will also do useful things like automatically showing Takeoff Lists.\\n\\n\"
 helptext += \"  When moving around on land:\\n\\n\"
 helptext += \"  7=northwest, 8=north, 9=northeast, etc.\\n\"
 helptext += \"  Alt+7=glance northwest, Alt+8=glance north, etc.\\n\"
@@ -55,7 +56,8 @@ helptext += \"  Ship movement is triggered by embarking or disembarking. Some ke
 helptext += \"  '/'=halt, '*'=slow, '-'=cruise, '+'=full speed, '0'=starchart, '.'=fire cannon.\\n\"
 helptext += \"  The 5 key sends out a ship beacon.\\n\\n\"
 helptext += \"  Finally, to manually switch movement control:\\n\"
-helptext += \"  Ctrl+0=Disable, Ctrl+1=Land movement, Ctrl+2=Ship movement.\\n\"
+helptext += \"  Ctrl+0=Disable, Ctrl+1=Land movement, Ctrl+2=Ship movement.\\n\\n\"
+helptext += \"  NOTE: Some shortcuts don't work on certain clients!\\n\"
 
 SMI.helpbox(\"Starwraith Movement Implant v1.0\",helptext);
 "
@@ -758,6 +760,31 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     "key_alt": true,
                     "key_ctrl": false,
                     "key_shift": false
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Utility",
+            "enabled": true,
+            "id": 54,
+            "items": [
+                {
+                    "type": "trigger",
+                    "name": "Autoshow Takeoff List",
+                    "enabled": true,
+                    "id": 56,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You can board a transport craft here, check TAKEOFF LIST.",
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "TAKEOFF LIST"
+                        }
+                    ]
                 }
             ],
             "actions": []
