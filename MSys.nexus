@@ -259,17 +259,27 @@ MSys = {
             
         //Scoundrel    
         }else if (this.class == 'Scoundrel') {
+            var command = ''
+            
             if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
             \tsend_command('stim')
-            }else if (this.bullets == 0) {
-            \tsend_command('ied fling ripper at ' + get_variable('tar'))
-            }else if (!this.ambush && this.useAmbush) {
-                send_command('gun ambush ' + get_variable('tar'))  
-            }else if (!this.rapidfire && this.bullets > 1 && this.useRapidfire) {
-                send_command('gun rapidfire ' + get_variable('tar'))
-            }else {
-                send_command('gun crackshot ' + get_variable('tar'))
+            } else if (this.offenseEnabled == false || get_variable('tar') == '') {
+                return
+            } else if (this.bullets == 0) {
+            \tcommand += 'ied fling ripper at '
+            } else if (this.bullets == 1) {
+                command += 'gun crackshot '
+            } else if (!this.ambush && this.useAmbush && this.bullets) {
+                command += 'gun ambush '
+            } else if (!this.rapidfire && this.useRapidfire) {
+                command += 'gun rapidfire '
+            } else {
+                command += 'gun crackshot '
             }
+            
+            command += get_variable('tar')
+            send_command(command)
+        
         }else if (this.class == 'B.E.A.S.T.'){
             if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
             \tsend_command('suit support')
@@ -282,8 +292,14 @@ MSys = {
         //Engineer
         }else if (this.class == 'Engineer'){
             if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
-                if (get_variable('debug')) {MSys.log('Activating stimjector',  'white')}
+                if (get_variable('debug')) {
+                    MSys.log('Activating stimjector',  'white')
+                }
+                
             \tsend_command('operate stimjector')
+                
+            }else if (get_variable('tar') == '' || this.offenseEnabled == false) {
+                return;
                 
             }else if (!this.repeat && get_variable('useRepeat') && get_variable('repeatAttack') != '') {
                 if (get_variable('debug')) {
@@ -294,16 +310,25 @@ MSys = {
                 send_command('bot repeat ' + get_variable('engineerRepeatAttack') + ' ' + get_variable('tar'))
                 
             } else if (get_variable('useWorm') && this.targetHealth > 0.7 && !this.wormDeployed) {
-                if (get_variable('debug')) {MSys.log('Executing burrowbot worm attack',  'white')}
+                if (get_variable('debug')) {
+                    MSys.log('Executing burrowbot worm attack',  'white')
+                }
+                
                 send_command('bot worm ' + get_variable('tar'))
             
             } else if (get_variable('useRelease') && this.wormDeployed && this.targetHealth < 0.3) {
-                if (get_variable('debug')) {MSys.log('Releasing burrowbot',  'white')}
+                if (get_variable('debug')) {
+                    MSys.log('Releasing burrowbot',  'white')
+                }
+                
                 send_command('bot release')
                 
             }
             else {
-                if (get_variable('debug')) {MSys.log('Executing default engineer attack',  'white')}
+                if (get_variable('debug')) {
+                    MSys.log('Executing default engineer attack',  'white')
+                }
+                
                 send_command('bot claw ' + get_variable('tar'))
             }
         }
@@ -627,6 +652,9 @@ if (args[1]) {
 if (MSys.systemEnabled === true && onList) {
     MSys.targetHealth = 0
 \tMSys.findTarget()
+    if (MSys.class == 'Engineer' && get_variable('useQPCBoost')) {
+        send_command('qpcboost')
+    }
     if (!MSys.break) {
 \t\tMSys.huntingAttack()
     } else {
@@ -1416,7 +1444,7 @@ send_command('crash ' + args[1])"
         {
             "type": "group",
             "name": "Nanoseer",
-            "enabled": false,
+            "enabled": true,
             "id": 21,
             "items": [
                 {
@@ -2350,10 +2378,7 @@ send_command('kith inferno')"
                         {
                             "action": "script",
                             "script": "MSys.ambush = true
-
-if (MSys.systemEnabled === true) {
-\tMSys.huntingAttack()
-}"
+MSys.huntingAttack()"
                         }
                     ],
                     "items": []
@@ -2422,7 +2447,7 @@ if (MSys.systemEnabled === true) {
                         {
                             "action": "script",
                             "script": "MSys.healReady = true
-MSys.alert('stim ready', 'white', 'green')"
+MSys.huntingAttack()"
                         }
                     ],
                     "items": []
@@ -2430,18 +2455,16 @@ MSys.alert('stim ready', 'white', 'green')"
                 {
                     "type": "trigger",
                     "name": "Queue Attack Scoundrel",
-                    "enabled": false,
+                    "enabled": true,
                     "id": 94,
                     "matching": "regexp",
                     "whole_words": true,
                     "case_sensitive": true,
-                    "text": "^Drawing your shoulder back, you fling a handful.*$|^.*kicks in your grip and an explosive noise cracks.*$|^.*you quickly fire off two shots at.*$|^You jam a stim into your vein and healing nanites surge through your body.$",
+                    "text": "^Drawing your shoulder back, you fling a handful.*$|^.*kicks in your grip and an explosive noise cracks.*$|^.*you quickly fire off two shots at.*$|^You jam a stim into your vein and healing nanites surge through your body.$|^Spinning.*motion is effortless and smooth.$|jingling, rattling percussion.$",
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (MSys.systemEnabled === true) {
-\tMSys.huntingAttack()
-}"
+                            "script": "MSys.huntingAttack()"
                         }
                     ],
                     "items": []
@@ -2705,7 +2728,7 @@ MSys.log(abilities, 'white')"
         {
             "type": "group",
             "name": "Engineer",
-            "enabled": true,
+            "enabled": false,
             "id": 109,
             "items": [
                 {
@@ -2774,12 +2797,13 @@ MSys.log(abilities, 'white')"
                                     "action": "script",
                                     "script": "if (get_variable('turretAlias') != true) {return;}
 
-if (get_variable('turretMod') == 'QPC') {
+if (get_variable('turretMod').toUpperCase() == 'QPC') {
     send_command('gadget construct qpc')
 } else {
     send_command('turret mod ' + get_variable('turretMod'))
 \tif (get_variable('turretFollowup') != '') {send_command(get_variable('turretFollowup'))}
     set_variable('turretAlias', false)
+    MSys.log('Turret ready!', 'white')
 }"
                                 }
                             ],
@@ -2797,7 +2821,10 @@ if (get_variable('turretMod') == 'QPC') {
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.log('Turret ready!', 'white')"
+                                    "script": "if (get_variable('turretAlias') != true) {return;}
+send_command(get_variable('turretFollowup'))
+set_variable('turretAlias', false)
+MSys.log('Turret ready!', 'white')"
                                 }
                             ],
                             "items": []
@@ -2816,13 +2843,8 @@ if (get_variable('turretMod') == 'QPC') {
                                     "action": "script",
                                     "script": "if (get_variable('turretAlias') != true) {
     return;
-}
-
-if (get_variable('turretMod') == 'QPC') {
-    send_command('turret mod qpc)
-    set_variable('turretAlias', false)
-    MSys.log('Turret Ready!', 'white')
-    send_command(get_variable('turretFollowup'))
+} else if (get_variable('turretMod').toUpperCase() == 'QPC') {
+    send_command('turret mod qpc')
 }"
                                 }
                             ],
@@ -2882,7 +2904,7 @@ if (get_variable('turretMod') == 'QPC') {
                                     "prefix_suffix": true
                                 }
                             ],
-                            "text": "^deploysentry ([0-9]+)$",
+                            "text": "^deploysentry[ ]?([0-9]*)$",
                             "items": []
                         }
                     ],
@@ -3086,6 +3108,25 @@ MSys.huntingAttack()"
                     "items": []
                 },
                 {
+                    "type": "trigger",
+                    "name": "Turret Unpowered",
+                    "enabled": true,
+                    "id": 150,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": true,
+                    "text": "doesn't have enough power to attack.$",
+                    "actions": [
+                        {
+                            "action": "highlight",
+                            "highlight": "line",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#f863df",
+                            "highlight_bg": "#000000"
+                        }
+                    ]
+                },
+                {
                     "type": "alias",
                     "name": "List Ability Configuration",
                     "enabled": true,
@@ -3105,6 +3146,7 @@ abilities += 'Repeat Avail:  ' + MSys.repeat + '\\n'
 abilities += 'Use Worm:      ' + get_variable('useWorm') + '\\n'
 abilities += 'Worm Deployed: ' + MSys.wormDeployed + '\\n'
 abilities += 'Use Release:   ' + get_variable('useRelease') + '\\n'
+abilities += 'QPC Boost:     ' + get_variable('useQPCBoost') + '\\n'
 
 MSys.log(abilities, 'white')"
                         }
@@ -3185,6 +3227,29 @@ MSys.log(abilities, 'white')"
                     ],
                     "text": "hrelease",
                     "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Enable/Disable QPCBoost",
+                    "enabled": true,
+                    "id": 151,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useQPCBoost')) {
+\tset_variable('useQPCBoost', false)
+    MSys.log('QPC Boost after kill disabled', 'white')
+} else {
+\tset_variable('useQPCBoost', true)
+    MSys.log('QPC Boost after kill enabled', 'white')
+}"
+                        }
+                    ],
+                    "text": "hqpcboost"
                 }
             ],
             "actions": []
