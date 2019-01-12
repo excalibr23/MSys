@@ -1,6 +1,6 @@
 {
     "type": "group",
-    "name": "msys",
+    "name": "Starwraith Combat Implant",
     "enabled": true,
     "id": 1,
     "items": [
@@ -2050,6 +2050,23 @@ MSys.huntingAttack()"
                         },
                         {
                             "type": "trigger",
+                            "name": "Negation Active",
+                            "enabled": true,
+                            "id": 166,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "aura descends over you like a giant, protective shadow.$|^You are already prepared to negate damage.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.negation = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
                             "name": "Negation Down",
                             "enabled": false,
                             "id": 36,
@@ -2170,23 +2187,6 @@ MSys.huntingAttack()"
                         },
                         {
                             "type": "trigger",
-                            "name": "Negation Active",
-                            "enabled": true,
-                            "id": 166,
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": false,
-                            "text": "aura descends over you like a giant, protective shadow.$|^You are already prepared to negate damage.$",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.negation = true
-MSys.huntingAttack()"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "trigger",
                             "name": "Empyreal Channeling",
                             "enabled": true,
                             "id": 165,
@@ -2257,10 +2257,6 @@ MSys.huntingAttack()"
                     "case_sensitive": true,
                     "prefix_suffix": true,
                     "actions": [
-                        {
-                            "action": "script",
-                            "script": "MSys.offenseEnabled = false"
-                        },
                         {
                             "action": "command",
                             "command": "nano charge",
