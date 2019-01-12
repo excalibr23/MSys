@@ -162,11 +162,16 @@ MSys = {
         if (this.class == 'Nanoseer') {
             var command = ''
             
+            //Self heal
             if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
                 if (get_variable('debug')) {MSys.log('Nano repair', 'white')}
                 send_command('nano repair')
                 return
                 
+            //Out of combat buffs
+            //Casting and channeling are separated to enable the buff to be executed
+            //immediately if already channeling one of the required empyreals
+            //This prevents unnecessary swapping of empyreal channels after combat
             } else if (!this.negation && this.useNegation && this.empyreal == 'Progenitor') {
                 if (get_variable('debug')) {MSys.log('Cast Negation', 'white')}
                 send_command('negation')
@@ -187,10 +192,12 @@ MSys = {
                 send_command('oblivion channel progenitor')
                 return
                 
+            //Abort execution of offensive actions if disabled
             } else if (!this.offenseEnabled || get_variable('tar') == '') {
                 if (get_variable('debug')) {MSys.log('No target or offense disabled', 'white')}
                 return
                 
+            //Combat buffs
             } else if (!this.speedup && this.useSpeedup && this.empyreal != 'Traveller') {
                 if (get_variable('debug')) {MSys.log('Channel Traveller', 'white')}
                 send_command('oblivion channel Traveller')
@@ -731,6 +738,24 @@ display_notice('Attack set to: ' + args[1], 'white', 'black')"
                             ],
                             "text": "hbreak",
                             "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Break Threshold",
+                            "enabled": true,
+                            "id": 169,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "set_variable('breakThreshold', args[1])
+MSys.breakThreshold = args[1]"
+                                }
+                            ],
+                            "text": "^hbreakthreshold ([0-9]*)$"
                         }
                     ],
                     "actions": []
@@ -834,10 +859,6 @@ display_notice('AUTO OFF', 'white', 'black')"
                             "script": "if (get_variable('debug') == true) {MSys.log('I am attacking ' + get_variable('tar'), 'white')}
 MSys.systemEnabled = true
 MSys.offenseEnabled = true
-
-var dt = new Date()
-MSys.ttk = dt.getTime()
-
 MSys.huntingAttack()"
                         }
                     ],
@@ -1082,10 +1103,6 @@ for (i=0; i<list.length; i++) {
                             "script": "if (get_variable('debug') == true) {MSys.log('I am attacking ' + get_variable('tar'), 'white')}
 MSys.systemEnabled = true
 MSys.offenseEnabled = true
-
-var dt = new Date()
-MSys.ttk = dt.getTime()
-
 MSys.huntingAttack()"
                         }
                     ],
@@ -1306,7 +1323,11 @@ MSys.huntingAttack()
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.damageThisFight += parseInt(args[1])"
+                            "script": "if (MSys.ttk == 0) {
+    var now = new Date()
+    MSys.ttk = now.getTime()
+}
+MSys.damageThisFight += parseInt(args[1])"
                         }
                     ],
                     "items": []
@@ -1571,7 +1592,7 @@ send_command('crash ' + args[1])"
                             "name": "Enable/Disable Multistrike",
                             "enabled": true,
                             "id": 43,
-                            "matching": "exact",
+                            "matching": "regexp",
                             "whole_words": true,
                             "case_sensitive": true,
                             "prefix_suffix": true,
@@ -1589,7 +1610,7 @@ send_command('crash ' + args[1])"
 }"
                                 }
                             ],
-                            "text": "hmulti",
+                            "text": "^hmulti(strike)?$",
                             "items": []
                         },
                         {
@@ -2056,7 +2077,8 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.multistrike = true"
+                                    "script": "MSys.multistrike = true
+MSys.huntingAttack()"
                                 }
                             ],
                             "items": []
@@ -2066,14 +2088,15 @@ MSys.huntingAttack()"
                             "name": "Multistrike Return",
                             "enabled": true,
                             "id": 19,
-                            "matching": "substring",
-                            "whole_words": true,
+                            "matching": "regexp",
+                            "whole_words": false,
                             "case_sensitive": true,
-                            "text": "The group of nanites returns back to you.",
+                            "text": "^The group of nanites returns back to you.$|^The nanites disperse. no longer striking",
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.multistrike = false"
+                                    "script": "MSys.multistrike = false
+MSys.huntingAttack()"
                                 }
                             ],
                             "items": []
@@ -2100,14 +2123,15 @@ MSys.huntingAttack()"
                             "name": "Speedup Inactive",
                             "enabled": true,
                             "id": 159,
-                            "matching": "regexp",
+                            "matching": "exact",
                             "whole_words": false,
                             "case_sensitive": true,
-                            "text": "^The time distortion effect ends.$",
+                            "text": "The time distortion effect ends.",
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.speedUp = false"
+                                    "script": "MSys.speedUp = false
+MSys.huntingAttack()"
                                 }
                             ]
                         },
