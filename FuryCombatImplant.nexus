@@ -1,6 +1,6 @@
 {
     "type": "group",
-    "name": "starwraith beast combat implant",
+    "name": "starwraith fury combat implant",
     "enabled": true,
     "id": 1,
     "items": [
@@ -14,18 +14,18 @@
 
 // Place any code here you'd like to autorun when the system is loaded
 send_command('wakeup')
-SBCI = {
+SFCI = {
 // Core Implant Code
     noticecolor: 'gold',
-    packagename: 'starwraith beast combat implant',
-    shortname: 'SBCI',
+    packagename: 'starwraith fury combat implant',
+    shortname: 'SFCI',
     notice: function(text) {
         display_notice(\"[\" + this.shortname + \"] \" + text, this.noticecolor);
     },
     loaded: function() {
         //Send implant to browser log for debugging
         console.log(this)
-        this.notice(\"Starwraith B.E.A.S.T. Combat Implant v1.0 Loaded. Good hunting, and good death.\\n\");
+        this.notice(\"Starwraith Fury Combat Implant v1.0 Loaded. Good hunting, and good death.\\n\");
     },
     helpbox: function(title,text) {
         var helptext = \"<div class=\\\"mono\\\"><span style=\\\"color: #ffffff; \\\"><span style=\\\"background-color: #0000a0 \\\">\" + title + \"</span></span></div>\";
@@ -88,22 +88,18 @@ SBCI = {
     maxHealth: 0,
     useHeal: get_variable('useHeal'),
     healReady: true,
-//B.E.A.S.T.
-    backhand: false,
-    plasma: 0,
-    maxPlasma: 0,
-    useResistance:   get_variable('useResistance'),
-    useSerrate:      get_variable('useSerrate'),
-    usePlasmaShield: get_variable('usePlasmaShield'),
-    useRamset:       get_variable('useRamset'),
-    useDampening:    get_variable('useDampening'),
-    useJamming:      get_variable('useJamming'),
-    resistance:   false,
-    serrate:      false,
-    plasmaShield: false,
-    ramset:       false,
-    dampening:    false,
-    jamming:      false,
+//Fury
+    stance: '',
+    bladeshape: false,
+    rage: 0,
+    maxRage: 0,
+    unstoppable: false,
+    berserk: false,
+    useBerserk: get_variable('useBerserk'),
+    fever: false,
+    useFever: get_variable('useFever'),
+    hypertension: false,
+    infernoCharging: false,
 //Combat functions 
     findTarget: function() {
         var itemList = this.itemsInRoom
@@ -145,42 +141,129 @@ SBCI = {
         if (!this.systemEnabled) {return}
         var command = ''
         
-        if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
-            command += 'suit support'
-              
-        } else if (!this.resistance   && this.useResistance)    { 
-            command += 'plasma resistance'
-        } else if (!this.serrate      && this.useSerrate)       { 
-            command += 'mwp serrate'
-        } else if (!this.plasmaShield && this.usePlasmaShield)  { 
-            command += 'plasma shield'
-        } else if (!this.ramset       && this.useRamset)        { 
-            command += 'suit ramset'
-        } else if (!this.dampening    && this.useDampening)     { 
-            command += 'suit dampening'
-        } else if (!this.jamming      && this.useJamming)       { 
-            command += 'suit jamming'
-        } else if (!this.offenseEnabled || get_variable('tar') == '') {
-            message  = 'Aggressive actions are disabled\\n'
-            message += 'Offense Enabled: ' + this.offenseEnabled + '\\n'
-            message += 'Target Variable: ' + get_variable('tar') + '\\n'
-            this.debugMessage(message)
-            return
-        } else if (!this.backhand) { 
-            command += 'suit backhand '
-        } else { 
-            command += 'mwp wristblade '
+        command += 'combo '
+            
+        if (this.interrupt && this.offenseEnabled) {
+            send_command('kith fever ' + get_variable('tar'))
+            return;
         }
             
-        if (command[command.length - 1] == ' ') {command += get_variable('tar')}
-            
-        this.debugMessage('Executing command: \"' + command + '\"')
+        if (this.health / this.maxHealth < .8 && this.healReady  && this.useHeal) {
+            send_command('kith suffuse')
+            return;
+        }else if (!this.bladeshape && get_variable('kithbladeshape') !== undefined && get_variable('kithbladeshape') !== '') {
+            send_command(get_variable('kithbladeshape'))
+            return;
+        }else if (get_variable('tar') == '' || this.offenseEnabled == false) {
+            return;
+        }else if (!this.fever && this.useFever) {
+            command = 'kith fever ';
+        }else if (this.goal == 'hunt1') {
+            //Battleflow attack
+            if (this.stance == 'Symmetry') {
+                command += 'swiftcut '
+            } else if (this.stance == 'Flare') {
+                command += 'wound '
+            } else if (this.stance == 'Eruption') {
+                if (this.hypertension) {
+                    command += 'bloodburn '
+                } else {
+                    command += 'hypertension '
+                }
+            } else if (this.stance == 'Ember') {
+                command += 'legspike '
+            }
+
+            //Rage Attack
+            if (this.unstoppable) {
+                command += 'slice '
+            } else if (this.stance == 'Symmetry') {
+                if (this.rage / this.maxRage > .13 && !this.berserk && this.useBerserk) {
+                    command += 'berserk '
+                } else {
+                    command += 'flyinglash '
+                }
+            } else if (this.stance == 'Flare') {
+                command += 'rend '
+            } else if (this.stance == 'Eruption') {
+                if (this.health / this.maxHealth < .7) {
+                    command += 'resistant '
+                } else {
+                    command += 'upperlash '
+                }
+            } else if (this.stance == 'Ember') {
+                if (this.rage / this.maxRage > .73  && this.unstoppable == false) {
+                    command += 'unstoppable '
+                } else {
+                    command += 'strike '
+                }
+            }
+        }else if (this.goal == 'hunt2') {
+            //Battleflow attack
+            if (this.stance == 'Symmetry') {
+                command += 'swiftcut '
+            } else if (this.stance == 'Flare') {
+                command += 'wound '
+            } else if (this.stance == 'Eruption') {
+                command += 'rupture '
+            }
+
+            //Rage Attack
+            if (this.unstoppable) {
+                command += 'slice '
+            } else if (this.stance == 'Symmetry') {
+                if (this.rage / this.maxRage > .13 && !this.berserk && this.useBerserk) {
+                    command += 'berserk '
+                } else {
+                    command += 'flyinglash '
+                }
+            } else if (this.stance == 'Flare') {
+                command += 'rend '
+            } else if (this.stance == 'Eruption') {
+                if (this.rage / this.maxRage > .73  && this.unstoppable == false) {
+                    command += 'unstoppable '
+                } else {
+                    command += 'strike '
+                }
+            }
+        }else if (this.goal == 'hunt3') {
+            var next = ''
+            command = 'combo '
+                
+            //Battleflow attack
+            if (this.stance == 'Symmetry') {
+                command += 'gutrend '
+                next = 'Ember'
+            } else if (this.stance == 'Ember') {
+                command += 'legspike '
+                next = 'Symmetry'
+            } else if (this.stance == 'Flare') {
+                command += 'sear '
+                next = 'Symmetry'
+            }
+
+            //Rage Attack
+            if (this.unstoppable) {
+                command += 'slice '
+            } else if (next == 'Symmetry') {
+                if (this.rage / this.maxRage > .8  && this.unstoppable == false) {
+                    command += 'unstoppable '
+                } else {
+                    command += 'deflect '
+                }
+            } else if (next == 'Ember') {
+                command += 'resistant '
+            } else if (next == 'Flare') {
+                command += 'reel '
+            }
+        }
+        
+        command += get_variable('tar')
         send_command(command)
-        return
     }
 }
 
-SBCI.loaded();",
+SFCI.loaded();",
             "items": []
         },
         {
@@ -198,20 +281,20 @@ GMCP[args.gmcp_method] = args.gmcp_args
 if (args.gmcp_method == \"Char.Vitals\") {
 
     // Track health changes
-    var change = SBCI.health - args.gmcp_args.hp;
+    var change = SFCI.health - args.gmcp_args.hp;
    
     if (change > 0) {
-        SBCI.log('Damage taken: ' + change, 'yellow')
+        SFCI.log('Damage taken: ' + change, 'yellow')
     } else if (change < 0) {
-        SBCI.log('Damage healed: ' + Math.abs(change), '#6bdaee')
+        SFCI.log('Damage healed: ' + Math.abs(change), '#6bdaee')
     }
     
-    SBCI.health = args.gmcp_args.hp
-    SBCI.maxHealth = args.gmcp_args.maxhp
+    SFCI.health = args.gmcp_args.hp
+    SFCI.maxHealth = args.gmcp_args.maxhp
 
-\t//B.E.A.S.T. Plasma Management
-    SBCI.plasma = args.gmcp_args.pl
-    SBCI.maxPlasma = args.gmcp_args.maxpl
+    SFCI.stance = args.gmcp_args.st
+    SFCI.rage = args.gmcp_args.rg
+    SFCI.maxRage = args.gmcp_args.maxrg
 }
 
 /* ----------------------------------- DEFENCES AND BUFFS --------------------------------------- */
@@ -220,15 +303,16 @@ if (args.gmcp_method == 'Char.Defences.Add') {
     
     //Fury
     //if (args.gmcp_args.name == 'Oblivion: Conqueror')  {
-    //    SBCI.empyreal = 'Conqueror'
+    //    SFCI.empyreal = 'Conqueror'
     //}
+
 }
 
 /* -------------------------------------------- ITEMS IN ROOM ----------------------------------- */
 
 //Get Items In Room
 if (args.gmcp_method == \"Char.Items.List\") {
-    SBCI.itemsInRoom = args.gmcp_args['items']
+    SFCI.itemsInRoom = args.gmcp_args['items']
 }
 
 //Remove items when items leave
@@ -236,7 +320,7 @@ if (args.gmcp_method == \"Char.Items.Remove\") {
     let itemLeaving = args.gmcp_args['item']
     
     //Find index of item
-    SBCI.itemsInRoom = SBCI.itemsInRoom.filter(item => item.id !== itemLeaving.id);
+    SFCI.itemsInRoom = SFCI.itemsInRoom.filter(item => item.id !== itemLeaving.id);
     
 }
 
@@ -245,35 +329,35 @@ if (args.gmcp_method == \"Char.Items.Add\") {
     let itemJoining = args.gmcp_args['item']
     
     //Find index of item
-    SBCI.itemsInRoom.push(itemJoining);
+    SFCI.itemsInRoom.push(itemJoining);
     
-    if (SBCI.systemEnabled === true) {
+    if (SFCI.systemEnabled === true) {
         if (!get_variable('tar')) {
-            SBCI.findTarget()
+            SFCI.findTarget()
         }
     }
     
-    if (SBCI.infernoCharging && itemJoining.attrib === 'm') {
+    if (SFCI.infernoCharging && itemJoining.attrib === 'm') {
         send_command('asdf')
-        SBCI.infernoCharging = false
-        SBCI.alert('mob entered - inferno cancelled', 'white', 'red')
+        SFCI.infernoCharging = false
+        SFCI.alert('mob entered - inferno cancelled', 'white', 'red')
     }
 }
 
 /* -------------------------------------------- PLAYERS IN ROOM ----------------------------------- */
 if (args.gmcp_method == \"Room.Players\") {
-    SBCI.playersInRoom = args.gmcp_args
+    SFCI.playersInRoom = args.gmcp_args
 }
 
 /* --------------------------------------------- HELPERS --------------------------------- */
 if (args.gmcp_method == \"Room.Info\") {
-    if (SBCI.systemEnabled === true) {
-        SBCI.findTarget()
+    if (SFCI.systemEnabled === true) {
+        SFCI.findTarget()
     }
 }
 
 if (args.gmcp_method == \"IRE.Target.Info\") {
-    SBCI.targetHealth = args.gmcp_args['hpperc'].slice(0, -1)
+    SFCI.targetHealth = args.gmcp_args['hpperc'].slice(0, -1)
 }
 ",
             "items": []
@@ -302,11 +386,11 @@ if (args.gmcp_method == \"IRE.Target.Info\") {
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "SBCI.log('-- Hunting List Setup.  Use \\'hsave\\' to keep a backup.  \\'hload\\' will load your backup.', 'white', 'black')
-SBCI.log('-- Use \\'hadd\\' <name> to add to the list and \\'hremove\\' <name> to remove items from this list. \\'hshow\\' will show the items on your list.', 'white', 'black')
-SBCI.log('-- Use \\'hattack\\' <attackName> to make it your primary attack that will be auto used.', 'white')
-SBCI.log('-- Use \\'hlist\\' to switch between room and priority list. Use \\'hup\\' or \\'hdown\\' <name> to increase or decrease an item on the priority list.', 'white')
-SBCI.log('-- Make sure you use \\'config usequeueing on\\'.  Then you can use other attacks to overwrite auto attacks.', 'white')
+                                    "script": "SFCI.log('-- Hunting List Setup.  Use \\'hsave\\' to keep a backup.  \\'hload\\' will load your backup.', 'white', 'black')
+SFCI.log('-- Use \\'hadd\\' <name> to add to the list and \\'hremove\\' <name> to remove items from this list. \\'hshow\\' will show the items on your list.', 'white', 'black')
+SFCI.log('-- Use \\'hattack\\' <attackName> to make it your primary attack that will be auto used.', 'white')
+SFCI.log('-- Use \\'hlist\\' to switch between room and priority list. Use \\'hup\\' or \\'hdown\\' <name> to increase or decrease an item on the priority list.', 'white')
+SFCI.log('-- Make sure you use \\'config usequeueing on\\'.  Then you can use other attacks to overwrite auto attacks.', 'white')
 
 if (get_variable('killList')       == undefined) {set_variable('killList', ['rockhopper'])}
 if (get_variable('debug')          == undefined) {set_variable('debug', false)}
@@ -338,8 +422,8 @@ if (get_variable('useRapidfire')   == undefined) {set_variable('useRapidfire', f
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "SBCI.log('-- Combat Implant has been reset to factory settings.', 'white', 'black')
-SBCI.log('-- If you have previously backed up your kill list you may use \\'hload\\' to reload it', 'white', 'black')
+                                    "script": "SFCI.log('-- Combat Implant has been reset to factory settings.', 'white', 'black')
+SFCI.log('-- If you have previously backed up your kill list you may use \\'hload\\' to reload it', 'white', 'black')
 
 set_variable('killList', ['rockhopper'])
 set_variable('debug', false)
@@ -371,7 +455,7 @@ set_variable('break', true)"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "SBCI.attack = args[1] + ' '
+                                    "script": "SFCI.attack = args[1] + ' '
 set_variable('huntingAttack', args[1] + ' ')
 display_notice('Attack set to: ' + args[1], 'white', 'black')"
                                 }
@@ -392,13 +476,13 @@ display_notice('Attack set to: ' + args[1], 'white', 'black')"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('matchList')) {
-    SBCI.matchList = false
+    SFCI.matchList = false
     set_variable('matchList', false)
-    SBCI.log('Will match room listing', 'white')
+    SFCI.log('Will match room listing', 'white')
 } else {
-    SBCI.matchList = true
+    SFCI.matchList = true
     set_variable('matchList', true)
-    SBCI.log('Will match priority listing', 'white')
+    SFCI.log('Will match priority listing', 'white')
 }"
                                 }
                             ],
@@ -418,13 +502,13 @@ display_notice('Attack set to: ' + args[1], 'white', 'black')"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('break')) {
-    SBCI.break = false
+    SFCI.break = false
     set_variable('break', false)
-    SBCI.log('Will continue after kill.', 'white')
+    SFCI.log('Will continue after kill.', 'white')
 } else {
-    SBCI.break = true
+    SFCI.break = true
     set_variable('break', true)
-    SBCI.log('Will break after kill.', 'white')
+    SFCI.log('Will break after kill.', 'white')
 }"
                                 }
                             ],
@@ -444,7 +528,7 @@ display_notice('Attack set to: ' + args[1], 'white', 'black')"
                                 {
                                     "action": "script",
                                     "script": "set_variable('breakThreshold', args[1])
-SBCI.breakThreshold = args[1]"
+SFCI.breakThreshold = args[1]"
                                 }
                             ],
                             "text": "^hbreakthreshold ([0-9]*)$"
@@ -464,14 +548,14 @@ SBCI.breakThreshold = args[1]"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "SBCI.freeze = false
-SBCI.frenzy = false
-SBCI.negation = false
-SBCI.delaySwarm = false
-SBCI.fever = false
-SBCI.hypertension = false
-SBCI.ambush = false
-SBCI.backhand = false
+                            "script": "SFCI.freeze = false
+SFCI.frenzy = false
+SFCI.negation = false
+SFCI.delaySwarm = false
+SFCI.fever = false
+SFCI.hypertension = false
+SFCI.ambush = false
+SFCI.backhand = false
 
 var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
 //a.play()
@@ -485,39 +569,39 @@ if (args[1]) {
     onList = autoList.includes(args[2])
 }
 
-if (SBCI.systemEnabled === true && onList) {
-    SBCI.targetHealth = 0
+if (SFCI.systemEnabled === true && onList) {
+    SFCI.targetHealth = 0
     send_command('clearqueue')
-    SBCI.findTarget()
+    SFCI.findTarget()
 
-    if (SBCI.class == 'Engineer' && get_variable('useQPCBoost')) {
+    if (SFCI.class == 'Engineer' && get_variable('useQPCBoost')) {
         send_command('qpcboost')
     }
 
-    if (SBCI.break) {
-        SBCI.offenseEnabled = false
+    if (SFCI.break) {
+        SFCI.offenseEnabled = false
     }
     
-    SBCI.huntingAttack()
+    SFCI.huntingAttack()
 }
 
 var slainMessage = ''
 var now = new Date()
-if (SBCI.damageThisFight > 0 && SBCI.ttk > 0){
-    slainMessage = SBCI.damageThisFight + ' damage done this fight. | TTK: ' + (now.getTime() - SBCI.ttk)/1000 + 's | DPS: ' + Math.round(SBCI.damageThisFight / ((now.getTime() - SBCI.ttk)/1000))
-} else if (SBCI.damageThisFight > 0) {
-    slainMessage = SBCI.damageThisFight + ' damage done this fight.'
-} else if (SBCI.ttk > 0) {
-    slainMessage = 'TTK: ' + (now.getTime() - SBCI.ttk)/1000 + 's'
+if (SFCI.damageThisFight > 0 && SFCI.ttk > 0){
+    slainMessage = SFCI.damageThisFight + ' damage done this fight. | TTK: ' + (now.getTime() - SFCI.ttk)/1000 + 's | DPS: ' + Math.round(SFCI.damageThisFight / ((now.getTime() - SFCI.ttk)/1000))
+} else if (SFCI.damageThisFight > 0) {
+    slainMessage = SFCI.damageThisFight + ' damage done this fight.'
+} else if (SFCI.ttk > 0) {
+    slainMessage = 'TTK: ' + (now.getTime() - SFCI.ttk)/1000 + 's'
 }
 
-if (SBCI.damageThisFight > 0 || SBCI.ttk > 0){
-    SBCI.alert(slainMessage, 'lightgreen', 'darkblue')
+if (SFCI.damageThisFight > 0 || SFCI.ttk > 0){
+    SFCI.alert(slainMessage, 'lightgreen', 'darkblue')
 }
 
-SBCI.ttk = 0
-SBCI.damageThisFight = 0
-SBCI.interrupt = false"
+SFCI.ttk = 0
+SFCI.damageThisFight = 0
+SFCI.interrupt = false"
                         }
                     ],
                     "items": []
@@ -534,7 +618,7 @@ SBCI.interrupt = false"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "SBCI.systemEnabled = false
+                            "script": "SFCI.systemEnabled = false
 display_notice('AUTO OFF', 'white', 'black')"
                         }
                     ],
@@ -549,10 +633,10 @@ display_notice('AUTO OFF', 'white', 'black')"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (get_variable('debug') == true) {SBCI.log('I am attacking ' + get_variable('tar'), 'white')}
-SBCI.systemEnabled = true
-SBCI.offenseEnabled = true
-SBCI.huntingAttack()"
+                            "script": "if (get_variable('debug') == true) {SFCI.log('I am attacking ' + get_variable('tar'), 'white')}
+SFCI.systemEnabled = true
+SFCI.offenseEnabled = true
+SFCI.huntingAttack()"
                         }
                     ],
                     "key_alt": false,
@@ -569,11 +653,11 @@ SBCI.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (SBCI.systemEnabled === true) {
-  SBCI.systemEnabled = false
+                            "script": "if (SFCI.systemEnabled === true) {
+  SFCI.systemEnabled = false
   display_notice(\"Combat implant disabled\", 'white', 'black')
 } else {
-  SBCI.systemEnabled = true
+  SFCI.systemEnabled = true
   display_notice(\"Combat implant enabled\", 'white', 'black')
 }"
                         }
@@ -595,15 +679,15 @@ SBCI.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (SBCI.class == 'Nanoseer') {
+                            "script": "if (SFCI.class == 'Nanoseer') {
   send_command('NANO REPAIR')
-} else if (SBCI.class == 'Fury') {
+} else if (SFCI.class == 'Fury') {
   send_command('KITH SUFFUSE')
-} else if (SBCI.class == 'Scoundrel') {
+} else if (SFCI.class == 'Scoundrel') {
   send_command('STIM')
-} else if (SBCI.class == 'B.E.A.S.T.') {
+} else if (SFCI.class == 'B.E.A.S.T.') {
   send_command('suit support')
-} else if (SBCI.class == 'Engineer') {
+} else if (SFCI.class == 'Engineer') {
   send_command('operate stimjector')
 }"
                         }
@@ -769,12 +853,12 @@ for (i=0; i<list.length; i++) {
                             "action": "script",
                             "script": "if (get_variable('useHeal')) {
     set_variable('useHeal', false)
-    SBCI.useHeal = false
-    SBCI.log('HEAL OFF', 'white')
+    SFCI.useHeal = false
+    SFCI.log('HEAL OFF', 'white')
 } else {
     set_variable('useHeal', true)
-    SBCI.useHeal = true
-    SBCI.log('HEAL ON', 'white')
+    SFCI.useHeal = true
+    SFCI.log('HEAL ON', 'white')
 }"
                         }
                     ],
@@ -793,10 +877,10 @@ for (i=0; i<list.length; i++) {
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (get_variable('debug') == true) {SBCI.log('I am attacking ' + get_variable('tar'), 'white')}
-SBCI.systemEnabled = true
-SBCI.offenseEnabled = true
-SBCI.huntingAttack()"
+                            "script": "if (get_variable('debug') == true) {SFCI.log('I am attacking ' + get_variable('tar'), 'white')}
+SFCI.systemEnabled = true
+SFCI.offenseEnabled = true
+SFCI.huntingAttack()"
                         }
                     ],
                     "text": "k",
@@ -829,66 +913,11 @@ SBCI.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "SBCI.interrupt = true
+                                    "script": "SFCI.interrupt = true
 
-SBCI.alert('interrupting super', 'white', 'blue')
-SBCI.huntingAttack()
+SFCI.alert('interrupting super', 'white', 'blue')
+SFCI.huntingAttack()
 "
-                                }
-                            ],
-                            "items": []
-                        }
-                    ],
-                    "actions": []
-                },
-                {
-                    "type": "group",
-                    "name": "Travel",
-                    "enabled": true,
-                    "id": 149,
-                    "items": [
-                        {
-                            "type": "trigger",
-                            "name": "Battlemaster Engineer Return",
-                            "enabled": true,
-                            "id": 125,
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": false,
-                            "text": "A tripod-mounted wormhole generator has been set up in the center of the cracked landing pad.",
-                            "actions": [
-                                {
-                                    "action": "linkify",
-                                    "linkify": "match",
-                                    "linkify_backref": "1",
-                                    "linkify_text_type": "capture",
-                                    "linkify_text": "",
-                                    "linkify_command_type": "value",
-                                    "linkify_command": "turn tripod&push tripod",
-                                    "linkify_color": "#26aa95"
-                                }
-                            ],
-                            "items": []
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Battlemaster Engineer Omni",
-                            "enabled": true,
-                            "id": 124,
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": false,
-                            "text": "A tripod-mounted wormhole generator has been set up in the center of the repair bay.",
-                            "actions": [
-                                {
-                                    "action": "linkify",
-                                    "linkify": "match",
-                                    "linkify_backref": "1",
-                                    "linkify_text_type": "capture",
-                                    "linkify_text": "",
-                                    "linkify_command_type": "value",
-                                    "linkify_command": "turn tripod&push tripod",
-                                    "linkify_color": "#26aa95"
                                 }
                             ],
                             "items": []
@@ -944,11 +973,11 @@ SBCI.huntingAttack()
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (SBCI.ttk == 0) {
+                            "script": "if (SFCI.ttk == 0) {
     var now = new Date()
-    SBCI.ttk = now.getTime()
+    SFCI.ttk = now.getTime()
 }
-SBCI.damageThisFight += parseInt(args[1])"
+SFCI.damageThisFight += parseInt(args[1])"
                         },
                         {
                             "action": "highlight",
@@ -972,7 +1001,7 @@ SBCI.damageThisFight += parseInt(args[1])"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "SBCI.log(args[1] + ' Stopped Following!', 'darkred')"
+                            "script": "SFCI.log(args[1] + ' Stopped Following!', 'darkred')"
                         }
                     ],
                     "items": []
@@ -1008,7 +1037,7 @@ send_command('crash ' + args[1])"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "SBCI.log(eval(args[1]))"
+                            "script": "SFCI.log(eval(args[1]))"
                         }
                     ],
                     "text": "^js (.+)$",
@@ -1179,474 +1208,490 @@ send_command('crash ' + args[1])"
         },
         {
             "type": "group",
-            "name": "B.E.A.S.T.",
+            "name": "Fury",
             "enabled": true,
-            "id": 102,
+            "id": 69,
             "items": [
                 {
-                    "type": "group",
-                    "name": "Configuration",
-                    "enabled": true,
-                    "id": 171,
-                    "items": [
-                        {
-                            "type": "alias",
-                            "name": "",
-                            "enabled": true,
-                            "id": 110,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "var abilities = ''
-abilities += 'Heal: ' + get_variable('useHeal') + '\\n'
-abilities += 'useResistance:   ' + get_variable('useResistance') + '\\n'
-abilities += 'useSerrate:      ' + get_variable('useSerrate') + '\\n'
-abilities += 'usePlasmaShield: ' + get_variable('usePlasmaShield') + '\\n'
-abilities += 'useRamset:       ' + get_variable('useRamset') + '\\n'
-abilities += 'useDampening:    ' + get_variable('useDampening') + '\\n'
-abilities += 'useJamming:      ' + get_variable('useJamming') + '\\n'
-abilities += 'resistance:   ' + SBCI.resistance + '\\n'
-abilities += 'serrate:      ' + SBCI.serrate + '\\n'
-abilities += 'plasmaShield: ' + SBCI.plasmaShield + '\\n'
-abilities += 'ramset:       ' + SBCI.ramset + '\\n'
-abilities += 'dampening:    ' + SBCI.dampening + '\\n'
-abilities += 'jamming:      ' + SBCI.jamming + '\\n'
-
-SBCI.log(abilities, 'white')"
-                                }
-                            ],
-                            "text": "hbeast",
-                            "items": []
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Enable/Disable Resistance",
-                            "enabled": true,
-                            "id": 177,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": false,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "if (get_variable('useResistance')) {
-    set_variable('useResistance', false)
-    SBCI.useResistance = false
-    SBCI.log('Plasma Resistance Disabled', 'white')
-} else {
-    set_variable('useResistance', true)
-    SBCI.useResistance = true
-    SBCI.log('Plasma Resistance Enabled', 'white')
-}"
-                                }
-                            ],
-                            "text": "hresistance"
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Enable/Disable Serrate",
-                            "enabled": true,
-                            "id": 178,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": false,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "if (get_variable('useSerrate')) {
-    set_variable('useSerrate', false)
-    SBCI.useSerrate = false
-    SBCI.log('Serrate Disabled', 'white')
-} else {
-    set_variable('useSerrate', true)
-    SBCI.useSerrate = true
-    SBCI.log('Serrate Enabled', 'white')
-}"
-                                }
-                            ],
-                            "text": "hserrate"
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Enable/Disable Plasma Shield",
-                            "enabled": true,
-                            "id": 179,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": false,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "if (get_variable('usePlasmaShield')) {
-    set_variable('usePlasmaShield', false)
-    SBCI.usePlasmaShield = false
-    SBCI.log('Plasma Shield Disabled', 'white')
-} else {
-    set_variable('usePlasmaShield', true)
-    SBCI.usePlasmaShield = true
-    SBCI.log('Plasma Shield Enabled', 'white')
-}"
-                                }
-                            ],
-                            "text": "hplasmashield"
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Enable/Disable Ramset",
-                            "enabled": true,
-                            "id": 180,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": false,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "if (get_variable('useRamset')) {
-    set_variable('useRamset', false)
-    SBCI.useRamset = false
-    SBCI.log('Ramset Disabled', 'white')
-} else {
-    set_variable('useRamset', true)
-    SBCI.useRamset = true
-    SBCI.log('Ramset Enabled', 'white')
-}"
-                                }
-                            ],
-                            "text": "hramset"
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Enable/Disable Dampening",
-                            "enabled": true,
-                            "id": 181,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": false,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "if (get_variable('useDampening')) {
-    set_variable('useDampening', false)
-    SBCI.useDampening = false
-    SBCI.log('Dampening Disabled', 'white')
-} else {
-    set_variable('useDampening', true)
-    SBCI.useDampening = true
-    SBCI.log('Dampening Enabled', 'white')
-}"
-                                }
-                            ],
-                            "text": "hdampening"
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Enable/Disable Jamming",
-                            "enabled": true,
-                            "id": 182,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": false,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "if (get_variable('useJamming')) {
-    set_variable('useJamming', false)
-    SBCI.useJamming = false
-    SBCI.log('Jamming Disabled', 'white')
-} else {
-    set_variable('useJamming', true)
-    SBCI.useJamming = true
-    SBCI.log('Jamming Enabled', 'white')
-}"
-                                }
-                            ],
-                            "text": "hjamming"
-                        }
-                    ],
-                    "actions": []
-                },
-                {
-                    "type": "group",
-                    "name": "Shortcuts",
-                    "enabled": true,
-                    "id": 175,
-                    "items": [
-                        {
-                            "type": "alias",
-                            "name": "Suit Contingency",
-                            "enabled": true,
-                            "id": 104,
-                            "matching": "regexp",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "command",
-                                    "command": "suit contingency",
-                                    "prefix_suffix": true
-                                }
-                            ],
-                            "text": "con",
-                            "items": []
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Overclock",
-                            "enabled": true,
-                            "id": 105,
-                            "matching": "regexp",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "command",
-                                    "command": "suit overclock",
-                                    "prefix_suffix": true
-                                }
-                            ],
-                            "text": "oc",
-                            "items": []
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Heal",
-                            "enabled": true,
-                            "id": 172,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": false,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "command",
-                                    "command": "suit support",
-                                    "prefix_suffix": true
-                                }
-                            ],
-                            "text": "heal"
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Flying",
-                            "enabled": true,
-                            "id": 173,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": false,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "command",
-                                    "command": "suit jumpjets",
-                                    "prefix_suffix": true
-                                }
-                            ],
-                            "text": "fly"
-                        }
-                    ],
-                    "actions": []
-                },
-                {
-                    "type": "group",
-                    "name": "Ability Activations",
-                    "enabled": true,
-                    "id": 170,
-                    "items": [
-                        {
-                            "type": "trigger",
-                            "name": "Plasma Resistance Active",
-                            "enabled": true,
-                            "id": 183,
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": false,
-                            "text": "^You deploy extra heat sinks|^Your extra heat sinks are already",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "SBCI.resistance = true
-SBCI.huntingAttack()"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Serrate Active",
-                            "enabled": true,
-                            "id": 184,
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": false,
-                            "text": "^You rotate your wristblade|^You're already using",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "SBCI.serrate = true
-SBCI.huntingAttack()"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Ramset Active",
-                            "enabled": true,
-                            "id": 185,
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": false,
-                            "text": "^You key in a command and feel a thud|^You're already employing",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "SBCI.ramset = true
-SBCI.huntingAttack()"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Dampening Active",
-                            "enabled": true,
-                            "id": 186,
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": false,
-                            "text": "^You activate your B\\.E\\.A\\.S\\.T\\.'s EM shielding protocol\\.$|^You're already utili.ing measures to mitigate EM attacks\\.$",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "SBCI.dampening = true
-SBCI.huntingAttack()"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Jamming Active",
-                            "enabled": true,
-                            "id": 187,
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": false,
-                            "text": "^You engage your radar jamming|^You are already jamming",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "SBCI.jamming = true
-SBCI.huntingAttack()"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Backhand Used",
-                            "enabled": true,
-                            "id": 103,
-                            "matching": "regexp",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "text": "^You overdrive your suit's movement circuits, delivering a vicious backhanded blow.*",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "SBCI.backhand = true
-SBCI.huntingAttack()"
-                                }
-                            ],
-                            "items": []
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Support Used",
-                            "enabled": true,
-                            "id": 107,
-                            "matching": "regexp",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "text": "^You activate your suit's emergency life support system.*$",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "SBCI.healReady = false
-SBCI.huntingAttack()"
-                                }
-                            ],
-                            "items": []
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Support Ready",
-                            "enabled": true,
-                            "id": 108,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "text": "Your HUD indicates that you may use your life support system once again.",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "SBCI.healReady = true
-SBCI.huntingAttack()"
-                                },
-                                {
-                                    "action": "highlight",
-                                    "highlight": "line",
-                                    "highlight_backref": "1",
-                                    "highlight_fg": "#6dd4e1",
-                                    "highlight_bg": "#000000"
-                                }
-                            ],
-                            "items": []
-                        }
-                    ],
-                    "actions": []
-                },
-                {
                     "type": "trigger",
-                    "name": "Queue Attack BEAST",
+                    "name": "Kithblade Shaped",
                     "enabled": true,
-                    "id": 106,
+                    "id": 70,
                     "matching": "regexp",
                     "whole_words": true,
                     "case_sensitive": true,
-                    "text": "^With servo-assisted might, you drive your wristblade.*$",
+                    "text": "Resting your hand on the hilt of",
                     "actions": [
                         {
                             "action": "script",
-                            "script": "SBCI.huntingAttack()"
+                            "script": "SFCI.bladeshape = true
+if (SFCI.systemEnabled === true) {
+    SFCI.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Kithblade Unshaped",
+                    "enabled": true,
+                    "id": 86,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "text": "The blade of .+ shimmers and warps.+",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.alert('bladeshape off', 'white', 'lightred')
+SFCI.bladeshape = false
+
+var a = new Audio('https://freesound.org/people/Stopmotionbros/sounds/438991/download/438991__stopmotionbros__wind.m4a')
+a.play()"
+                        },
+                        {
+                            "action": "highlight",
+                            "highlight": "line",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#ffbc78",
+                            "highlight_bg": "#000000"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Fever On",
+                    "enabled": true,
+                    "id": 79,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "Your mind extends towards the vulnerabilities of .+ body, and with your connection to the universe's energy, you begin to increase the heat in every cell, flushing .+ with a raging fever.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.fever = true
+SFCI.interrupt = false"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Unstoppable On",
+                    "enabled": true,
+                    "id": 71,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "Your rage overwhelms you, you become unstoppable!",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.unstoppable = true
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SFCI').enabled
+
+if (SFCI.systemEnabled && reflexOn) {
+    SFCI.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Unstoppable Off",
+                    "enabled": true,
+                    "id": 72,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You no longer feel unstoppable!",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.unstoppable = false
+SFCI.log('NO UNSTOPPABLE', 'red')
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SFCI').enabled
+
+if (SFCI.systemEnabled && reflexOn) {
+    SFCI.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Hypertension On",
+                    "enabled": true,
+                    "id": 85,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^Tossing .+ to your off hand, you extend a bloodied palm towards .+ and then clench it into a fist, feeling .+ heart spasm and beat more quickly within .+ chest.$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.hypertension = true"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Heal Ready",
+                    "enabled": true,
+                    "id": 77,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "It is safe to suffuse yourself with kith energy again.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.healReady = true
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SFCI').enabled
+
+if (SFCI.systemEnabled && reflexOn) {
+    SFCI.huntingAttack()
+}"
+                        },
+                        {
+                            "action": "highlight",
+                            "highlight": "line",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#51d051",
+                            "highlight_bg": "#000000"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Heal Used",
+                    "enabled": true,
+                    "id": 78,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "The heart of distant stars and the fire at the center of every planet shimmers in your mind, and you draw upon that power, filling your body with an energy that heals your wounds and suffuses you with a flush of health.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.healReady = false
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SFCI').enabled
+
+if (SFCI.systemEnabled && reflexOn) {
+    SFCI.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Berserk On",
+                    "enabled": true,
+                    "id": 74,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^You go berserk, flailing .*$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.berserk = true
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SFCI').enabled
+
+if (SFCI.systemEnabled && reflexOn) {
+    SFCI.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Berserk Off",
+                    "enabled": true,
+                    "id": 75,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You are no longer berserk.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.berserk = false
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SFCI').enabled
+
+if (SFCI.systemEnabled && reflexOn) {
+    SFCI.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Attack after Inferno",
+                    "enabled": true,
+                    "id": 118,
+                    "matching": "substring",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "The searing wave of your inferno engulfs",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.systemEnabled = true
+SFCI.offenseEnabled = true
+SFCI.infernoCharging = false
+
+SFCI.huntingAttack()"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Queue Attack Fury",
+                    "enabled": true,
+                    "id": 73,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": true,
+                    "text": "^You flow smoothly into the.+stance.+|^You flow out of your stance.+|^Your mind extends towards the vulnerabilities of.*$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.huntingAttack()
+"
                         }
                     ],
                     "items": []
                 },
                 {
                     "type": "alias",
-                    "name": "Wakeup BEAST",
+                    "name": "Awaken Fury",
                     "enabled": true,
-                    "id": 176,
+                    "id": 143,
                     "matching": "exact",
                     "whole_words": true,
-                    "case_sensitive": false,
+                    "case_sensitive": true,
                     "prefix_suffix": true,
                     "actions": [
                         {
                             "action": "command",
-                            "command": "plasma heatup on",
+                            "command": "kith harden",
+                            "prefix_suffix": true
+                        },
+                        {
+                            "action": "waitfor",
+                            "text": "^You focus on hardening your skin|^Your internals are already hardened",
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "expire": "10"
+                        },
+                        {
+                            "action": "command",
+                            "command": "kith warmth",
+                            "prefix_suffix": true
+                        },
+                        {
+                            "action": "waitfor",
+                            "text": "^You focus on warming up your skin|^You're already protected",
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "expire": "10"
+                        },
+                        {
+                            "action": "command",
+                            "command": "kith balancing",
+                            "prefix_suffix": true
+                        },
+                        {
+                            "action": "waitfor",
+                            "text": "^You focus on your kith to prevent falling.|^You're already balancing",
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "expire": "10"
+                        },
+                        {
+                            "action": "command",
+                            "command": "kith firewreathe",
                             "prefix_suffix": true
                         }
                     ],
-                    "text": "wakeup"
+                    "text": "wakeup",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Berserk Toggle - hberserk",
+                    "enabled": true,
+                    "id": 76,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useBerserk')) {
+    set_variable('useBerserk', false)
+    SFCI.useBerserk = false
+    SFCI.log('BERSERK OFF', 'white')
+} else {
+    set_variable('useBerserk', true)
+    SFCI.useBerserk = true
+    SFCI.log('BERSERK ON', 'white')
+}"
+                        }
+                    ],
+                    "text": "hberserk",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Fever Toggle - hfever",
+                    "enabled": true,
+                    "id": 80,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useFever')) {
+    set_variable('useFever', false)
+    SFCI.useFever = false
+    SFCI.log('FEVER OFF', 'white')
+} else {
+    set_variable('useFever', true)
+    SFCI.useFever = true
+    SFCI.log('FEVER ON', 'white')
+}"
+                        }
+                    ],
+                    "text": "hfever",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Fury Abilities - hfury",
+                    "enabled": true,
+                    "id": 84,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "var abilities = ''
+abilities += 'Berserk: ' + get_variable('useBerserk') + '\\n'
+abilities += 'Fever: ' + get_variable('useFever') + '\\n'
+abilities += 'Heal: ' + get_variable('useHeal') + '\\n'
+abilities += 'Bladeshape: ' + SFCI.bladeshape + '\\n'
+abilities += 'Desired blade shape set to: ' + get_variable('kithbladeshape') + '\\n'
+abilities += 'Goal: ' + SFCI.goal + '\\n'
+
+SFCI.log(abilities, 'white')"
+                        }
+                    ],
+                    "text": "hfury",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Set Bladeshape",
+                    "enabled": true,
+                    "id": 121,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "set_variable('kithbladeshape', args[1])
+SFCI.log('Set desired kithblade shape to: ' + get_variable('kithbladeshape'))"
+                        }
+                    ],
+                    "text": "^hblade (.+)",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Inferno - inf",
+                    "enabled": true,
+                    "id": 116,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "KITH INFERNO",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "inf",
+                    "items": []
+                },
+                {
+                    "type": "keybind",
+                    "name": "",
+                    "enabled": true,
+                    "id": 117,
+                    "key": 110,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "var dt = new Date()
+SFCI.ttk = dt.getTime()
+
+SFCI.infernoCharging = true
+
+send_command('kith inferno')"
+                        }
+                    ],
+                    "key_alt": false,
+                    "key_ctrl": false,
+                    "key_shift": false,
+                    "items": []
+                },
+                {
+                    "type": "keybind",
+                    "name": "",
+                    "enabled": true,
+                    "id": 122,
+                    "key": 106,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "kith suffuse"
+                        }
+                    ],
+                    "key_alt": false,
+                    "key_ctrl": false,
+                    "key_shift": false,
+                    "items": []
                 }
             ],
             "actions": []
@@ -1675,7 +1720,7 @@ SBCI.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "SBCI.target = args[1]
+                                    "script": "SFCI.target = args[1]
 set_variable('tar', args[1])
 send_command('st ' + args[1])
 send_command('crt Target: ' + args[1])"
@@ -1691,5 +1736,5 @@ send_command('crt Target: ' + args[1])"
             "actions": []
         }
     ],
-    "description": "SBCI v1.0"
+    "description": "SFCI v1.0"
 }
