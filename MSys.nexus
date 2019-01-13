@@ -89,6 +89,18 @@ MSys = {
     backhand: false,
     plasma: 0,
     maxPlasma: 0,
+    useResistance:   get_variable('useResistance'),
+    useSerrate:      get_variable('useSerrate'),
+    usePlasmaShield: get_variable('usePlasmaShield'),
+    useRamset:       get_variable('useRamset'),
+    useDampening:    get_variable('useDampening'),
+    useJamming:      get_variable('useJamming'),
+    resistance:   false,
+    serrate:      false,
+    plasmaShield: false,
+    ramset:       false,
+    dampening:    false,
+    jamming:      false,
 //Engineer
     parts: 0,
     repeat: true,
@@ -116,16 +128,21 @@ MSys = {
         }
     },
     alert: function (text, fgcolor, bgcolor) {
-    \ttext = text.toUpperCase()
+        text = text.toUpperCase()
         let fullText = '-'.repeat(text.length+1) + '-------\\n--  '+ text + '  --\\n-------' + '-'.repeat(text.length+1)
         
         display_notice(fullText, fgcolor, bgcolor)
+    },
+    debugMessage: function (text) {
+        if (get_variable('debug')) {
+            this.log(text, 'white', 'black')
+        }
     },
     findTarget: function() {
         var itemList = this.itemsInRoom
         var killList = get_variable('killList')
         var targetFound = false
-\t\t
+        
         //Match room order
         if (!this.matchList) {
             for (i=0; i<itemList.length; i++) {
@@ -159,14 +176,14 @@ MSys = {
     huntingAttack: function() {
         
         if (!this.systemEnabled) {return}
+        var command = ''
         
         //Nano
         if (this.class == 'Nanoseer') {
-            var command = ''
             
             //Self heal
             if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
-                if (get_variable('debug')) {MSys.log('Nano repair', 'white')}
+                MSys.debugMessage('Nano repair')
                 send_command('nano repair')
                 return
                 
@@ -175,62 +192,62 @@ MSys = {
             //immediately if already channeling one of the required empyreals
             //This prevents unnecessary swapping of empyreal channels after combat
             } else if (!this.negation && this.useNegation && this.empyreal == 'Progenitor') {
-                if (get_variable('debug')) {MSys.log('Cast Negation', 'white')}
+                MSys.debugMessage('Cast Negation')
                 send_command('negation')
                 return
                 
             } else if (!this.frenzy && this.useFrenzy && this.empyreal == 'Conqueror') {
-                if (get_variable('debug')) {MSys.log('Cast Frenzy', 'white')}
+                MSys.debugMessage('Cast Frenzy')
                 send_command('frenzy')
                 return
                 
             } else if (!this.frenzy && this.useFrenzy && this.empyreal != 'Conqueror') {
-                if (get_variable('debug')) {MSys.log('Channel conqueror', 'white')}
+                MSys.debugMessage('Channel conqueror')
                 send_command('oblivion channel conqueror')
                 return
                 
             } else if (!this.negation && this.useNegation && this.empyreal != 'Progenitor') {
-                if (get_variable('debug')) {MSys.log('Channel Progenitor', 'white')}
+                MSys.debugMessage('Channel Progenitor')
                 send_command('oblivion channel progenitor')
                 return
                 
             //Abort execution of offensive actions if disabled
             } else if (!this.offenseEnabled || get_variable('tar') == '') {
-                if (get_variable('debug')) {MSys.log('No target or offense disabled', 'white')}
+                MSys.debugMessage('No target or offense disabled')
                 return
                 
             //Combat buffs
             } else if (!this.speedup && this.useSpeedup && this.empyreal != 'Traveller') {
-                if (get_variable('debug')) {MSys.log('Channel Traveller', 'white')}
+                MSys.debugMessage('Channel Traveller')
                 send_command('oblivion channel Traveller')
                 return
                 
             } else if (!this.speedup && this.useSpeedup && this.empyreal == 'Traveller') {
-                if (get_variable('debug')) {MSys.log('Cast Speedup', 'white')}
+                MSys.debugMessage('Cast Speedup')
                 send_command('speedup')
                 return
                 
             } else if (!this.pointZero && this.usePointZero) {
-                if (get_variable('debug')) {MSys.log('Point Zero', 'white')}
+                MSys.debugMessage('Point Zero')
                 send_command('void pointzero')
                 return
                 
-        \t} else if (!this.delaySwarm && this.useDelay) {
-                if (get_variable('debug')) {MSys.log('Delay Attack', 'white')}
+            } else if (!this.delaySwarm && this.useDelay) {
+                MSys.debugMessage('Delay Attack')
                 command =  'delay '
                 command += get_variable('delayAttack')
                 command += ' '
                 
             } else if (!this.multistrike && this.targetHealth > 40 && this.useMultistrike) {
-                if (get_variable('debug')) {MSys.log('Multistrike', 'white')}
+                MSys.debugMessage('Multistrike')
                 command = 'multistrike '
                 
             } else if (!this.freeze && this.useFreeze && this.targetHealth > 20 ) {
-                if (get_variable('debug')) {MSys.log('Freeze', 'white')}
+                MSys.debugMessage('Freeze')
                 command = 'freeze '
                 
             } else {
-                if (get_variable('debug')) {MSys.log('Default Attack', 'white')}
+                MSys.debugMessage('Default Attack')
                 command = this.attack + ' '
                 
             }
@@ -240,7 +257,7 @@ MSys = {
             
         //Fury
         } else if (this.class == 'Fury') {
-        \tvar command = 'combo '
+            command += 'combo '
             
             if (this.interrupt && this.offenseEnabled) {
                 send_command('kith fever ' + get_variable('tar'))
@@ -248,7 +265,7 @@ MSys = {
             }
             
             if (this.health / this.maxHealth < .8 && this.healReady  && this.useHeal) {
-            \tsend_command('kith suffuse')
+                send_command('kith suffuse')
                 return;
             }else if (!this.bladeshape && get_variable('kithbladeshape') !== undefined && get_variable('kithbladeshape') !== '') {
                 send_command(get_variable('kithbladeshape'))
@@ -267,7 +284,7 @@ MSys = {
                     if (this.hypertension) {
                         command += 'bloodburn '
                     } else {
-                    \tcommand += 'hypertension '
+                        command += 'hypertension '
                     }
                 } else if (this.stance == 'Ember') {
                     command += 'legspike '
@@ -278,9 +295,9 @@ MSys = {
                     command += 'slice '
                 } else if (this.stance == 'Symmetry') {
                     if (this.rage / this.maxRage > .13 && !this.berserk && this.useBerserk) {
-                    \tcommand += 'berserk '
+                        command += 'berserk '
                     } else {
-                    \tcommand += 'flyinglash '
+                        command += 'flyinglash '
                     }
                 } else if (this.stance == 'Flare') {
                     command += 'rend '
@@ -298,7 +315,7 @@ MSys = {
                     }
                 }
             }else if (this.goal == 'hunt2' && MSys.first_name != 'Oga') {
-            \t//Battleflow attack
+                //Battleflow attack
                 if (this.stance == 'Symmetry') {
                     command += 'swiftcut '
                 } else if (this.stance == 'Flare') {
@@ -312,9 +329,9 @@ MSys = {
                     command += 'slice '
                 } else if (this.stance == 'Symmetry') {
                     if (this.rage / this.maxRage > .13 && !this.berserk && this.useBerserk) {
-                    \tcommand += 'berserk '
+                        command += 'berserk '
                     } else {
-                    \tcommand += 'flyinglash '
+                        command += 'flyinglash '
                     }
                 } else if (this.stance == 'Flare') {
                     command += 'rend '
@@ -362,15 +379,14 @@ MSys = {
             
         //Scoundrel    
         }else if (this.class == 'Scoundrel') {
-            var command = ''
             
             if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
-            \tsend_command('stim')
+                send_command('stim')
                 return
             } else if (this.offenseEnabled == false || get_variable('tar') == '') {
                 return
             } else if (this.bullets == 0) {
-            \tcommand += 'ied fling ripper at '
+                command += 'ied fling ripper at '
             } else if (this.bullets == 1) {
                 command += 'gun crackshot '
             } else if (!this.ambush && this.useAmbush && this.bullets) {
@@ -385,10 +401,9 @@ MSys = {
             send_command(command)
         
         }else if (this.class == 'B.E.A.S.T.'){
-            var command = ''
             
             if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
-            \tsend_command('suit support')
+                send_command('suit support')
                 return
                 
             }else if (!this.backhand) {
@@ -405,45 +420,34 @@ MSys = {
         //Engineer
         }else if (this.class == 'Engineer'){
             if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
-                if (get_variable('debug')) {
-                    MSys.log('Activating stimjector',  'white')
-                }
-                
-            \tsend_command('operate stimjector')
+                MSys.debugMessage('Activating stimjector')
+                send_command('operate stimjector')
                 
             }else if (get_variable('tar') == '' || this.offenseEnabled == false) {
                 return;
                 
             }else if (!this.repeat && get_variable('useRepeat') && get_variable('repeatAttack') != '') {
-                if (get_variable('debug')) {
-                    MSys.log('Initiating repeat',  'white')
-                    MSys.log('Attempting command: ' + ('bot repeat ' + get_variable('repeatAttack') + ' ' + get_variable('tar')), 'white')
-                }
-                
-                send_command('bot repeat ' + get_variable('engineerRepeatAttack') + ' ' + get_variable('tar'))
-                
+                MSys.debugMessage('Initiating repeat')
+                command =  'bot repeat '
+                command += get_variable('engineerRepeatAttack')
+                command += ' '
+
             } else if (get_variable('useWorm') && this.targetHealth > 0.7 && !this.wormDeployed) {
-                if (get_variable('debug')) {
-                    MSys.log('Executing burrowbot worm attack',  'white')
-                }
-                
-                send_command('bot worm ' + get_variable('tar'))
-            
+                MSys.debugMessage('Executing burrowbot worm attack')
+                command = 'bot worm '
+
             } else if (get_variable('useRelease') && this.wormDeployed && this.targetHealth < 0.3) {
-                if (get_variable('debug')) {
-                    MSys.log('Releasing burrowbot',  'white')
-                }
-                
-                send_command('bot release')
-                
+                MSys.debugMessage('Releasing burrowbot')
+                command = 'bot release '
             }
             else {
-                if (get_variable('debug')) {
-                    MSys.log('Executing default engineer attack',  'white')
-                }
-                
-                send_command('bot claw ' + get_variable('tar'))
+                MSys.debugMessage('Executing default engineer attack')
+                command = 'bot claw '
             }
+            
+            MSys.debugMessage('Attempting command: ' + command) 
+            command += get_variable('tar')
+            send_command(command)
         }
     },
     disableGroup: function(name) {
@@ -3071,10 +3075,228 @@ MSys.log(abilities, 'white')"
             "items": [
                 {
                     "type": "group",
-                    "name": "Compatibility",
+                    "name": "Configuration",
                     "enabled": true,
                     "id": 171,
                     "items": [
+                        {
+                            "type": "alias",
+                            "name": "",
+                            "enabled": true,
+                            "id": 110,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "var abilities = ''
+abilities += 'Heal: ' + get_variable('useHeal') + '\\n'
+
+MSys.log(abilities, 'white')"
+                                }
+                            ],
+                            "text": "hbeast",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Resistance",
+                            "enabled": true,
+                            "id": 177,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('useResistance')) {
+\tset_variable('useResistance', false)
+    MSys.useResistance = false
+    MSys.log('Plasma Resistance Disabled', 'white')
+} else {
+\tset_variable('useResistance', true)
+    MSys.useResistance = true
+    MSys.log('Plasma Resistance Enabled', 'white')
+}"
+                                }
+                            ],
+                            "text": "hresistance"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Serrate",
+                            "enabled": true,
+                            "id": 178,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('useSerrate')) {
+\tset_variable('useSerrate', false)
+    MSys.useSerrate = false
+    MSys.log('Serrate Disabled', 'white')
+} else {
+\tset_variable('useSerrate', true)
+    MSys.useSerrate = true
+    MSys.log('Serrate Enabled', 'white')
+}"
+                                }
+                            ],
+                            "text": "hserrate"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Plasma Shield",
+                            "enabled": true,
+                            "id": 179,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('usePlasmaShield')) {
+\tset_variable('usePlasmaShield', false)
+    MSys.usePlasmaShield = false
+    MSys.log('Plasma Shield Disabled', 'white')
+} else {
+\tset_variable('usePlasmaShield', true)
+    MSys.usePlasmaShield = true
+    MSys.log('Plasma Shield Enabled', 'white')
+}"
+                                }
+                            ],
+                            "text": "hplasmashield"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Ramset",
+                            "enabled": true,
+                            "id": 180,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('useRamset')) {
+\tset_variable('useRamset', false)
+    MSys.useRamset = false
+    MSys.log('Ramset Disabled', 'white')
+} else {
+\tset_variable('useRamset', true)
+    MSys.useRamset = true
+    MSys.log('Ramset Enabled', 'white')
+}"
+                                }
+                            ],
+                            "text": "hramset"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Dampening",
+                            "enabled": true,
+                            "id": 181,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('useDampening')) {
+\tset_variable('useDampening', false)
+    MSys.useDampening = false
+    MSys.log('Dampening Disabled', 'white')
+} else {
+\tset_variable('useDampening', true)
+    MSys.useDampening = true
+    MSys.log('Dampening Enabled', 'white')
+}"
+                                }
+                            ],
+                            "text": "hdampening"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Jamming",
+                            "enabled": true,
+                            "id": 182,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('useJamming')) {
+\tset_variable('useJamming', false)
+    MSys.useJamming = false
+    MSys.log('Jamming Disabled', 'white')
+} else {
+\tset_variable('useJamming', true)
+    MSys.useJamming = true
+    MSys.log('Jamming Enabled', 'white')
+}"
+                                }
+                            ],
+                            "text": "hjamming"
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Shortcuts",
+                    "enabled": true,
+                    "id": 175,
+                    "items": [
+                        {
+                            "type": "alias",
+                            "name": "Suit Contingency",
+                            "enabled": true,
+                            "id": 104,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "suit contingency",
+                                    "prefix_suffix": true
+                                }
+                            ],
+                            "text": "con",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Overclock",
+                            "enabled": true,
+                            "id": 105,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "suit overclock",
+                                    "prefix_suffix": true
+                                }
+                            ],
+                            "text": "oc",
+                            "items": []
+                        },
                         {
                             "type": "alias",
                             "name": "Heal",
@@ -3116,65 +3338,152 @@ MSys.log(abilities, 'white')"
                 },
                 {
                     "type": "group",
-                    "name": "Plasma Management",
+                    "name": "Ability Activations",
                     "enabled": true,
                     "id": 170,
-                    "items": [],
-                    "actions": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Backhand Used",
-                    "enabled": true,
-                    "id": 103,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "^You overdrive your suit's movement circuits, delivering a vicious backhanded blow.*",
-                    "actions": [
+                    "items": [
                         {
-                            "action": "script",
-                            "script": "MSys.backhand = true
+                            "type": "trigger",
+                            "name": "Plasma Resistance Active",
+                            "enabled": true,
+                            "id": 183,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You deploy extra heat sinks|^Your extra heat sinks are already",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.resistance = true
 MSys.huntingAttack()"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Support Used",
-                    "enabled": true,
-                    "id": 107,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "^You activate your suit's emergency life support system.*$",
-                    "actions": [
+                                }
+                            ]
+                        },
                         {
-                            "action": "script",
-                            "script": "MSys.healReady = false"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Support Ready",
-                    "enabled": true,
-                    "id": 108,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "Your HUD indicates that you may use your life support system once again.",
-                    "actions": [
+                            "type": "trigger",
+                            "name": "Serrate Active",
+                            "enabled": true,
+                            "id": 184,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You rotate your wristblade|^You're already using",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.serrate = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
                         {
-                            "action": "script",
-                            "script": "MSys.healReady = true
+                            "type": "trigger",
+                            "name": "Ramset Active",
+                            "enabled": true,
+                            "id": 185,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You key in a command and feel a thud|^You're already employing",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.ramset = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Dampening Active",
+                            "enabled": true,
+                            "id": 186,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You activate your|^You're already util",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.dampening = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Jamming Active",
+                            "enabled": true,
+                            "id": 187,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You engage your radar jamming|^You are already jamming",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.jamming = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Backhand Used",
+                            "enabled": true,
+                            "id": 103,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "^You overdrive your suit's movement circuits, delivering a vicious backhanded blow.*",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.backhand = true
+MSys.huntingAttack()"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Support Used",
+                            "enabled": true,
+                            "id": 107,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "^You activate your suit's emergency life support system.*$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.healReady = false
+MSys.huntingAttack()"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Support Ready",
+                            "enabled": true,
+                            "id": 108,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "Your HUD indicates that you may use your life support system once again.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.healReady = true
 MSys.log('Heal ready', 'blue')
 MSys.huntingAttack()"
+                                }
+                            ],
+                            "items": []
                         }
                     ],
-                    "items": []
+                    "actions": []
                 },
                 {
                     "type": "trigger",
@@ -3184,7 +3493,7 @@ MSys.huntingAttack()"
                     "matching": "regexp",
                     "whole_words": true,
                     "case_sensitive": true,
-                    "text": "^With servo-assisted might, you drive your wristblade.*$|^You activate your suit's emergency life support system.*$",
+                    "text": "^With servo-assisted might, you drive your wristblade.*$",
                     "actions": [
                         {
                             "action": "script",
@@ -3195,62 +3504,15 @@ MSys.huntingAttack()"
                 },
                 {
                     "type": "alias",
-                    "name": "Suit Contingency",
+                    "name": "Wakeup BEAST",
                     "enabled": true,
-                    "id": 104,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "command",
-                            "command": "suit contingency",
-                            "prefix_suffix": true
-                        }
-                    ],
-                    "text": "con",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Overclock",
-                    "enabled": true,
-                    "id": 105,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "command",
-                            "command": "suit overclock",
-                            "prefix_suffix": true
-                        }
-                    ],
-                    "text": "oc",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "",
-                    "enabled": true,
-                    "id": 110,
+                    "id": 176,
                     "matching": "exact",
                     "whole_words": true,
-                    "case_sensitive": true,
+                    "case_sensitive": false,
                     "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "var abilities = ''
-abilities += 'Heal: ' + get_variable('useHeal') + '\\n'
-
-MSys.log(abilities, 'white')"
-                        }
-                    ],
-                    "text": "hbeast",
-                    "items": []
+                    "actions": [],
+                    "text": "wakeup"
                 }
             ],
             "actions": []
