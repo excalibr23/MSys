@@ -15,6 +15,61 @@
 // Place any code here you'd like to autorun when the system is loaded
 send_command('wakeup')
 SBCI = {
+// Core Implant Code
+    noticecolor: 'gold',
+    packagename: 'starwraith beast combat implant',
+    shortname: 'SBCI',
+    notice: function(text) {
+        display_notice(\"[\" + this.shortname + \"] \" + text, this.noticecolor);
+    },
+    loaded: function() {
+        //Send implant to browser log for debugging
+\t\tconsole.log(this)
+\t\tthis.notice(\"Starwraith B.E.A.S.T. Combat Implant v1.0 Loaded. Good hunting, and good death.\\n\");
+    },
+    helpbox: function(title,text) {
+        var helptext = \"<div class=\\\"mono\\\"><span style=\\\"color: #ffffff; \\\"><span style=\\\"background-color: #0000a0 \\\">\" + title + \"</span></span></div>\";
+        helptext += \"<div class=\\\"mono\\\">\" + text.replace(\"\\n\",\"</div><div class=\\\"mono\\\">\") + \"</div>\";
+        client.display_help_window(helptext);
+\t},
+    disableGroup: function(name) {
+        var group = reflex_find_by_name('group', name, false, false, this.packagename)
+        reflex_disable(group)
+    },
+    enableGroup: function(name) {
+        var group = reflex_find_by_name('group', name, false, false, this.packagename)
+        reflex_enable(group)
+    },
+    log: function (x, fgcolor, bgcolor) {
+        let type = typeof x
+        switch(type) {
+          case 'number':
+          case 'string':
+          case 'boolean':
+            display_notice(x.toString(), fgcolor, bgcolor)
+            break;
+          case 'object':
+            for (var prop in x) {
+              display_notice(`${prop}: ${x[prop]}`, fgcolor, bgcolor)
+            }
+            break;
+          case 'undefined':
+            display_notice('undefined', fgcolor, bgcolor)
+            break;
+          default:
+            display_notice('wtf is this')
+        }
+    },
+    alert: function (text, fgcolor, bgcolor) {
+        text = text.toUpperCase()
+        let fullText = '-'.repeat(text.length+1) + '-------\\n--  '+ text + '  --\\n-------' + '-'.repeat(text.length+1)
+        display_notice(fullText, fgcolor, bgcolor)
+    },
+    debugMessage: function (text) {
+        if (get_variable('debug')) {
+            this.log(text, 'white', 'black')
+        }
+    },
 //System Variables
     goal: 'hunt2',
     matchList: get_variable('matchList'),
@@ -87,39 +142,7 @@ SBCI = {
     parts: 0,
     repeat: true,
     wormDeployed: false,
-    
-//Functions
-    log: function (x, fgcolor, bgcolor) {
-        let type = typeof x
-        switch(type) {
-          case 'number':
-          case 'string':
-          case 'boolean':
-            display_notice(x.toString(), fgcolor, bgcolor)
-            break;
-          case 'object':
-            for (var prop in x) {
-              display_notice(`${prop}: ${x[prop]}`, fgcolor, bgcolor)
-            }
-            break;
-          case 'undefined':
-            display_notice('undefined', fgcolor, bgcolor)
-            break;
-          default:
-            display_notice('wtf is this')
-        }
-    },
-    alert: function (text, fgcolor, bgcolor) {
-        text = text.toUpperCase()
-        let fullText = '-'.repeat(text.length+1) + '-------\\n--  '+ text + '  --\\n-------' + '-'.repeat(text.length+1)
-        
-        display_notice(fullText, fgcolor, bgcolor)
-    },
-    debugMessage: function (text) {
-        if (get_variable('debug')) {
-            this.log(text, 'white', 'black')
-        }
-    },
+//Combat functions 
     findTarget: function() {
         var itemList = this.itemsInRoom
         var killList = get_variable('killList')
@@ -165,7 +188,7 @@ SBCI = {
             
             //Self heal
             if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
-                SBCI.debugMessage('Nano repair')
+                this.debugMessage('Nano repair')
                 send_command('nano repair')
                 return
                 
@@ -174,62 +197,62 @@ SBCI = {
             //immediately if already channeling one of the required empyreals
             //This prevents unnecessary swapping of empyreal channels after combat
             } else if (!this.negation && this.useNegation && this.empyreal == 'Progenitor') {
-                SBCI.debugMessage('Cast Negation')
+                this.debugMessage('Cast Negation')
                 send_command('negation')
                 return
                 
             } else if (!this.frenzy && this.useFrenzy && this.empyreal == 'Conqueror') {
-                SBCI.debugMessage('Cast Frenzy')
+                this.debugMessage('Cast Frenzy')
                 send_command('frenzy')
                 return
                 
             } else if (!this.frenzy && this.useFrenzy && this.empyreal != 'Conqueror') {
-                SBCI.debugMessage('Channel conqueror')
+                this.debugMessage('Channel conqueror')
                 send_command('oblivion channel conqueror')
                 return
                 
             } else if (!this.negation && this.useNegation && this.empyreal != 'Progenitor') {
-                SBCI.debugMessage('Channel Progenitor')
+                this.debugMessage('Channel Progenitor')
                 send_command('oblivion channel progenitor')
                 return
                 
             //Abort execution of offensive actions if disabled
             } else if (!this.offenseEnabled || get_variable('tar') == '') {
-                SBCI.debugMessage('No target or offense disabled')
+                this.debugMessage('No target or offense disabled')
                 return
                 
             //Combat buffs
             } else if (!this.speedup && this.useSpeedup && this.empyreal != 'Traveller') {
-                SBCI.debugMessage('Channel Traveller')
+                this.debugMessage('Channel Traveller')
                 send_command('oblivion channel Traveller')
                 return
                 
             } else if (!this.speedup && this.useSpeedup && this.empyreal == 'Traveller') {
-                SBCI.debugMessage('Cast Speedup')
+                this.debugMessage('Cast Speedup')
                 send_command('speedup')
                 return
                 
             } else if (!this.pointZero && this.usePointZero) {
-                SBCI.debugMessage('Point Zero')
+                this.debugMessage('Point Zero')
                 send_command('void pointzero')
                 return
                 
             } else if (!this.delaySwarm && this.useDelay) {
-                SBCI.debugMessage('Delay Attack')
+                this.debugMessage('Delay Attack')
                 command =  'delay '
                 command += get_variable('delayAttack')
                 command += ' '
                 
             } else if (!this.multistrike && this.targetHealth > 40 && this.useMultistrike) {
-                SBCI.debugMessage('Multistrike')
+                this.debugMessage('Multistrike')
                 command = 'multistrike '
                 
             } else if (!this.freeze && this.useFreeze && this.targetHealth > 20 ) {
-                SBCI.debugMessage('Freeze')
+                this.debugMessage('Freeze')
                 command = 'freeze '
                 
             } else {
-                SBCI.debugMessage('Default Attack')
+                this.debugMessage('Default Attack')
                 command = this.attack + ' '
                 
             }
@@ -296,7 +319,7 @@ SBCI = {
                         command += 'strike '
                     }
                 }
-            }else if (this.goal == 'hunt2' && SBCI.first_name != 'Oga') {
+            }else if (this.goal == 'hunt2') {
                 //Battleflow attack
                 if (this.stance == 'Symmetry') {
                     command += 'swiftcut '
@@ -324,7 +347,7 @@ SBCI = {
                         command += 'strike '
                     }
                 }
-            }else if (SBCI.first_name == 'Oga') {
+            }else if (this.goal == 'hunt2') {
                 var next = ''
                 command = 'combo '
                 
@@ -398,7 +421,7 @@ SBCI = {
                 message  = 'Aggressive actions are disabled\\n'
                 message += 'Offense Enabled: ' + this.offenseEnabled + '\\n'
                 message += 'Target Variable: ' + get_variable('tar') + '\\n'
-                SBCI.debugMessage(message)
+                this.debugMessage(message)
                 return
                 
             } else if (!this.backhand) { command += 'suit backhand '
@@ -407,57 +430,46 @@ SBCI = {
             
             if (command[command.length - 1] == ' ') {command += get_variable('tar')}
             
-            SBCI.debugMessage('Executing command: \"' + command + '\"')
+            this.debugMessage('Executing command: \"' + command + '\"')
             send_command(command)
             return
             
         //Engineer
         }else if (this.class == 'Engineer'){
             if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
-                SBCI.debugMessage('Activating stimjector')
+                this.debugMessage('Activating stimjector')
                 send_command('operate stimjector')
                 
             }else if (get_variable('tar') == '' || this.offenseEnabled == false) {
                 return;
                 
             }else if (!this.repeat && get_variable('useRepeat') && get_variable('repeatAttack') != '') {
-                SBCI.debugMessage('Initiating repeat')
+                this.debugMessage('Initiating repeat')
                 command =  'bot repeat '
                 command += get_variable('engineerRepeatAttack')
                 command += ' '
 
             } else if (get_variable('useWorm') && this.targetHealth > 0.7 && !this.wormDeployed) {
-                SBCI.debugMessage('Executing burrowbot worm attack')
+                this.debugMessage('Executing burrowbot worm attack')
                 command = 'bot worm '
 
             } else if (get_variable('useRelease') && this.wormDeployed && this.targetHealth < 0.3) {
-                SBCI.debugMessage('Releasing burrowbot')
+                this.debugMessage('Releasing burrowbot')
                 command = 'bot release '
             }
             else {
-                SBCI.debugMessage('Executing default engineer attack')
+                this.debugMessage('Executing default engineer attack')
                 command = 'bot claw '
             }
             
-            SBCI.debugMessage('Attempting command: ' + command) 
+            this.debugMessage('Attempting command: ' + command) 
             command += get_variable('tar')
             send_command(command)
         }
-    },
-    disableGroup: function(name) {
-        var group = reflex_find_by_name('group', name, false, false, 'SBCI')
-        reflex_disable(group)
-    },
-    enableGroup: function(name) {
-        var group = reflex_find_by_name('group', name, false, false, 'SBCI')
-        reflex_enable(group)
     }
 }
 
-//Send SBCI to browser log for debugging
-console.log(SBCI)
-
-SBCI.alert('Starwraith Combat Package Loaded. Good hunting.', 'gold')",
+SBCI.loaded();",
             "items": []
         },
         {
@@ -803,6 +815,7 @@ if (args[1]) {
 
 if (SBCI.systemEnabled === true && onList) {
     SBCI.targetHealth = 0
+    send_command('clearqueue')
 \tSBCI.findTarget()
 
     if (SBCI.class == 'Engineer' && get_variable('useQPCBoost')) {
@@ -2338,7 +2351,7 @@ SBCI.huntingAttack()"
         {
             "type": "group",
             "name": "Fury",
-            "enabled": false,
+            "enabled": true,
             "id": 69,
             "items": [
                 {
@@ -3055,7 +3068,7 @@ SBCI.log(abilities, 'white')"
         {
             "type": "group",
             "name": "B.E.A.S.T.",
-            "enabled": true,
+            "enabled": false,
             "id": 102,
             "items": [
                 {

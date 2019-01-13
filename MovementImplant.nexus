@@ -785,6 +785,38 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "command": "TAKEOFF LIST"
                         }
                     ]
+                },
+                {
+                    "type": "trigger",
+                    "name": "Autoexit Elevator",
+                    "enabled": true,
+                    "id": 57,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "The lift comes to a complete stop, a ping echoing from the control interface. You can now EXIT LIFT.",
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "EXIT LIFT"
+                        }
+                    ]
+                },
+                {
+                    "type": "trigger",
+                    "name": "Autoshow Transfer List",
+                    "enabled": true,
+                    "id": 59,
+                    "matching": "substring",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You can board a transport craft here, check TAKEOFF LIST.",
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "TRANSFER LIST"
+                        }
+                    ]
                 }
             ],
             "actions": []
