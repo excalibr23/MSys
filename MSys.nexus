@@ -401,21 +401,33 @@ MSys = {
             send_command(command)
         
         }else if (this.class == 'B.E.A.S.T.'){
+            command = ''
             
             if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
-                send_command('suit support')
+                command += 'suit support'
+                
+            } else if (!this.resistance   && this.useResistance)    { command += 'plasma resistance'
+\t\t\t} else if (!this.serrate      && this.useSerrate)       { command += 'mwp serrate'
+\t\t\t} else if (!this.plasmaShield && this.usePlasmaShield)  { command += 'plasma shield'
+\t\t\t} else if (!this.ramset       && this.useRamset)        { command += 'suit ramset'
+\t\t\t} else if (!this.dampening    && this.useDampening)     { command += 'suit dampening'
+\t\t\t} else if (!this.jamming      && this.useJamming)       { command += 'suit jamming'
+            } else if (!this.offenseEnabled || get_variable('tar') == '') {
+                message  = 'Aggressive actions are disabled\\n'
+                message += 'Offense Enabled: ' + this.offenseEnabled + '\\n'
+                message += 'Target Variable: ' + get_variable('tar') + '\\n'
+                MSys.debugMessage(message)
                 return
                 
-            }else if (!this.backhand) {
-                command += 'suit backhand '
-                
-            }else {
-                command += 'mwp wristblade '
-                this.backhand = false
+            } else if (!this.backhand) { command += 'suit backhand '
+            } else { command += 'mwp wristblade '
             }
             
-            command += get_variable('tar')
+            if (command[command.length - 1] == ' ') {command += get_variable('tar')}
+            
+            MSys.debugMessage('Executing command: \"' + command + '\"')
             send_command(command)
+            return
             
         //Engineer
         }else if (this.class == 'Engineer'){
@@ -597,15 +609,6 @@ if (args.gmcp_method == \"IRE.Target.Info\") {
 if (args.gmcp_method == \"Char.Vitals\" && MSys.class == 'B.E.A.S.T.') {
     MSys.plasma = args.gmcp_args.pl
     MSys.maxPlasma = args.gmcp_args.maxpl
-    return
-    
-    var message = ''
-    message += 'Plasma: '
-    message += MSys.plasma
-    message += '\\nLevel: '
-    message += args.gmcp_args.formatpl
-    
-    MSys.log(message, 'orange')
 }",
             "items": []
         },
@@ -3093,6 +3096,18 @@ MSys.log(abilities, 'white')"
                                     "action": "script",
                                     "script": "var abilities = ''
 abilities += 'Heal: ' + get_variable('useHeal') + '\\n'
+abilities += 'useResistance:   ' + get_variable('useResistance') + '\\n'
+abilities += 'useSerrate:      ' + get_variable('useSerrate') + '\\n'
+abilities += 'usePlasmaShield: ' + get_variable('usePlasmaShield') + '\\n'
+abilities += 'useRamset:       ' + get_variable('useRamset') + '\\n'
+abilities += 'useDampening:    ' + get_variable('useDampening') + '\\n'
+abilities += 'useJamming:      ' + get_variable('useJamming') + '\\n'
+abilities += 'resistance:   ' + MSys.resistance + '\\n'
+abilities += 'serrate:      ' + MSys.serrate + '\\n'
+abilities += 'plasmaShield: ' + MSys.plasmaShield + '\\n'
+abilities += 'ramset:       ' + MSys.ramset + '\\n'
+abilities += 'dampening:    ' + MSys.dampening + '\\n'
+abilities += 'jamming:      ' + MSys.jamming + '\\n'
 
 MSys.log(abilities, 'white')"
                                 }
@@ -3401,7 +3416,7 @@ MSys.huntingAttack()"
                             "matching": "regexp",
                             "whole_words": false,
                             "case_sensitive": false,
-                            "text": "^You activate your|^You're already util",
+                            "text": "^You activate your B\\.E\\.A\\.S\\.T\\.'s EM shielding protocol\\.$|^You're already utili.ing measures to mitigate EM attacks\\.$",
                             "actions": [
                                 {
                                     "action": "script",
@@ -3476,8 +3491,14 @@ MSys.huntingAttack()"
                                 {
                                     "action": "script",
                                     "script": "MSys.healReady = true
-MSys.log('Heal ready', 'blue')
 MSys.huntingAttack()"
+                                },
+                                {
+                                    "action": "highlight",
+                                    "highlight": "line",
+                                    "highlight_backref": "1",
+                                    "highlight_fg": "#6dd4e1",
+                                    "highlight_bg": "#000000"
                                 }
                             ],
                             "items": []
@@ -3511,7 +3532,13 @@ MSys.huntingAttack()"
                     "whole_words": true,
                     "case_sensitive": false,
                     "prefix_suffix": true,
-                    "actions": [],
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "plasma heatup on",
+                            "prefix_suffix": true
+                        }
+                    ],
                     "text": "wakeup"
                 }
             ],
