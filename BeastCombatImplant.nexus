@@ -9,30 +9,12 @@
             "name": "onLoad",
             "enabled": true,
             "id": 2,
-            "code": "// Place any code here you'd like to autorun when the system is loaded
-// Changelog
-// 20190109--------: Add interrupt support for fury
-// 20190109--------: Cancel inferno if mob enters, fix inferno casting, add some QOL station transfer triggers
-// 20190106T0128EST: Added 'wakeup' command to onLoad to run personal defense ability setups
-// 20190106T0128EST: Modified hunting attack for Fury to exit if target is missing, but after suffuse and bladeshape buffs
-// 20190106T0128EST: Removed suffuse from queue attack trigger
-// 20190106T0128EST: Added queue attack to \"Heal Used\" trigger if auto is set to ensure attack occurs after variables being set
-// 20190106T0128EST: Added queue attack after \"Heal Ready\" to provide heal outside of combat
-// 20190106T0153EST: Removed empty target check from slain trigger to avoid incidentally disabled reflexes resulting in combat script being stuck
-// 20190106T0631EST: Changed launch banner, inverted colors, changed to Mindsim combat implant, and manually padded dashes
-// 20190106T0631EST: Modified heal ready highlight
-// 20190107T0550EST: Added reflexOn logic to healing triggers
-// 20190107T----EST: Added engineer configurations
-// 20190107T----EST: Set up engineer burrowbot functions
-// 20190107T----EST: Added utility scripts to build and deploy turrets
-// 20190107T----EST: Yes I know using waits suck, blow me. It's not an active combat feature
-// 20190107T----EST: Added engineer repeat attacks
-// 20190107T----EST: Incorporated recurring airdrops to fully refill parts
-// 20190109T1708EST: Rebranded as Starwraith Combat Package
-// 20190111T1419SAST: Added Oga-specific switches.
+            "code": "// Changelog
+// 20190113T1119EST: Added Oga-specific switches.
 
+// Place any code here you'd like to autorun when the system is loaded
 send_command('wakeup')
-MSys = {
+SBCI = {
 //System Variables
     goal: 'hunt2',
     matchList: get_variable('matchList'),
@@ -183,7 +165,7 @@ MSys = {
             
             //Self heal
             if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
-                MSys.debugMessage('Nano repair')
+                SBCI.debugMessage('Nano repair')
                 send_command('nano repair')
                 return
                 
@@ -192,62 +174,62 @@ MSys = {
             //immediately if already channeling one of the required empyreals
             //This prevents unnecessary swapping of empyreal channels after combat
             } else if (!this.negation && this.useNegation && this.empyreal == 'Progenitor') {
-                MSys.debugMessage('Cast Negation')
+                SBCI.debugMessage('Cast Negation')
                 send_command('negation')
                 return
                 
             } else if (!this.frenzy && this.useFrenzy && this.empyreal == 'Conqueror') {
-                MSys.debugMessage('Cast Frenzy')
+                SBCI.debugMessage('Cast Frenzy')
                 send_command('frenzy')
                 return
                 
             } else if (!this.frenzy && this.useFrenzy && this.empyreal != 'Conqueror') {
-                MSys.debugMessage('Channel conqueror')
+                SBCI.debugMessage('Channel conqueror')
                 send_command('oblivion channel conqueror')
                 return
                 
             } else if (!this.negation && this.useNegation && this.empyreal != 'Progenitor') {
-                MSys.debugMessage('Channel Progenitor')
+                SBCI.debugMessage('Channel Progenitor')
                 send_command('oblivion channel progenitor')
                 return
                 
             //Abort execution of offensive actions if disabled
             } else if (!this.offenseEnabled || get_variable('tar') == '') {
-                MSys.debugMessage('No target or offense disabled')
+                SBCI.debugMessage('No target or offense disabled')
                 return
                 
             //Combat buffs
             } else if (!this.speedup && this.useSpeedup && this.empyreal != 'Traveller') {
-                MSys.debugMessage('Channel Traveller')
+                SBCI.debugMessage('Channel Traveller')
                 send_command('oblivion channel Traveller')
                 return
                 
             } else if (!this.speedup && this.useSpeedup && this.empyreal == 'Traveller') {
-                MSys.debugMessage('Cast Speedup')
+                SBCI.debugMessage('Cast Speedup')
                 send_command('speedup')
                 return
                 
             } else if (!this.pointZero && this.usePointZero) {
-                MSys.debugMessage('Point Zero')
+                SBCI.debugMessage('Point Zero')
                 send_command('void pointzero')
                 return
                 
             } else if (!this.delaySwarm && this.useDelay) {
-                MSys.debugMessage('Delay Attack')
+                SBCI.debugMessage('Delay Attack')
                 command =  'delay '
                 command += get_variable('delayAttack')
                 command += ' '
                 
             } else if (!this.multistrike && this.targetHealth > 40 && this.useMultistrike) {
-                MSys.debugMessage('Multistrike')
+                SBCI.debugMessage('Multistrike')
                 command = 'multistrike '
                 
             } else if (!this.freeze && this.useFreeze && this.targetHealth > 20 ) {
-                MSys.debugMessage('Freeze')
+                SBCI.debugMessage('Freeze')
                 command = 'freeze '
                 
             } else {
-                MSys.debugMessage('Default Attack')
+                SBCI.debugMessage('Default Attack')
                 command = this.attack + ' '
                 
             }
@@ -314,7 +296,7 @@ MSys = {
                         command += 'strike '
                     }
                 }
-            }else if (this.goal == 'hunt2' && MSys.first_name != 'Oga') {
+            }else if (this.goal == 'hunt2' && SBCI.first_name != 'Oga') {
                 //Battleflow attack
                 if (this.stance == 'Symmetry') {
                     command += 'swiftcut '
@@ -342,7 +324,7 @@ MSys = {
                         command += 'strike '
                     }
                 }
-            }else if (MSys.first_name == 'Oga') {
+            }else if (SBCI.first_name == 'Oga') {
                 var next = ''
                 command = 'combo '
                 
@@ -416,7 +398,7 @@ MSys = {
                 message  = 'Aggressive actions are disabled\\n'
                 message += 'Offense Enabled: ' + this.offenseEnabled + '\\n'
                 message += 'Target Variable: ' + get_variable('tar') + '\\n'
-                MSys.debugMessage(message)
+                SBCI.debugMessage(message)
                 return
                 
             } else if (!this.backhand) { command += 'suit backhand '
@@ -425,57 +407,57 @@ MSys = {
             
             if (command[command.length - 1] == ' ') {command += get_variable('tar')}
             
-            MSys.debugMessage('Executing command: \"' + command + '\"')
+            SBCI.debugMessage('Executing command: \"' + command + '\"')
             send_command(command)
             return
             
         //Engineer
         }else if (this.class == 'Engineer'){
             if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
-                MSys.debugMessage('Activating stimjector')
+                SBCI.debugMessage('Activating stimjector')
                 send_command('operate stimjector')
                 
             }else if (get_variable('tar') == '' || this.offenseEnabled == false) {
                 return;
                 
             }else if (!this.repeat && get_variable('useRepeat') && get_variable('repeatAttack') != '') {
-                MSys.debugMessage('Initiating repeat')
+                SBCI.debugMessage('Initiating repeat')
                 command =  'bot repeat '
                 command += get_variable('engineerRepeatAttack')
                 command += ' '
 
             } else if (get_variable('useWorm') && this.targetHealth > 0.7 && !this.wormDeployed) {
-                MSys.debugMessage('Executing burrowbot worm attack')
+                SBCI.debugMessage('Executing burrowbot worm attack')
                 command = 'bot worm '
 
             } else if (get_variable('useRelease') && this.wormDeployed && this.targetHealth < 0.3) {
-                MSys.debugMessage('Releasing burrowbot')
+                SBCI.debugMessage('Releasing burrowbot')
                 command = 'bot release '
             }
             else {
-                MSys.debugMessage('Executing default engineer attack')
+                SBCI.debugMessage('Executing default engineer attack')
                 command = 'bot claw '
             }
             
-            MSys.debugMessage('Attempting command: ' + command) 
+            SBCI.debugMessage('Attempting command: ' + command) 
             command += get_variable('tar')
             send_command(command)
         }
     },
     disableGroup: function(name) {
-        var group = reflex_find_by_name('group', name, false, false, 'MSys')
+        var group = reflex_find_by_name('group', name, false, false, 'SBCI')
         reflex_disable(group)
     },
     enableGroup: function(name) {
-        var group = reflex_find_by_name('group', name, false, false, 'MSys')
+        var group = reflex_find_by_name('group', name, false, false, 'SBCI')
         reflex_enable(group)
     }
 }
 
-//Send MSys to browser log for debugging
-console.log(MSys)
+//Send SBCI to browser log for debugging
+console.log(SBCI)
 
-MSys.alert('Starwraith Combat Package Loaded. Good hunting.', 'gold')",
+SBCI.alert('Starwraith Combat Package Loaded. Good hunting.', 'gold')",
             "items": []
         },
         {
@@ -492,44 +474,44 @@ GMCP[args.gmcp_method] = args.gmcp_args
 
 // Seen when doing score
 if (args.gmcp_method == \"Char.Status\" && args.gmcp_args.first_name) {
-    MSys.first_name = args.gmcp_args.first_name;
+    SBCI.first_name = args.gmcp_args.first_name;
 }
 
 if (args.gmcp_method == \"Char.Vitals\") {
 
     // Track health changes
-    var change = MSys.health - args.gmcp_args.hp;
+    var change = SBCI.health - args.gmcp_args.hp;
    
     if (change > 0) {
-    \tMSys.log('Damage taken: ' + change, 'yellow')
+    \tSBCI.log('Damage taken: ' + change, 'yellow')
     } else if (change < 0) {
-        MSys.log('Damage healed: ' + Math.abs(change), '#6bdaee')
+        SBCI.log('Damage healed: ' + Math.abs(change), '#6bdaee')
     }
     
-    MSys.health = args.gmcp_args.hp
-    MSys.maxHealth = args.gmcp_args.maxhp
+    SBCI.health = args.gmcp_args.hp
+    SBCI.maxHealth = args.gmcp_args.maxhp
 
     // Check class
-    if (!MSys.class || MSys.class != args.gmcp_args.class) {
-        MSys.class = args.gmcp_args.class
+    if (!SBCI.class || SBCI.class != args.gmcp_args.class) {
+        SBCI.class = args.gmcp_args.class
         
-        MSys.disableGroup('Fury')
-        MSys.disableGroup('Nanoseer')
-        MSys.disableGroup('Scoundrel')
-        MSys.disableGroup('B.E.A.S.T.')
-        MSys.disableGroup('Engineer')
+        SBCI.disableGroup('Fury')
+        SBCI.disableGroup('Nanoseer')
+        SBCI.disableGroup('Scoundrel')
+        SBCI.disableGroup('B.E.A.S.T.')
+        SBCI.disableGroup('Engineer')
         
-        MSys.enableGroup(MSys.class)
+        SBCI.enableGroup(SBCI.class)
     }
  
-    if (MSys.class === 'Fury') {
-        MSys.stance = args.gmcp_args.st
-        MSys.rage = args.gmcp_args.rg
-        MSys.maxRage = args.gmcp_args.maxrg
-    } else if (MSys.class === 'Scoundrel') {
-        MSys.bullets = args.gmcp_args.bl
-    } else if (MSys.class == 'Engineer') {
-        MSys.parts = args.gmcp_args.pt
+    if (SBCI.class === 'Fury') {
+        SBCI.stance = args.gmcp_args.st
+        SBCI.rage = args.gmcp_args.rg
+        SBCI.maxRage = args.gmcp_args.maxrg
+    } else if (SBCI.class === 'Scoundrel') {
+        SBCI.bullets = args.gmcp_args.bl
+    } else if (SBCI.class == 'Engineer') {
+        SBCI.parts = args.gmcp_args.pt
     }
 }
 
@@ -539,15 +521,15 @@ if (args.gmcp_method == 'Char.Defences.Add') {
     
     //Fury
     if (args.gmcp_args.name == 'Oblivion: Conqueror')  {
-        MSys.empyreal = 'Conqueror'
+        SBCI.empyreal = 'Conqueror'
     } else if (args.gmcp_args.name == 'Oblivion: Traveller')  {
-        MSys.empyreal = 'Traveller'
+        SBCI.empyreal = 'Traveller'
     } else if (args.gmcp_args.name == 'Oblivion: Architect')  {
-        MSys.empyreal = 'Architect'
+        SBCI.empyreal = 'Architect'
     } else if (args.gmcp_args.name == 'Oblivion: Progenitor') {
-        MSys.empyreal = 'Progenitor'
+        SBCI.empyreal = 'Progenitor'
     } else if (args.gmcp_args.name == 'Oblivion: Sunderer')   {
-        MSys.empyreal = 'Sunderer'
+        SBCI.empyreal = 'Sunderer'
     }
 }
 
@@ -555,7 +537,7 @@ if (args.gmcp_method == 'Char.Defences.Add') {
 
 //Get Items In Room
 if (args.gmcp_method == \"Char.Items.List\") {
-    MSys.itemsInRoom = args.gmcp_args['items']
+    SBCI.itemsInRoom = args.gmcp_args['items']
 }
 
 //Remove items when items leave
@@ -563,7 +545,7 @@ if (args.gmcp_method == \"Char.Items.Remove\") {
     let itemLeaving = args.gmcp_args['item']
     
     //Find index of item
-    MSys.itemsInRoom = MSys.itemsInRoom.filter(item => item.id !== itemLeaving.id);
+    SBCI.itemsInRoom = SBCI.itemsInRoom.filter(item => item.id !== itemLeaving.id);
     
 }
 
@@ -572,43 +554,43 @@ if (args.gmcp_method == \"Char.Items.Add\") {
     let itemJoining = args.gmcp_args['item']
     
     //Find index of item
-    MSys.itemsInRoom.push(itemJoining);
+    SBCI.itemsInRoom.push(itemJoining);
     
-    if (MSys.systemEnabled === true) {
+    if (SBCI.systemEnabled === true) {
     \tif (!get_variable('tar')) {
-        \tMSys.findTarget()
+        \tSBCI.findTarget()
         }
     }
     
-    if (MSys.infernoCharging && itemJoining.attrib === 'm') {
+    if (SBCI.infernoCharging && itemJoining.attrib === 'm') {
     \tsend_command('asdf')
-        MSys.infernoCharging = false
-        MSys.alert('mob entered - inferno cancelled', 'white', 'red')
+        SBCI.infernoCharging = false
+        SBCI.alert('mob entered - inferno cancelled', 'white', 'red')
     }
 }
 
 /* -------------------------------------------- PLAYERS IN ROOM ----------------------------------- */
 if (args.gmcp_method == \"Room.Players\") {
-    MSys.playersInRoom = args.gmcp_args
+    SBCI.playersInRoom = args.gmcp_args
 }
 
 /* --------------------------------------------- HELPERS --------------------------------- */
 if (args.gmcp_method == \"Room.Info\") {
-    if (MSys.systemEnabled === true) {
-        MSys.findTarget()
+    if (SBCI.systemEnabled === true) {
+        SBCI.findTarget()
     }
 }
 
 if (args.gmcp_method == \"IRE.Target.Info\") {
-\tMSys.targetHealth = args.gmcp_args['hpperc'].slice(0, -1)
+\tSBCI.targetHealth = args.gmcp_args['hpperc'].slice(0, -1)
 }
 
 /* --------------------------------------------- CLASS HELPERS --------------------------------- */
 
 //B.E.A.S.T. Plasma Management
-if (args.gmcp_method == \"Char.Vitals\" && MSys.class == 'B.E.A.S.T.') {
-    MSys.plasma = args.gmcp_args.pl
-    MSys.maxPlasma = args.gmcp_args.maxpl
+if (args.gmcp_method == \"Char.Vitals\" && SBCI.class == 'B.E.A.S.T.') {
+    SBCI.plasma = args.gmcp_args.pl
+    SBCI.maxPlasma = args.gmcp_args.maxpl
 }",
             "items": []
         },
@@ -636,11 +618,11 @@ if (args.gmcp_method == \"Char.Vitals\" && MSys.class == 'B.E.A.S.T.') {
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.log('-- Hunting List Setup.  Use \\'hsave\\' to keep a backup.  \\'hload\\' will load your backup.', 'white', 'black')
-MSys.log('-- Use \\'hadd\\' <name> to add to the list and \\'hremove\\' <name> to remove items from this list. \\'hshow\\' will show the items on your list.', 'white', 'black')
-MSys.log('-- Use \\'hattack\\' <attackName> to make it your primary attack that will be auto used.', 'white')
-MSys.log('-- Use \\'hlist\\' to switch between room and priority list. Use \\'hup\\' or \\'hdown\\' <name> to increase or decrease an item on the priority list.', 'white')
-MSys.log('-- Make sure you use \\'config usequeueing on\\'.  Then you can use other attacks to overwrite auto attacks.', 'white')
+                                    "script": "SBCI.log('-- Hunting List Setup.  Use \\'hsave\\' to keep a backup.  \\'hload\\' will load your backup.', 'white', 'black')
+SBCI.log('-- Use \\'hadd\\' <name> to add to the list and \\'hremove\\' <name> to remove items from this list. \\'hshow\\' will show the items on your list.', 'white', 'black')
+SBCI.log('-- Use \\'hattack\\' <attackName> to make it your primary attack that will be auto used.', 'white')
+SBCI.log('-- Use \\'hlist\\' to switch between room and priority list. Use \\'hup\\' or \\'hdown\\' <name> to increase or decrease an item on the priority list.', 'white')
+SBCI.log('-- Make sure you use \\'config usequeueing on\\'.  Then you can use other attacks to overwrite auto attacks.', 'white')
 
 if (get_variable('killList')       == undefined) {set_variable('killList', ['rockhopper'])}
 if (get_variable('debug')          == undefined) {set_variable('debug', false)}
@@ -672,8 +654,8 @@ if (get_variable('useRapidfire')   == undefined) {set_variable('useRapidfire', f
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.log('-- Combat Implant has been reset to factory settings.', 'white', 'black')
-MSys.log('-- If you have previously backed up your kill list you may use \\'hload\\' to reload it', 'white', 'black')
+                                    "script": "SBCI.log('-- Combat Implant has been reset to factory settings.', 'white', 'black')
+SBCI.log('-- If you have previously backed up your kill list you may use \\'hload\\' to reload it', 'white', 'black')
 
 set_variable('killList', ['rockhopper'])
 set_variable('debug', false)
@@ -705,7 +687,7 @@ set_variable('break', true)"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.attack = args[1] + ' '
+                                    "script": "SBCI.attack = args[1] + ' '
 set_variable('huntingAttack', args[1] + ' ')
 display_notice('Attack set to: ' + args[1], 'white', 'black')"
                                 }
@@ -726,13 +708,13 @@ display_notice('Attack set to: ' + args[1], 'white', 'black')"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('matchList')) {
-    MSys.matchList = false
+    SBCI.matchList = false
     set_variable('matchList', false)
-    MSys.log('Will match room listing', 'white')
+    SBCI.log('Will match room listing', 'white')
 } else {
-\tMSys.matchList = true
+\tSBCI.matchList = true
     set_variable('matchList', true)
-    MSys.log('Will match priority listing', 'white')
+    SBCI.log('Will match priority listing', 'white')
 }"
                                 }
                             ],
@@ -752,13 +734,13 @@ display_notice('Attack set to: ' + args[1], 'white', 'black')"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('break')) {
-    MSys.break = false
+    SBCI.break = false
     set_variable('break', false)
-    MSys.log('Will continue after kill.', 'white')
+    SBCI.log('Will continue after kill.', 'white')
 } else {
-\tMSys.break = true
+\tSBCI.break = true
     set_variable('break', true)
-    MSys.log('Will break after kill.', 'white')
+    SBCI.log('Will break after kill.', 'white')
 }"
                                 }
                             ],
@@ -778,7 +760,7 @@ display_notice('Attack set to: ' + args[1], 'white', 'black')"
                                 {
                                     "action": "script",
                                     "script": "set_variable('breakThreshold', args[1])
-MSys.breakThreshold = args[1]"
+SBCI.breakThreshold = args[1]"
                                 }
                             ],
                             "text": "^hbreakthreshold ([0-9]*)$"
@@ -798,14 +780,14 @@ MSys.breakThreshold = args[1]"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.freeze = false
-MSys.frenzy = false
-MSys.negation = false
-MSys.delaySwarm = false
-MSys.fever = false
-MSys.hypertension = false
-MSys.ambush = false
-MSys.backhand = false
+                            "script": "SBCI.freeze = false
+SBCI.frenzy = false
+SBCI.negation = false
+SBCI.delaySwarm = false
+SBCI.fever = false
+SBCI.hypertension = false
+SBCI.ambush = false
+SBCI.backhand = false
 
 var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
 //a.play()
@@ -819,38 +801,38 @@ if (args[1]) {
 \tonList = autoList.includes(args[2])
 }
 
-if (MSys.systemEnabled === true && onList) {
-    MSys.targetHealth = 0
-\tMSys.findTarget()
+if (SBCI.systemEnabled === true && onList) {
+    SBCI.targetHealth = 0
+\tSBCI.findTarget()
 
-    if (MSys.class == 'Engineer' && get_variable('useQPCBoost')) {
+    if (SBCI.class == 'Engineer' && get_variable('useQPCBoost')) {
         send_command('qpcboost')
     }
 
-    if (MSys.break) {
-\t\tMSys.offenseEnabled = false
+    if (SBCI.break) {
+\t\tSBCI.offenseEnabled = false
     }
     
-    MSys.huntingAttack()
+    SBCI.huntingAttack()
 }
 
 var slainMessage = ''
 var now = new Date()
-if (MSys.damageThisFight > 0 && MSys.ttk > 0){
-\tslainMessage = MSys.damageThisFight + ' damage done this fight. | TTK: ' + (now.getTime() - MSys.ttk)/1000 + 's | DPS: ' + Math.round(MSys.damageThisFight / ((now.getTime() - MSys.ttk)/1000))
-} else if (MSys.damageThisFight > 0) {
-\tslainMessage = MSys.damageThisFight + ' damage done this fight.'
-} else if (MSys.ttk > 0) {
-\tslainMessage = 'TTK: ' + (now.getTime() - MSys.ttk)/1000 + 's'
+if (SBCI.damageThisFight > 0 && SBCI.ttk > 0){
+\tslainMessage = SBCI.damageThisFight + ' damage done this fight. | TTK: ' + (now.getTime() - SBCI.ttk)/1000 + 's | DPS: ' + Math.round(SBCI.damageThisFight / ((now.getTime() - SBCI.ttk)/1000))
+} else if (SBCI.damageThisFight > 0) {
+\tslainMessage = SBCI.damageThisFight + ' damage done this fight.'
+} else if (SBCI.ttk > 0) {
+\tslainMessage = 'TTK: ' + (now.getTime() - SBCI.ttk)/1000 + 's'
 }
 
-if (MSys.damageThisFight > 0 || MSys.ttk > 0){
-    MSys.alert(slainMessage, 'lightgreen', 'darkblue')
+if (SBCI.damageThisFight > 0 || SBCI.ttk > 0){
+    SBCI.alert(slainMessage, 'lightgreen', 'darkblue')
 }
 
-MSys.ttk = 0
-MSys.damageThisFight = 0
-MSys.interrupt = false"
+SBCI.ttk = 0
+SBCI.damageThisFight = 0
+SBCI.interrupt = false"
                         }
                     ],
                     "items": []
@@ -867,7 +849,7 @@ MSys.interrupt = false"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.systemEnabled = false
+                            "script": "SBCI.systemEnabled = false
 display_notice('AUTO OFF', 'white', 'black')"
                         }
                     ],
@@ -882,10 +864,10 @@ display_notice('AUTO OFF', 'white', 'black')"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (get_variable('debug') == true) {MSys.log('I am attacking ' + get_variable('tar'), 'white')}
-MSys.systemEnabled = true
-MSys.offenseEnabled = true
-MSys.huntingAttack()"
+                            "script": "if (get_variable('debug') == true) {SBCI.log('I am attacking ' + get_variable('tar'), 'white')}
+SBCI.systemEnabled = true
+SBCI.offenseEnabled = true
+SBCI.huntingAttack()"
                         }
                     ],
                     "key_alt": false,
@@ -902,11 +884,11 @@ MSys.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (MSys.systemEnabled === true) {
-  MSys.systemEnabled = false
+                            "script": "if (SBCI.systemEnabled === true) {
+  SBCI.systemEnabled = false
   display_notice(\"Combat implant disabled\", 'white', 'black')
 } else {
-  MSys.systemEnabled = true
+  SBCI.systemEnabled = true
   display_notice(\"Combat implant enabled\", 'white', 'black')
 }"
                         }
@@ -928,15 +910,15 @@ MSys.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (MSys.class == 'Nanoseer') {
+                            "script": "if (SBCI.class == 'Nanoseer') {
   send_command('NANO REPAIR')
-} else if (MSys.class == 'Fury') {
+} else if (SBCI.class == 'Fury') {
   send_command('KITH SUFFUSE')
-} else if (MSys.class == 'Scoundrel') {
+} else if (SBCI.class == 'Scoundrel') {
   send_command('STIM')
-} else if (MSys.class == 'B.E.A.S.T.') {
+} else if (SBCI.class == 'B.E.A.S.T.') {
   send_command('suit support')
-} else if (MSys.class == 'Engineer') {
+} else if (SBCI.class == 'Engineer') {
   send_command('operate stimjector')
 }"
                         }
@@ -1102,12 +1084,12 @@ for (i=0; i<list.length; i++) {
                             "action": "script",
                             "script": "if (get_variable('useHeal')) {
 \tset_variable('useHeal', false)
-    MSys.useHeal = false
-    MSys.log('HEAL OFF', 'white')
+    SBCI.useHeal = false
+    SBCI.log('HEAL OFF', 'white')
 } else {
 \tset_variable('useHeal', true)
-    MSys.useHeal = true
-    MSys.log('HEAL ON', 'white')
+    SBCI.useHeal = true
+    SBCI.log('HEAL ON', 'white')
 }"
                         }
                     ],
@@ -1126,10 +1108,10 @@ for (i=0; i<list.length; i++) {
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (get_variable('debug') == true) {MSys.log('I am attacking ' + get_variable('tar'), 'white')}
-MSys.systemEnabled = true
-MSys.offenseEnabled = true
-MSys.huntingAttack()"
+                            "script": "if (get_variable('debug') == true) {SBCI.log('I am attacking ' + get_variable('tar'), 'white')}
+SBCI.systemEnabled = true
+SBCI.offenseEnabled = true
+SBCI.huntingAttack()"
                         }
                     ],
                     "text": "k",
@@ -1162,10 +1144,10 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.interrupt = true
+                                    "script": "SBCI.interrupt = true
 
-MSys.alert('interrupting super', 'white', 'blue')
-MSys.huntingAttack()
+SBCI.alert('interrupting super', 'white', 'blue')
+SBCI.huntingAttack()
 "
                                 }
                             ],
@@ -1365,11 +1347,11 @@ MSys.huntingAttack()
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (MSys.ttk == 0) {
+                            "script": "if (SBCI.ttk == 0) {
     var now = new Date()
-    MSys.ttk = now.getTime()
+    SBCI.ttk = now.getTime()
 }
-MSys.damageThisFight += parseInt(args[1])"
+SBCI.damageThisFight += parseInt(args[1])"
                         }
                     ],
                     "items": []
@@ -1386,7 +1368,7 @@ MSys.damageThisFight += parseInt(args[1])"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.log(args[1] + ' Stopped Following!', 'darkred')"
+                            "script": "SBCI.log(args[1] + ' Stopped Following!', 'darkred')"
                         }
                     ],
                     "items": []
@@ -1422,7 +1404,7 @@ send_command('crash ' + args[1])"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.log(eval(args[1]))"
+                            "script": "SBCI.log(eval(args[1]))"
                         }
                     ],
                     "text": "^js (.+)$",
@@ -1617,12 +1599,12 @@ send_command('crash ' + args[1])"
                                     "action": "script",
                                     "script": "if (get_variable('useFreeze')) {
 \tset_variable('useFreeze', false)
-    MSys.useFreeze = false
-    MSys.log('FREEZE OFF', 'white')
+    SBCI.useFreeze = false
+    SBCI.log('FREEZE OFF', 'white')
 } else {
 \tset_variable('useFreeze', true)
-    MSys.useFreeze = true
-    MSys.log('FREEZE ON', 'white')
+    SBCI.useFreeze = true
+    SBCI.log('FREEZE ON', 'white')
 }"
                                 }
                             ],
@@ -1643,12 +1625,12 @@ send_command('crash ' + args[1])"
                                     "action": "script",
                                     "script": "if (get_variable('useMultistrike')) {
 \tset_variable('useMultistrike', false)
-    MSys.useMultistrike = false
-    MSys.log('MULTISTRIKE OFF', 'white')
+    SBCI.useMultistrike = false
+    SBCI.log('MULTISTRIKE OFF', 'white')
 } else {
 \tset_variable('useMultistrike', true)
-    MSys.useMultistrike = true
-    MSys.log('MULTISTRIKE ON', 'white')
+    SBCI.useMultistrike = true
+    SBCI.log('MULTISTRIKE ON', 'white')
 }"
                                 }
                             ],
@@ -1669,12 +1651,12 @@ send_command('crash ' + args[1])"
                                     "action": "script",
                                     "script": "if (get_variable('useFrenzy')) {
 \tset_variable('useFrenzy', false)
-    MSys.useFrenzy = false
-    MSys.log('FRENZY OFF', 'white')
+    SBCI.useFrenzy = false
+    SBCI.log('FRENZY OFF', 'white')
 } else {
 \tset_variable('useFrenzy', true)
-    MSys.useFrenzy = true
-    MSys.log('FRENZY ON', 'white')
+    SBCI.useFrenzy = true
+    SBCI.log('FRENZY ON', 'white')
 }"
                                 }
                             ],
@@ -1695,16 +1677,16 @@ send_command('crash ' + args[1])"
                                     "action": "script",
                                     "script": "if (get_variable('useDelay')) {
 \tset_variable('useDelay', false)
-    MSys.useDelay = false
-    MSys.log('DELAY OFF', 'white')
+    SBCI.useDelay = false
+    SBCI.log('DELAY OFF', 'white')
 } else if (args[1] == '' && get_variable('delayAttack') == '') {
-    MSys.alert('Delayed attack is not configured. Please provide a delayed attack to use\\nUsage: hdelay <attack>', 'red', 'black')
+    SBCI.alert('Delayed attack is not configured. Please provide a delayed attack to use\\nUsage: hdelay <attack>', 'red', 'black')
     return
 } else {
     if (args[1] != '') {set_variable('delayAttack', args[1])}
     set_variable('useDelay', true)
-    MSys.useDelay = true
-    MSys.log('DELAY ON', 'white')
+    SBCI.useDelay = true
+    SBCI.log('DELAY ON', 'white')
 }"
                                 }
                             ],
@@ -1725,12 +1707,12 @@ send_command('crash ' + args[1])"
                                     "action": "script",
                                     "script": "if (get_variable('usePointZero')) {
 \tset_variable('usePointZero', false)
-    MSys.usePointZero = false
-    MSys.log('Point Zero Disabled', 'white')
+    SBCI.usePointZero = false
+    SBCI.log('Point Zero Disabled', 'white')
 } else {
 \tset_variable('usePointZero', true)
-    MSys.usePointZero = true
-    MSys.log('Point Zero Enabled', 'white')
+    SBCI.usePointZero = true
+    SBCI.log('Point Zero Enabled', 'white')
 }"
                                 }
                             ],
@@ -1750,12 +1732,12 @@ send_command('crash ' + args[1])"
                                     "action": "script",
                                     "script": "if (get_variable('useSpeedup')) {
 \tset_variable('useSpeedup', false)
-    MSys.useSpeedup = false
-    MSys.log('Speedup Disabled', 'white')
+    SBCI.useSpeedup = false
+    SBCI.log('Speedup Disabled', 'white')
 } else {
 \tset_variable('useSpeedup', true)
-    MSys.useSpeedup = true
-    MSys.log('Speedup Enabled', 'white')
+    SBCI.useSpeedup = true
+    SBCI.log('Speedup Enabled', 'white')
 }"
                                 }
                             ],
@@ -1775,12 +1757,12 @@ send_command('crash ' + args[1])"
                                     "action": "script",
                                     "script": "if (get_variable('useNegation')) {
     set_variable('useNegation', false)
-    MSys.useNegation = false
-    MSys.log('Negation Disabled', 'white')
+    SBCI.useNegation = false
+    SBCI.log('Negation Disabled', 'white')
 } else {
     set_variable('useNegation', true)
-    MSys.useNegation = true
-    MSys.log('Negation Enabled', 'white')
+    SBCI.useNegation = true
+    SBCI.log('Negation Enabled', 'white')
 }"
                                 }
                             ],
@@ -1803,15 +1785,15 @@ abilities += 'Freeze: ' + get_variable('useFreeze') + '\\n'
 abilities += 'Multistrike: ' + get_variable('useMultistrike') + '\\n'
 abilities += 'DelaySwarm: ' + get_variable('useDelay') + '\\n'
 abilities += 'UseFrenzy: ' + get_variable('useFrenzy') + '\\n'
-abilities += 'Frenzy Status: ' + MSys.frenzy + '\\n'
+abilities += 'Frenzy Status: ' + SBCI.frenzy + '\\n'
 abilities += 'Use Point Zero: ' + get_variable('usePointZero') + '\\n'
-abilities += 'Point Zero Status: ' + MSys.pointZero + '\\n'
+abilities += 'Point Zero Status: ' + SBCI.pointZero + '\\n'
 abilities += 'Use Speedup: ' + get_variable('useSpeedup') + '\\n'
-abilities += 'Speedup Status: ' + MSys.speedUp + '\\n'
+abilities += 'Speedup Status: ' + SBCI.speedUp + '\\n'
 abilities += 'Use Negation: ' + get_variable('useNegation') + '\\n'
-abilities += 'Negation Status: ' + MSys.negation + '\\n'
+abilities += 'Negation Status: ' + SBCI.negation + '\\n'
 
-MSys.log(abilities, 'white')"
+SBCI.log(abilities, 'white')"
                                 }
                             ],
                             "text": "hnano",
@@ -1981,8 +1963,8 @@ send_command('delay ' + command[args[1]])"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.speedup = false
-MSys.pointZero = false"
+                                    "script": "SBCI.speedup = false
+SBCI.pointZero = false"
                                 }
                             ]
                         },
@@ -1998,7 +1980,7 @@ MSys.pointZero = false"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.delaySwarm = true"
+                                    "script": "SBCI.delaySwarm = true"
                                 }
                             ],
                             "items": []
@@ -2015,7 +1997,7 @@ MSys.pointZero = false"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.freeze = true"
+                                    "script": "SBCI.freeze = true"
                                 }
                             ],
                             "items": []
@@ -2032,8 +2014,8 @@ MSys.pointZero = false"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.freeze = false
-MSys.huntingAttack()"
+                                    "script": "SBCI.freeze = false
+SBCI.huntingAttack()"
                                 }
                             ],
                             "items": []
@@ -2050,8 +2032,8 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.frenzy = true
-MSys.huntingAttack()"
+                                    "script": "SBCI.frenzy = true
+SBCI.huntingAttack()"
                                 }
                             ],
                             "items": []
@@ -2068,7 +2050,7 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.frenzy = false"
+                                    "script": "SBCI.frenzy = false"
                                 }
                             ],
                             "items": []
@@ -2085,7 +2067,7 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.alert('Frenzy Down', 'white', 'red')"
+                                    "script": "SBCI.alert('Frenzy Down', 'white', 'red')"
                                 }
                             ],
                             "items": []
@@ -2102,8 +2084,8 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.negation = true
-MSys.huntingAttack()"
+                                    "script": "SBCI.negation = true
+SBCI.huntingAttack()"
                                 }
                             ]
                         },
@@ -2119,7 +2101,7 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.alert('Negation Down', 'white', 'red')"
+                                    "script": "SBCI.alert('Negation Down', 'white', 'red')"
                                 }
                             ],
                             "items": []
@@ -2136,8 +2118,8 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.multistrike = true
-MSys.huntingAttack()"
+                                    "script": "SBCI.multistrike = true
+SBCI.huntingAttack()"
                                 }
                             ],
                             "items": []
@@ -2154,8 +2136,8 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.multistrike = false
-MSys.huntingAttack()"
+                                    "script": "SBCI.multistrike = false
+SBCI.huntingAttack()"
                                 }
                             ],
                             "items": []
@@ -2172,8 +2154,8 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.speedup = true
-MSys.huntingAttack()"
+                                    "script": "SBCI.speedup = true
+SBCI.huntingAttack()"
                                 }
                             ]
                         },
@@ -2189,8 +2171,8 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.speedUp = false
-MSys.huntingAttack()"
+                                    "script": "SBCI.speedUp = false
+SBCI.huntingAttack()"
                                 }
                             ]
                         },
@@ -2206,8 +2188,8 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.pointZero = true
-MSys.huntingAttack()"
+                                    "script": "SBCI.pointZero = true
+SBCI.huntingAttack()"
                                 }
                             ]
                         },
@@ -2223,7 +2205,7 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.pointZero = false"
+                                    "script": "SBCI.pointZero = false"
                                 }
                             ]
                         },
@@ -2240,7 +2222,7 @@ MSys.huntingAttack()"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('my_combat')) {
-\tMSys.huntingAttack()
+\tSBCI.huntingAttack()
 }"
                                 }
                             ]
@@ -2257,8 +2239,8 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.healReady = false
-MSys.huntingAttack()"
+                                    "script": "SBCI.healReady = false
+SBCI.huntingAttack()"
                                 }
                             ]
                         },
@@ -2274,8 +2256,8 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.healReady = true
-MSys.huntingAttack()"
+                                    "script": "SBCI.healReady = true
+SBCI.huntingAttack()"
                                 },
                                 {
                                     "action": "highlight",
@@ -2345,7 +2327,7 @@ MSys.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.huntingAttack()"
+                            "script": "SBCI.huntingAttack()"
                         }
                     ],
                     "items": []
@@ -2371,9 +2353,9 @@ MSys.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.bladeshape = true
-if (MSys.systemEnabled === true) {
-\tMSys.huntingAttack()
+                            "script": "SBCI.bladeshape = true
+if (SBCI.systemEnabled === true) {
+\tSBCI.huntingAttack()
 }"
                         }
                     ],
@@ -2391,8 +2373,8 @@ if (MSys.systemEnabled === true) {
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.alert('bladeshape off', 'white', 'lightred')
-MSys.bladeshape = false
+                            "script": "SBCI.alert('bladeshape off', 'white', 'lightred')
+SBCI.bladeshape = false
 
 var a = new Audio('https://freesound.org/people/Stopmotionbros/sounds/438991/download/438991__stopmotionbros__wind.m4a')
 a.play()"
@@ -2419,8 +2401,8 @@ a.play()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.fever = true
-MSys.interrupt = false"
+                            "script": "SBCI.fever = true
+SBCI.interrupt = false"
                         }
                     ],
                     "items": []
@@ -2437,12 +2419,12 @@ MSys.interrupt = false"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.unstoppable = true
+                            "script": "SBCI.unstoppable = true
 
-var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'MSys').enabled
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SBCI').enabled
 
-if (MSys.systemEnabled && reflexOn) {
-\tMSys.huntingAttack()
+if (SBCI.systemEnabled && reflexOn) {
+\tSBCI.huntingAttack()
 }"
                         }
                     ],
@@ -2460,13 +2442,13 @@ if (MSys.systemEnabled && reflexOn) {
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.unstoppable = false
-MSys.log('NO UNSTOPPABLE', 'red')
+                            "script": "SBCI.unstoppable = false
+SBCI.log('NO UNSTOPPABLE', 'red')
 
-var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'MSys').enabled
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SBCI').enabled
 
-if (MSys.systemEnabled && reflexOn) {
-\tMSys.huntingAttack()
+if (SBCI.systemEnabled && reflexOn) {
+\tSBCI.huntingAttack()
 }"
                         }
                     ],
@@ -2484,7 +2466,7 @@ if (MSys.systemEnabled && reflexOn) {
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.hypertension = true"
+                            "script": "SBCI.hypertension = true"
                         }
                     ],
                     "items": []
@@ -2501,12 +2483,12 @@ if (MSys.systemEnabled && reflexOn) {
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.healReady = true
+                            "script": "SBCI.healReady = true
 
-var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'MSys').enabled
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SBCI').enabled
 
-if (MSys.systemEnabled && reflexOn) {
-\tMSys.huntingAttack()
+if (SBCI.systemEnabled && reflexOn) {
+\tSBCI.huntingAttack()
 }"
                         },
                         {
@@ -2531,12 +2513,12 @@ if (MSys.systemEnabled && reflexOn) {
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.healReady = false
+                            "script": "SBCI.healReady = false
 
-var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'MSys').enabled
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SBCI').enabled
 
-if (MSys.systemEnabled && reflexOn) {
-\tMSys.huntingAttack()
+if (SBCI.systemEnabled && reflexOn) {
+\tSBCI.huntingAttack()
 }"
                         }
                     ],
@@ -2554,12 +2536,12 @@ if (MSys.systemEnabled && reflexOn) {
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.berserk = true
+                            "script": "SBCI.berserk = true
 
-var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'MSys').enabled
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SBCI').enabled
 
-if (MSys.systemEnabled && reflexOn) {
-\tMSys.huntingAttack()
+if (SBCI.systemEnabled && reflexOn) {
+\tSBCI.huntingAttack()
 }"
                         }
                     ],
@@ -2577,12 +2559,12 @@ if (MSys.systemEnabled && reflexOn) {
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.berserk = false
+                            "script": "SBCI.berserk = false
 
-var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'MSys').enabled
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SBCI').enabled
 
-if (MSys.systemEnabled && reflexOn) {
-\tMSys.huntingAttack()
+if (SBCI.systemEnabled && reflexOn) {
+\tSBCI.huntingAttack()
 }"
                         }
                     ],
@@ -2600,11 +2582,11 @@ if (MSys.systemEnabled && reflexOn) {
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.systemEnabled = true
-MSys.offenseEnabled = true
-MSys.infernoCharging = false
+                            "script": "SBCI.systemEnabled = true
+SBCI.offenseEnabled = true
+SBCI.infernoCharging = false
 
-MSys.huntingAttack()"
+SBCI.huntingAttack()"
                         }
                     ],
                     "items": []
@@ -2621,7 +2603,7 @@ MSys.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.huntingAttack()
+                            "script": "SBCI.huntingAttack()
 "
                         }
                     ],
@@ -2699,12 +2681,12 @@ MSys.huntingAttack()"
                             "action": "script",
                             "script": "if (get_variable('useBerserk')) {
 \tset_variable('useBerserk', false)
-    MSys.useBerserk = false
-    MSys.log('BERSERK OFF', 'white')
+    SBCI.useBerserk = false
+    SBCI.log('BERSERK OFF', 'white')
 } else {
 \tset_variable('useBerserk', true)
-    MSys.useBerserk = true
-    MSys.log('BERSERK ON', 'white')
+    SBCI.useBerserk = true
+    SBCI.log('BERSERK ON', 'white')
 }"
                         }
                     ],
@@ -2725,12 +2707,12 @@ MSys.huntingAttack()"
                             "action": "script",
                             "script": "if (get_variable('useFever')) {
 \tset_variable('useFever', false)
-    MSys.useFever = false
-    MSys.log('FEVER OFF', 'white')
+    SBCI.useFever = false
+    SBCI.log('FEVER OFF', 'white')
 } else {
 \tset_variable('useFever', true)
-    MSys.useFever = true
-    MSys.log('FEVER ON', 'white')
+    SBCI.useFever = true
+    SBCI.log('FEVER ON', 'white')
 }"
                         }
                     ],
@@ -2753,11 +2735,11 @@ MSys.huntingAttack()"
 abilities += 'Berserk: ' + get_variable('useBerserk') + '\\n'
 abilities += 'Fever: ' + get_variable('useFever') + '\\n'
 abilities += 'Heal: ' + get_variable('useHeal') + '\\n'
-abilities += 'Bladeshape: ' + MSys.bladeshape + '\\n'
+abilities += 'Bladeshape: ' + SBCI.bladeshape + '\\n'
 abilities += 'Desired blade shape set to: ' + get_variable('kithbladeshape') + '\\n'
-abilities += 'Goal: ' + MSys.goal + '\\n'
+abilities += 'Goal: ' + SBCI.goal + '\\n'
 
-MSys.log(abilities, 'white')"
+SBCI.log(abilities, 'white')"
                         }
                     ],
                     "text": "hfury",
@@ -2776,7 +2758,7 @@ MSys.log(abilities, 'white')"
                         {
                             "action": "script",
                             "script": "set_variable('kithbladeshape', args[1])
-MSys.log('Set desired kithblade shape to: ' + get_variable('kithbladeshape'))"
+SBCI.log('Set desired kithblade shape to: ' + get_variable('kithbladeshape'))"
                         }
                     ],
                     "text": "^hblade (.+)",
@@ -2811,9 +2793,9 @@ MSys.log('Set desired kithblade shape to: ' + get_variable('kithbladeshape'))"
                         {
                             "action": "script",
                             "script": "var dt = new Date()
-MSys.ttk = dt.getTime()
+SBCI.ttk = dt.getTime()
 
-MSys.infernoCharging = true
+SBCI.infernoCharging = true
 
 send_command('kith inferno')"
                         }
@@ -2861,8 +2843,8 @@ send_command('kith inferno')"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.ambush = true
-MSys.huntingAttack()"
+                            "script": "SBCI.ambush = true
+SBCI.huntingAttack()"
                         }
                     ],
                     "items": []
@@ -2879,7 +2861,7 @@ MSys.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.rapidfire = true"
+                            "script": "SBCI.rapidfire = true"
                         }
                     ],
                     "items": []
@@ -2896,7 +2878,7 @@ MSys.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.rapidfire = false"
+                            "script": "SBCI.rapidfire = false"
                         }
                     ],
                     "items": []
@@ -2913,7 +2895,7 @@ MSys.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.healReady = false"
+                            "script": "SBCI.healReady = false"
                         }
                     ],
                     "items": []
@@ -2930,8 +2912,8 @@ MSys.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.healReady = true
-MSys.huntingAttack()"
+                            "script": "SBCI.healReady = true
+SBCI.huntingAttack()"
                         }
                     ],
                     "items": []
@@ -2948,7 +2930,7 @@ MSys.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.huntingAttack()"
+                            "script": "SBCI.huntingAttack()"
                         }
                     ],
                     "items": []
@@ -2965,7 +2947,7 @@ MSys.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (MSys.bullets == 0) {
+                            "script": "if (SBCI.bullets == 0) {
 \tsend_command('gun spin')
 }"
                         }
@@ -3005,12 +2987,12 @@ MSys.huntingAttack()"
                             "action": "script",
                             "script": "if (get_variable('useAmbush')) {
 \tset_variable('useAmbush', false)
-    MSys.useAmbush = false
-    MSys.log('AMBUSH OFF', 'white')
+    SBCI.useAmbush = false
+    SBCI.log('AMBUSH OFF', 'white')
 } else {
 \tset_variable('useAmbush', true)
-    MSys.useAmbush = true
-    MSys.log('AMBUSH ON', 'white')
+    SBCI.useAmbush = true
+    SBCI.log('AMBUSH ON', 'white')
 }"
                         }
                     ],
@@ -3031,12 +3013,12 @@ MSys.huntingAttack()"
                             "action": "script",
                             "script": "if (get_variable('useRapidfire')) {
 \tset_variable('useRapidfire', false)
-    MSys.useRapidfire = false
-    MSys.log('RAPIDFIRE OFF', 'white')
+    SBCI.useRapidfire = false
+    SBCI.log('RAPIDFIRE OFF', 'white')
 } else {
 \tset_variable('useRapidfire', true)
-    MSys.useRapidfire = true
-    MSys.log('RAPIDFIRE ON', 'white')
+    SBCI.useRapidfire = true
+    SBCI.log('RAPIDFIRE ON', 'white')
 }"
                         }
                     ],
@@ -3059,9 +3041,9 @@ MSys.huntingAttack()"
 abilities += 'Ambush: ' + get_variable('useAmbush') + '\\n'
 abilities += 'Rapidfire: ' + get_variable('useRapidfire') + '\\n'
 abilities += 'Heal: ' + get_variable('useHeal') + '\\n'
-abilities += 'Bullets: ' + MSys.bullets + '\\n'
+abilities += 'Bullets: ' + SBCI.bullets + '\\n'
 
-MSys.log(abilities, 'white')"
+SBCI.log(abilities, 'white')"
                         }
                     ],
                     "text": "hscoundrel",
@@ -3102,14 +3084,14 @@ abilities += 'usePlasmaShield: ' + get_variable('usePlasmaShield') + '\\n'
 abilities += 'useRamset:       ' + get_variable('useRamset') + '\\n'
 abilities += 'useDampening:    ' + get_variable('useDampening') + '\\n'
 abilities += 'useJamming:      ' + get_variable('useJamming') + '\\n'
-abilities += 'resistance:   ' + MSys.resistance + '\\n'
-abilities += 'serrate:      ' + MSys.serrate + '\\n'
-abilities += 'plasmaShield: ' + MSys.plasmaShield + '\\n'
-abilities += 'ramset:       ' + MSys.ramset + '\\n'
-abilities += 'dampening:    ' + MSys.dampening + '\\n'
-abilities += 'jamming:      ' + MSys.jamming + '\\n'
+abilities += 'resistance:   ' + SBCI.resistance + '\\n'
+abilities += 'serrate:      ' + SBCI.serrate + '\\n'
+abilities += 'plasmaShield: ' + SBCI.plasmaShield + '\\n'
+abilities += 'ramset:       ' + SBCI.ramset + '\\n'
+abilities += 'dampening:    ' + SBCI.dampening + '\\n'
+abilities += 'jamming:      ' + SBCI.jamming + '\\n'
 
-MSys.log(abilities, 'white')"
+SBCI.log(abilities, 'white')"
                                 }
                             ],
                             "text": "hbeast",
@@ -3129,12 +3111,12 @@ MSys.log(abilities, 'white')"
                                     "action": "script",
                                     "script": "if (get_variable('useResistance')) {
 \tset_variable('useResistance', false)
-    MSys.useResistance = false
-    MSys.log('Plasma Resistance Disabled', 'white')
+    SBCI.useResistance = false
+    SBCI.log('Plasma Resistance Disabled', 'white')
 } else {
 \tset_variable('useResistance', true)
-    MSys.useResistance = true
-    MSys.log('Plasma Resistance Enabled', 'white')
+    SBCI.useResistance = true
+    SBCI.log('Plasma Resistance Enabled', 'white')
 }"
                                 }
                             ],
@@ -3154,12 +3136,12 @@ MSys.log(abilities, 'white')"
                                     "action": "script",
                                     "script": "if (get_variable('useSerrate')) {
 \tset_variable('useSerrate', false)
-    MSys.useSerrate = false
-    MSys.log('Serrate Disabled', 'white')
+    SBCI.useSerrate = false
+    SBCI.log('Serrate Disabled', 'white')
 } else {
 \tset_variable('useSerrate', true)
-    MSys.useSerrate = true
-    MSys.log('Serrate Enabled', 'white')
+    SBCI.useSerrate = true
+    SBCI.log('Serrate Enabled', 'white')
 }"
                                 }
                             ],
@@ -3179,12 +3161,12 @@ MSys.log(abilities, 'white')"
                                     "action": "script",
                                     "script": "if (get_variable('usePlasmaShield')) {
 \tset_variable('usePlasmaShield', false)
-    MSys.usePlasmaShield = false
-    MSys.log('Plasma Shield Disabled', 'white')
+    SBCI.usePlasmaShield = false
+    SBCI.log('Plasma Shield Disabled', 'white')
 } else {
 \tset_variable('usePlasmaShield', true)
-    MSys.usePlasmaShield = true
-    MSys.log('Plasma Shield Enabled', 'white')
+    SBCI.usePlasmaShield = true
+    SBCI.log('Plasma Shield Enabled', 'white')
 }"
                                 }
                             ],
@@ -3204,12 +3186,12 @@ MSys.log(abilities, 'white')"
                                     "action": "script",
                                     "script": "if (get_variable('useRamset')) {
 \tset_variable('useRamset', false)
-    MSys.useRamset = false
-    MSys.log('Ramset Disabled', 'white')
+    SBCI.useRamset = false
+    SBCI.log('Ramset Disabled', 'white')
 } else {
 \tset_variable('useRamset', true)
-    MSys.useRamset = true
-    MSys.log('Ramset Enabled', 'white')
+    SBCI.useRamset = true
+    SBCI.log('Ramset Enabled', 'white')
 }"
                                 }
                             ],
@@ -3229,12 +3211,12 @@ MSys.log(abilities, 'white')"
                                     "action": "script",
                                     "script": "if (get_variable('useDampening')) {
 \tset_variable('useDampening', false)
-    MSys.useDampening = false
-    MSys.log('Dampening Disabled', 'white')
+    SBCI.useDampening = false
+    SBCI.log('Dampening Disabled', 'white')
 } else {
 \tset_variable('useDampening', true)
-    MSys.useDampening = true
-    MSys.log('Dampening Enabled', 'white')
+    SBCI.useDampening = true
+    SBCI.log('Dampening Enabled', 'white')
 }"
                                 }
                             ],
@@ -3254,12 +3236,12 @@ MSys.log(abilities, 'white')"
                                     "action": "script",
                                     "script": "if (get_variable('useJamming')) {
 \tset_variable('useJamming', false)
-    MSys.useJamming = false
-    MSys.log('Jamming Disabled', 'white')
+    SBCI.useJamming = false
+    SBCI.log('Jamming Disabled', 'white')
 } else {
 \tset_variable('useJamming', true)
-    MSys.useJamming = true
-    MSys.log('Jamming Enabled', 'white')
+    SBCI.useJamming = true
+    SBCI.log('Jamming Enabled', 'white')
 }"
                                 }
                             ],
@@ -3369,8 +3351,8 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.resistance = true
-MSys.huntingAttack()"
+                                    "script": "SBCI.resistance = true
+SBCI.huntingAttack()"
                                 }
                             ]
                         },
@@ -3386,8 +3368,8 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.serrate = true
-MSys.huntingAttack()"
+                                    "script": "SBCI.serrate = true
+SBCI.huntingAttack()"
                                 }
                             ]
                         },
@@ -3403,8 +3385,8 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.ramset = true
-MSys.huntingAttack()"
+                                    "script": "SBCI.ramset = true
+SBCI.huntingAttack()"
                                 }
                             ]
                         },
@@ -3420,8 +3402,8 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.dampening = true
-MSys.huntingAttack()"
+                                    "script": "SBCI.dampening = true
+SBCI.huntingAttack()"
                                 }
                             ]
                         },
@@ -3437,8 +3419,8 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.jamming = true
-MSys.huntingAttack()"
+                                    "script": "SBCI.jamming = true
+SBCI.huntingAttack()"
                                 }
                             ]
                         },
@@ -3454,8 +3436,8 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.backhand = true
-MSys.huntingAttack()"
+                                    "script": "SBCI.backhand = true
+SBCI.huntingAttack()"
                                 }
                             ],
                             "items": []
@@ -3472,8 +3454,8 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.healReady = false
-MSys.huntingAttack()"
+                                    "script": "SBCI.healReady = false
+SBCI.huntingAttack()"
                                 }
                             ],
                             "items": []
@@ -3490,8 +3472,8 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.healReady = true
-MSys.huntingAttack()"
+                                    "script": "SBCI.healReady = true
+SBCI.huntingAttack()"
                                 },
                                 {
                                     "action": "highlight",
@@ -3518,7 +3500,7 @@ MSys.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.huntingAttack()"
+                            "script": "SBCI.huntingAttack()"
                         }
                     ],
                     "items": []
@@ -3569,7 +3551,7 @@ MSys.huntingAttack()"
                                 {
                                     "action": "script",
                                     "script": "if (args[1] == '' || args[2] == '') {
-    MSys.log('Usage: hturret <mod> <weapon> <follow up command>', 'darkyellow')
+    SBCI.log('Usage: hturret <mod> <weapon> <follow up command>', 'darkyellow')
 } else {
     set_variable('turretMod', args[1])
     set_variable('turretWeapon', args[2])
@@ -3622,7 +3604,7 @@ if (get_variable('turretMod').toUpperCase() == 'QPC') {
     send_command('turret mod ' + get_variable('turretMod'))
 \tif (get_variable('turretFollowup') != '') {send_command(get_variable('turretFollowup'))}
     set_variable('turretAlias', false)
-    MSys.log('Turret ready!', 'white')
+    SBCI.log('Turret ready!', 'white')
 }"
                                 }
                             ],
@@ -3643,7 +3625,7 @@ if (get_variable('turretMod').toUpperCase() == 'QPC') {
                                     "script": "if (get_variable('turretAlias') != true) {return;}
 send_command(get_variable('turretFollowup'))
 set_variable('turretAlias', false)
-MSys.log('Turret ready!', 'white')"
+SBCI.log('Turret ready!', 'white')"
                                 }
                             ],
                             "items": []
@@ -3755,7 +3737,7 @@ MSys.log('Turret ready!', 'white')"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('refillParts') == true) {
-    if (MSys.parts < 60) {
+    if (SBCI.parts < 60) {
         send_command('bot airdrop')
     } else {
         set_variable('refillParts', false)
@@ -3800,7 +3782,7 @@ send_command('bot airdrop')
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.healReady = false"
+                            "script": "SBCI.healReady = false"
                         }
                     ],
                     "items": []
@@ -3817,9 +3799,9 @@ send_command('bot airdrop')
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.healReady = true
-MSys.huntingAttack()
-//MSys.log('stimjector ready', 'cyan')"
+                            "script": "SBCI.healReady = true
+SBCI.huntingAttack()
+//SBCI.log('stimjector ready', 'cyan')"
                         },
                         {
                             "action": "highlight",
@@ -3843,8 +3825,8 @@ MSys.huntingAttack()
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.repeat = false
-MSys.huntingAttack()"
+                            "script": "SBCI.repeat = false
+SBCI.huntingAttack()"
                         }
                     ],
                     "items": []
@@ -3861,7 +3843,7 @@ MSys.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.repeat = true"
+                            "script": "SBCI.repeat = true"
                         },
                         {
                             "action": "highlight",
@@ -3885,8 +3867,8 @@ MSys.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.wormDeployed = true
-MSys.huntingAttack()"
+                            "script": "SBCI.wormDeployed = true
+SBCI.huntingAttack()"
                         }
                     ],
                     "items": []
@@ -3903,8 +3885,8 @@ MSys.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.wormDeployed = false
-MSys.huntingAttack()"
+                            "script": "SBCI.wormDeployed = false
+SBCI.huntingAttack()"
                         }
                     ],
                     "items": []
@@ -3921,7 +3903,7 @@ MSys.huntingAttack()"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.huntingAttack()"
+                            "script": "SBCI.huntingAttack()"
                         }
                     ],
                     "items": []
@@ -3961,13 +3943,13 @@ MSys.huntingAttack()"
 abilities += 'Heal:          ' + get_variable('useHeal') + '\\n'
 abilities += 'Repeat Attack: ' + get_variable('engineerRepeatAttack') + '\\n'
 abilities += 'Use Repeat:    ' + get_variable('useRepeat') + '\\n'
-abilities += 'Repeat Avail:  ' + MSys.repeat + '\\n'
+abilities += 'Repeat Avail:  ' + SBCI.repeat + '\\n'
 abilities += 'Use Worm:      ' + get_variable('useWorm') + '\\n'
-abilities += 'Worm Deployed: ' + MSys.wormDeployed + '\\n'
+abilities += 'Worm Deployed: ' + SBCI.wormDeployed + '\\n'
 abilities += 'Use Release:   ' + get_variable('useRelease') + '\\n'
 abilities += 'QPC Boost:     ' + get_variable('useQPCBoost') + '\\n'
 
-MSys.log(abilities, 'white')"
+SBCI.log(abilities, 'white')"
                         }
                     ],
                     "text": "hengineer",
@@ -3988,11 +3970,11 @@ MSys.log(abilities, 'white')"
                             "script": "if (args[1] != 'clear') {
     set_variable('engineerRepeatAttack', args[1])
     set_variable('useRepeat', true)
-    MSys.log('Enabled bot repeat with attack: ' + args[1], 'white')
+    SBCI.log('Enabled bot repeat with attack: ' + args[1], 'white')
 } else {
     set_variable('engineerRepeatAttack', '')
     set_variable('useRepeat', false)
-    MSys.log('Disabled bot repeat command', 'white')
+    SBCI.log('Disabled bot repeat command', 'white')
 }"
                         }
                     ],
@@ -4013,10 +3995,10 @@ MSys.log(abilities, 'white')"
                             "action": "script",
                             "script": "if (get_variable('useWorm')) {
 \tset_variable('useWorm', false)
-    MSys.log('Burrowbot Worm Attack disabled', 'white')
+    SBCI.log('Burrowbot Worm Attack disabled', 'white')
 } else {
 \tset_variable('useWorm', true)
-    MSys.log('Burrowbot Worm Attack enabled', 'white')
+    SBCI.log('Burrowbot Worm Attack enabled', 'white')
 }"
                         }
                     ],
@@ -4037,10 +4019,10 @@ MSys.log(abilities, 'white')"
                             "action": "script",
                             "script": "if (get_variable('useRelease')) {
 \tset_variable('useRelease', false)
-    MSys.log('Burrowbot Worm Release Attack disabled', 'white')
+    SBCI.log('Burrowbot Worm Release Attack disabled', 'white')
 } else {
 \tset_variable('useRelease', true)
-    MSys.log('Burrowbot Worm Release Attack enabled', 'white')
+    SBCI.log('Burrowbot Worm Release Attack enabled', 'white')
 }"
                         }
                     ],
@@ -4061,10 +4043,10 @@ MSys.log(abilities, 'white')"
                             "action": "script",
                             "script": "if (get_variable('useQPCBoost')) {
 \tset_variable('useQPCBoost', false)
-    MSys.log('QPC Boost after kill disabled', 'white')
+    SBCI.log('QPC Boost after kill disabled', 'white')
 } else {
 \tset_variable('useQPCBoost', true)
-    MSys.log('QPC Boost after kill enabled', 'white')
+    SBCI.log('QPC Boost after kill enabled', 'white')
 }"
                         }
                     ],
@@ -4097,7 +4079,7 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.target = args[1]
+                                    "script": "SBCI.target = args[1]
 set_variable('tar', args[1])
 send_command('st ' + args[1])
 send_command('crt Target: ' + args[1])"
