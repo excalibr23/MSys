@@ -1,6 +1,6 @@
 {
     "type": "group",
-    "name": "Starwraith Combat Implant",
+    "name": "msys",
     "enabled": true,
     "id": 1,
     "items": [
@@ -87,6 +87,8 @@ MSys = {
     useRapidfire: get_variable('useRapidfire'),
 //B.E.A.S.T.
     backhand: false,
+    plasma: 0,
+    maxPlasma: 0,
 //Engineer
     parts: 0,
     repeat: true,
@@ -383,13 +385,22 @@ MSys = {
             send_command(command)
         
         }else if (this.class == 'B.E.A.S.T.'){
+            var command = ''
+            
             if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
             \tsend_command('suit support')
+                return
+                
             }else if (!this.backhand) {
-                send_command('suit backhand ' + get_variable('tar'))
+                command += 'suit backhand '
+                
             }else {
-                send_command('mwp wristblade ' + get_variable('tar'))
+                command += 'mwp wristblade '
+                this.backhand = false
             }
+            
+            command += get_variable('tar')
+            send_command(command)
             
         //Engineer
         }else if (this.class == 'Engineer'){
@@ -483,7 +494,7 @@ if (args.gmcp_method == \"Char.Vitals\") {
     MSys.maxHealth = args.gmcp_args.maxhp
 
     // Check class
-    if (!MSys.class || MSys.class !== args.gmcp_args.class) {
+    if (!MSys.class || MSys.class != args.gmcp_args.class) {
         MSys.class = args.gmcp_args.class
         
         MSys.disableGroup('Fury')
@@ -576,14 +587,22 @@ if (args.gmcp_method == \"IRE.Target.Info\") {
 \tMSys.targetHealth = args.gmcp_args['hpperc'].slice(0, -1)
 }
 
-//This is broken
-if (args.gmcp_method == \"IRE.CombatMessage\") {
-\tif (args.gmcp_args['target'] == 'montem') {
-    \tMSys.alert('you are being attacked by ' + args.gmcp_args['caster'] , 'yellow', 'red')
-    }
-}
+/* --------------------------------------------- CLASS HELPERS --------------------------------- */
 
-/* --------------------------------------------- CLASS HELPERS --------------------------------- */",
+//B.E.A.S.T. Plasma Management
+if (args.gmcp_method == \"Char.Vitals\" && MSys.class == 'B.E.A.S.T.') {
+    MSys.plasma = args.gmcp_args.pl
+    MSys.maxPlasma = args.gmcp_args.maxpl
+    return
+    
+    var message = ''
+    message += 'Plasma: '
+    message += MSys.plasma
+    message += '\\nLevel: '
+    message += args.gmcp_args.formatpl
+    
+    MSys.log(message, 'orange')
+}",
             "items": []
         },
         {
@@ -1218,6 +1237,39 @@ MSys.huntingAttack()
                             "items": []
                         },
                         {
+                            "type": "trigger",
+                            "name": "Station Transfer List",
+                            "enabled": true,
+                            "id": 144,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You can board a transport craft here, check STATION TRANSFER LIST.",
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "STATION TRANSFER LIST"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Takeoff List",
+                            "enabled": true,
+                            "id": 174,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You can board a transport craft here, check TAKEOFF LIST.",
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "TAKEOFF LIST"
+                                }
+                            ]
+                        },
+                        {
                             "type": "alias",
                             "name": "Takeoff List - tl",
                             "enabled": true,
@@ -1253,23 +1305,6 @@ MSys.huntingAttack()
                                 }
                             ],
                             "text": "stl",
-                            "items": []
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Station Transfer List",
-                            "enabled": true,
-                            "id": 144,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "text": "You can board a transport craft here, check STATION TRANSFER LIST.",
-                            "actions": [
-                                {
-                                    "action": "command",
-                                    "command": "STATION TRANSFER LIST"
-                                }
-                            ],
                             "items": []
                         }
                     ],
@@ -1552,7 +1587,7 @@ send_command('crash ' + args[1])"
         {
             "type": "group",
             "name": "Nanoseer",
-            "enabled": true,
+            "enabled": false,
             "id": 21,
             "items": [
                 {
@@ -3031,9 +3066,62 @@ MSys.log(abilities, 'white')"
         {
             "type": "group",
             "name": "B.E.A.S.T.",
-            "enabled": false,
+            "enabled": true,
             "id": 102,
             "items": [
+                {
+                    "type": "group",
+                    "name": "Compatibility",
+                    "enabled": true,
+                    "id": 171,
+                    "items": [
+                        {
+                            "type": "alias",
+                            "name": "Heal",
+                            "enabled": true,
+                            "id": 172,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "suit support",
+                                    "prefix_suffix": true
+                                }
+                            ],
+                            "text": "heal"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Flying",
+                            "enabled": true,
+                            "id": 173,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "suit jumpjets",
+                                    "prefix_suffix": true
+                                }
+                            ],
+                            "text": "fly"
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Plasma Management",
+                    "enabled": true,
+                    "id": 170,
+                    "items": [],
+                    "actions": []
+                },
                 {
                     "type": "trigger",
                     "name": "Backhand Used",
@@ -3042,11 +3130,12 @@ MSys.log(abilities, 'white')"
                     "matching": "regexp",
                     "whole_words": true,
                     "case_sensitive": true,
-                    "text": "You overdrive your suit's movement circuits, delivering a vicious backhanded blow.*",
+                    "text": "^You overdrive your suit's movement circuits, delivering a vicious backhanded blow.*",
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.backhand = true"
+                            "script": "MSys.backhand = true
+MSys.huntingAttack()"
                         }
                     ],
                     "items": []
@@ -3081,7 +3170,8 @@ MSys.log(abilities, 'white')"
                         {
                             "action": "script",
                             "script": "MSys.healReady = true
-MSys.alert('support ready', 'white', 'green')"
+MSys.log('Heal ready', 'blue')
+MSys.huntingAttack()"
                         }
                     ],
                     "items": []
@@ -3089,18 +3179,16 @@ MSys.alert('support ready', 'white', 'green')"
                 {
                     "type": "trigger",
                     "name": "Queue Attack BEAST",
-                    "enabled": false,
+                    "enabled": true,
                     "id": 106,
                     "matching": "regexp",
                     "whole_words": true,
                     "case_sensitive": true,
-                    "text": "^You overdrive your suit's movement circuits.*$|^With servo-assisted might, you drive your wristblade.*$|^You activate your suit's emergency life support system.*$",
+                    "text": "^With servo-assisted might, you drive your wristblade.*$|^You activate your suit's emergency life support system.*$",
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (MSys.systemEnabled === true) {
-\tMSys.huntingAttack()
-}"
+                            "script": "MSys.huntingAttack()"
                         }
                     ],
                     "items": []
