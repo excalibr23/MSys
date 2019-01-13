@@ -98,12 +98,14 @@ SBCI = {
     useRamset:       get_variable('useRamset'),
     useDampening:    get_variable('useDampening'),
     useJamming:      get_variable('useJamming'),
+    useLaunch:       get_variable('useLaunch'),
     resistance:   false,
     serrate:      false,
     plasmaShield: false,
     ramset:       false,
     dampening:    false,
     jamming:      false,
+    launch:       false,
 //Combat functions 
     findTarget: function() {
         var itemList = this.itemsInRoom
@@ -147,7 +149,6 @@ SBCI = {
         
         if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
             command += 'suit support'
-              
         } else if (!this.resistance   && this.useResistance)    { 
             command += 'plasma resistance'
         } else if (!this.serrate      && this.useSerrate)       { 
@@ -166,7 +167,10 @@ SBCI = {
             message += 'Target Variable: ' + get_variable('tar') + '\\n'
             this.debugMessage(message)
             return
-        } else if (!this.backhand) { 
+            
+        } else if (!this.launch && this.useLaunch) { 
+            command += 'mwp launch '
+        }else if (!this.backhand) { 
             command += 'suit backhand '
         } else { 
             command += 'mwp wristblade '
@@ -216,13 +220,13 @@ if (args.gmcp_method == \"Char.Vitals\") {
 
 /* ----------------------------------- DEFENCES AND BUFFS --------------------------------------- */
 
-if (args.gmcp_method == 'Char.Defences.Add') {
+//if (args.gmcp_method == 'Char.Defences.Add') {
     
     //Fury
     //if (args.gmcp_args.name == 'Oblivion: Conqueror')  {
     //    SBCI.empyreal = 'Conqueror'
     //}
-}
+//}
 
 /* -------------------------------------------- ITEMS IN ROOM ----------------------------------- */
 
@@ -247,17 +251,15 @@ if (args.gmcp_method == \"Char.Items.Add\") {
     //Find index of item
     SBCI.itemsInRoom.push(itemJoining);
     
-    if (SBCI.systemEnabled === true) {
-        if (!get_variable('tar')) {
-            SBCI.findTarget()
-        }
+    if (SBCI.systemEnabled === true && !get_variable('tar')) {
+        SBCI.findTarget()
     }
     
-    if (SBCI.infernoCharging && itemJoining.attrib === 'm') {
-        send_command('asdf')
-        SBCI.infernoCharging = false
-        SBCI.alert('mob entered - inferno cancelled', 'white', 'red')
-    }
+    //if (SBCI.infernoCharging && itemJoining.attrib === 'm') {
+    //    send_command('asdf')
+    //    SBCI.infernoCharging = false
+    //    SBCI.alert('mob entered - inferno cancelled', 'white', 'red')
+    //}
 }
 
 /* -------------------------------------------- PLAYERS IN ROOM ----------------------------------- */
@@ -266,10 +268,8 @@ if (args.gmcp_method == \"Room.Players\") {
 }
 
 /* --------------------------------------------- HELPERS --------------------------------- */
-if (args.gmcp_method == \"Room.Info\") {
-    if (SBCI.systemEnabled === true) {
-        SBCI.findTarget()
-    }
+if (args.gmcp_method == \"Room.Info\" && SBCI.systemEnabled === true) {
+    SBCI.findTarget()
 }
 
 if (args.gmcp_method == \"IRE.Target.Info\") {
@@ -312,15 +312,7 @@ if (get_variable('killList')       == undefined) {set_variable('killList', ['roc
 if (get_variable('debug')          == undefined) {set_variable('debug', false)}
 if (get_variable('matchList')      == undefined) {set_variable('matchList', true)}
 if (get_variable('break')          == undefined) {set_variable('break', true)}
-if (get_variable('useHeal')        == undefined) {set_variable('useHeal', true)}
-if (get_variable('useFreeze')      == undefined) {set_variable('useFreeze', false)}
-if (get_variable('useMultistrike') == undefined) {set_variable('useMultistrike', false)}
-if (get_variable('useFrenzy')      == undefined) {set_variable('useFrenzy', false)}
-if (get_variable('useDelay')       == undefined) {set_variable('useDelay', false)}
-if (get_variable('useBerserk')     == undefined) {set_variable('useBerserk', false)}
-if (get_variable('useFever')       == undefined) {set_variable('useFever', false)}
-if (get_variable('useAmbush')      == undefined) {set_variable('useAmbush', false)}
-if (get_variable('useRapidfire')   == undefined) {set_variable('useRapidfire', false)}"
+if (get_variable('useHeal')        == undefined) {set_variable('useHeal', true)}"
                                 }
                             ],
                             "text": "hsetup",
@@ -464,14 +456,8 @@ SBCI.breakThreshold = args[1]"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "SBCI.freeze = false
-SBCI.frenzy = false
-SBCI.negation = false
-SBCI.delaySwarm = false
-SBCI.fever = false
-SBCI.hypertension = false
-SBCI.ambush = false
-SBCI.backhand = false
+                            "script": "SBCI.backhand = false
+SBCI.launch = false
 
 var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
 //a.play()
@@ -489,10 +475,6 @@ if (SBCI.systemEnabled === true && onList) {
     SBCI.targetHealth = 0
     send_command('clearqueue')
     SBCI.findTarget()
-
-    if (SBCI.class == 'Engineer' && get_variable('useQPCBoost')) {
-        send_command('qpcboost')
-    }
 
     if (SBCI.break) {
         SBCI.offenseEnabled = false
@@ -951,6 +933,9 @@ SBCI.huntingAttack()
 SBCI.damageThisFight += parseInt(args[1])"
                         },
                         {
+                            "action": "stop"
+                        },
+                        {
                             "action": "highlight",
                             "highlight": "match",
                             "highlight_backref": "1",
@@ -1209,12 +1194,14 @@ abilities += 'usePlasmaShield: ' + get_variable('usePlasmaShield') + '\\n'
 abilities += 'useRamset:       ' + get_variable('useRamset') + '\\n'
 abilities += 'useDampening:    ' + get_variable('useDampening') + '\\n'
 abilities += 'useJamming:      ' + get_variable('useJamming') + '\\n'
+abilities += 'useLaunch:       ' + get_variable('useLaunch') + '\\n'
 abilities += 'resistance:   ' + SBCI.resistance + '\\n'
 abilities += 'serrate:      ' + SBCI.serrate + '\\n'
 abilities += 'plasmaShield: ' + SBCI.plasmaShield + '\\n'
 abilities += 'ramset:       ' + SBCI.ramset + '\\n'
 abilities += 'dampening:    ' + SBCI.dampening + '\\n'
 abilities += 'jamming:      ' + SBCI.jamming + '\\n'
+abilities += 'launch:       ' + SBCI.launch + '\\n'
 
 SBCI.log(abilities, 'white')"
                                 }
@@ -1371,6 +1358,31 @@ SBCI.log(abilities, 'white')"
                                 }
                             ],
                             "text": "hjamming"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Launch",
+                            "enabled": true,
+                            "id": 188,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('useLaunch')) {
+    set_variable('useLaunch', false)
+    SBCI.useLaunch = false
+    SBCI.log('Launch Disabled', 'white')
+} else {
+    set_variable('useLaunch', true)
+    SBCI.useLaunch = true
+    SBCI.log('Launch Enabled', 'white')
+}"
+                                }
+                            ],
+                            "text": "hlaunch"
                         }
                     ],
                     "actions": []
@@ -1609,6 +1621,23 @@ SBCI.huntingAttack()"
                                 }
                             ],
                             "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Missile Launch Detected",
+                            "enabled": true,
+                            "id": 189,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You fire a homing missile into the air",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "SBCI.launch = true
+SBCI.huntingAttack()"
+                                }
+                            ]
                         }
                     ],
                     "actions": []
