@@ -804,17 +804,33 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                 },
                 {
                     "type": "trigger",
-                    "name": "Autoshow Transfer List",
+                    "name": "Autoshow Station Transfer List",
                     "enabled": true,
                     "id": 59,
-                    "matching": "substring",
+                    "matching": "exact",
                     "whole_words": true,
                     "case_sensitive": true,
-                    "text": "You can board a transport craft here, check TAKEOFF LIST.",
+                    "text": "You can board a transport craft here, check STATION TRANSFER LIST.",
                     "actions": [
                         {
                             "action": "command",
-                            "command": "TRANSFER LIST"
+                            "command": "STATION TRANSFER LIST"
+                        }
+                    ]
+                },
+                {
+                    "type": "trigger",
+                    "name": "Autoshow Gatwarp Destinations",
+                    "enabled": true,
+                    "id": 60,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "There is a voidgate here. GATEWARP DESTINATIONS to start your travel across the cosmos.",
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "GATEWARP DESTINATIONS"
                         }
                     ]
                 }
