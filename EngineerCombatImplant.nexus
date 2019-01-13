@@ -10,7 +10,7 @@
             "enabled": true,
             "id": 2,
             "code": "// Changelog
-// 20190113T1119EST: Added Oga-specific switches.
+// 20190113T1503EST: Copied main system to separate class systems
 
 // Place any code here you'd like to autorun when the system is loaded
 send_command('wakeup')
@@ -24,14 +24,14 @@ SBCI = {
     },
     loaded: function() {
         //Send implant to browser log for debugging
-\t\tconsole.log(this)
-\t\tthis.notice(\"Starwraith B.E.A.S.T. Combat Implant v1.0 Loaded. Good hunting, and good death.\\n\");
+        console.log(this)
+        this.notice(\"Starwraith B.E.A.S.T. Combat Implant v1.0 Loaded. Good hunting, and good death.\\n\");
     },
     helpbox: function(title,text) {
         var helptext = \"<div class=\\\"mono\\\"><span style=\\\"color: #ffffff; \\\"><span style=\\\"background-color: #0000a0 \\\">\" + title + \"</span></span></div>\";
         helptext += \"<div class=\\\"mono\\\">\" + text.replace(\"\\n\",\"</div><div class=\\\"mono\\\">\") + \"</div>\";
         client.display_help_window(helptext);
-\t},
+    },
     disableGroup: function(name) {
         var group = reflex_find_by_name('group', name, false, false, this.packagename)
         reflex_disable(group)
@@ -412,11 +412,11 @@ SBCI = {
                 command += 'suit support'
                 
             } else if (!this.resistance   && this.useResistance)    { command += 'plasma resistance'
-\t\t\t} else if (!this.serrate      && this.useSerrate)       { command += 'mwp serrate'
-\t\t\t} else if (!this.plasmaShield && this.usePlasmaShield)  { command += 'plasma shield'
-\t\t\t} else if (!this.ramset       && this.useRamset)        { command += 'suit ramset'
-\t\t\t} else if (!this.dampening    && this.useDampening)     { command += 'suit dampening'
-\t\t\t} else if (!this.jamming      && this.useJamming)       { command += 'suit jamming'
+            } else if (!this.serrate      && this.useSerrate)       { command += 'mwp serrate'
+            } else if (!this.plasmaShield && this.usePlasmaShield)  { command += 'plasma shield'
+            } else if (!this.ramset       && this.useRamset)        { command += 'suit ramset'
+            } else if (!this.dampening    && this.useDampening)     { command += 'suit dampening'
+            } else if (!this.jamming      && this.useJamming)       { command += 'suit jamming'
             } else if (!this.offenseEnabled || get_variable('tar') == '') {
                 message  = 'Aggressive actions are disabled\\n'
                 message += 'Offense Enabled: ' + this.offenseEnabled + '\\n'
@@ -495,7 +495,7 @@ if (args.gmcp_method == \"Char.Vitals\") {
     var change = SBCI.health - args.gmcp_args.hp;
    
     if (change > 0) {
-    \tSBCI.log('Damage taken: ' + change, 'yellow')
+        SBCI.log('Damage taken: ' + change, 'yellow')
     } else if (change < 0) {
         SBCI.log('Damage healed: ' + Math.abs(change), '#6bdaee')
     }
@@ -569,13 +569,13 @@ if (args.gmcp_method == \"Char.Items.Add\") {
     SBCI.itemsInRoom.push(itemJoining);
     
     if (SBCI.systemEnabled === true) {
-    \tif (!get_variable('tar')) {
-        \tSBCI.findTarget()
+        if (!get_variable('tar')) {
+            SBCI.findTarget()
         }
     }
     
     if (SBCI.infernoCharging && itemJoining.attrib === 'm') {
-    \tsend_command('asdf')
+        send_command('asdf')
         SBCI.infernoCharging = false
         SBCI.alert('mob entered - inferno cancelled', 'white', 'red')
     }
@@ -594,7 +594,7 @@ if (args.gmcp_method == \"Room.Info\") {
 }
 
 if (args.gmcp_method == \"IRE.Target.Info\") {
-\tSBCI.targetHealth = args.gmcp_args['hpperc'].slice(0, -1)
+    SBCI.targetHealth = args.gmcp_args['hpperc'].slice(0, -1)
 }
 
 /* --------------------------------------------- CLASS HELPERS --------------------------------- */
@@ -724,7 +724,7 @@ display_notice('Attack set to: ' + args[1], 'white', 'black')"
     set_variable('matchList', false)
     SBCI.log('Will match room listing', 'white')
 } else {
-\tSBCI.matchList = true
+    SBCI.matchList = true
     set_variable('matchList', true)
     SBCI.log('Will match priority listing', 'white')
 }"
@@ -750,7 +750,7 @@ display_notice('Attack set to: ' + args[1], 'white', 'black')"
     set_variable('break', false)
     SBCI.log('Will continue after kill.', 'white')
 } else {
-\tSBCI.break = true
+    SBCI.break = true
     set_variable('break', true)
     SBCI.log('Will break after kill.', 'white')
 }"
@@ -808,22 +808,22 @@ var autoList = ['You', 'Chronoxi Starwraith', 'Feraluna Starwraith', 'Mee', 'Cas
 var onList = ''
 
 if (args[1]) {
-\tonList = autoList.includes(args[1])
+    onList = autoList.includes(args[1])
 } else {
-\tonList = autoList.includes(args[2])
+    onList = autoList.includes(args[2])
 }
 
 if (SBCI.systemEnabled === true && onList) {
     SBCI.targetHealth = 0
     send_command('clearqueue')
-\tSBCI.findTarget()
+    SBCI.findTarget()
 
     if (SBCI.class == 'Engineer' && get_variable('useQPCBoost')) {
         send_command('qpcboost')
     }
 
     if (SBCI.break) {
-\t\tSBCI.offenseEnabled = false
+        SBCI.offenseEnabled = false
     }
     
     SBCI.huntingAttack()
@@ -832,11 +832,11 @@ if (SBCI.systemEnabled === true && onList) {
 var slainMessage = ''
 var now = new Date()
 if (SBCI.damageThisFight > 0 && SBCI.ttk > 0){
-\tslainMessage = SBCI.damageThisFight + ' damage done this fight. | TTK: ' + (now.getTime() - SBCI.ttk)/1000 + 's | DPS: ' + Math.round(SBCI.damageThisFight / ((now.getTime() - SBCI.ttk)/1000))
+    slainMessage = SBCI.damageThisFight + ' damage done this fight. | TTK: ' + (now.getTime() - SBCI.ttk)/1000 + 's | DPS: ' + Math.round(SBCI.damageThisFight / ((now.getTime() - SBCI.ttk)/1000))
 } else if (SBCI.damageThisFight > 0) {
-\tslainMessage = SBCI.damageThisFight + ' damage done this fight.'
+    slainMessage = SBCI.damageThisFight + ' damage done this fight.'
 } else if (SBCI.ttk > 0) {
-\tslainMessage = 'TTK: ' + (now.getTime() - SBCI.ttk)/1000 + 's'
+    slainMessage = 'TTK: ' + (now.getTime() - SBCI.ttk)/1000 + 's'
 }
 
 if (SBCI.damageThisFight > 0 || SBCI.ttk > 0){
@@ -1038,7 +1038,7 @@ display_notice('Hunt List Loaded from Backup', 'white', 'black')"
                             "action": "script",
                             "script": "let killList = get_variable('killList')
 for (i=0; i<killList.length; i++) {
-\tdisplay_notice(killList[i], 'white', 'black')
+    display_notice(killList[i], 'white', 'black')
 }"
                         }
                     ],
@@ -1062,7 +1062,7 @@ var nameIndex = list.indexOf(args[2])
 var name = list[nameIndex]
 
 if (list[nameIndex-1] && nameIndex && args[1] === 'hup') {
-\tlist[nameIndex] = list[nameIndex - 1]
+    list[nameIndex] = list[nameIndex - 1]
     list[nameIndex-1] = name
 } else if (list[nameIndex+1] && nameIndex && args[1] === 'hdown') {
     list[nameIndex] = list[nameIndex + 1]
@@ -1072,10 +1072,10 @@ if (list[nameIndex-1] && nameIndex && args[1] === 'hup') {
 set_variable('killList', list)
 
 for (i=0; i<list.length; i++) {
-\tif(list[i] === name){
-    \tdisplay_notice(list[i], 'gold', 'black')
+    if(list[i] === name){
+        display_notice(list[i], 'gold', 'black')
     } else {
-    \tdisplay_notice(list[i])
+        display_notice(list[i])
     }
 }"
                         }
@@ -1096,11 +1096,11 @@ for (i=0; i<list.length; i++) {
                         {
                             "action": "script",
                             "script": "if (get_variable('useHeal')) {
-\tset_variable('useHeal', false)
+    set_variable('useHeal', false)
     SBCI.useHeal = false
     SBCI.log('HEAL OFF', 'white')
 } else {
-\tset_variable('useHeal', true)
+    set_variable('useHeal', true)
     SBCI.useHeal = true
     SBCI.log('HEAL ON', 'white')
 }"
@@ -1523,11 +1523,11 @@ send_command('crash ' + args[1])"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('useFreeze')) {
-\tset_variable('useFreeze', false)
+    set_variable('useFreeze', false)
     SBCI.useFreeze = false
     SBCI.log('FREEZE OFF', 'white')
 } else {
-\tset_variable('useFreeze', true)
+    set_variable('useFreeze', true)
     SBCI.useFreeze = true
     SBCI.log('FREEZE ON', 'white')
 }"
@@ -1549,11 +1549,11 @@ send_command('crash ' + args[1])"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('useMultistrike')) {
-\tset_variable('useMultistrike', false)
+    set_variable('useMultistrike', false)
     SBCI.useMultistrike = false
     SBCI.log('MULTISTRIKE OFF', 'white')
 } else {
-\tset_variable('useMultistrike', true)
+    set_variable('useMultistrike', true)
     SBCI.useMultistrike = true
     SBCI.log('MULTISTRIKE ON', 'white')
 }"
@@ -1575,11 +1575,11 @@ send_command('crash ' + args[1])"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('useFrenzy')) {
-\tset_variable('useFrenzy', false)
+    set_variable('useFrenzy', false)
     SBCI.useFrenzy = false
     SBCI.log('FRENZY OFF', 'white')
 } else {
-\tset_variable('useFrenzy', true)
+    set_variable('useFrenzy', true)
     SBCI.useFrenzy = true
     SBCI.log('FRENZY ON', 'white')
 }"
@@ -1601,7 +1601,7 @@ send_command('crash ' + args[1])"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('useDelay')) {
-\tset_variable('useDelay', false)
+    set_variable('useDelay', false)
     SBCI.useDelay = false
     SBCI.log('DELAY OFF', 'white')
 } else if (args[1] == '' && get_variable('delayAttack') == '') {
@@ -1631,11 +1631,11 @@ send_command('crash ' + args[1])"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('usePointZero')) {
-\tset_variable('usePointZero', false)
+    set_variable('usePointZero', false)
     SBCI.usePointZero = false
     SBCI.log('Point Zero Disabled', 'white')
 } else {
-\tset_variable('usePointZero', true)
+    set_variable('usePointZero', true)
     SBCI.usePointZero = true
     SBCI.log('Point Zero Enabled', 'white')
 }"
@@ -1656,11 +1656,11 @@ send_command('crash ' + args[1])"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('useSpeedup')) {
-\tset_variable('useSpeedup', false)
+    set_variable('useSpeedup', false)
     SBCI.useSpeedup = false
     SBCI.log('Speedup Disabled', 'white')
 } else {
-\tset_variable('useSpeedup', true)
+    set_variable('useSpeedup', true)
     SBCI.useSpeedup = true
     SBCI.log('Speedup Enabled', 'white')
 }"
@@ -1796,7 +1796,7 @@ send_command(command[args[1]] + empyreal[args[2]])"
                                 {
                                     "action": "script",
                                     "script": "limbs = {
-\tll: 'left leg',
+    ll: 'left leg',
     rl: 'right leg',
     ra: 'right arm',
     la: 'left arm'
@@ -1858,7 +1858,7 @@ send_command('limbdrain ' + get_variable('tar') + ' ' + limbs[args[1]])"
                                 {
                                     "action": "script",
                                     "script": "var command = {
-\ts: 'swarm'
+    s: 'swarm'
 }
 
 send_command('delay ' + command[args[1]])"
@@ -2147,7 +2147,7 @@ SBCI.huntingAttack()"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('my_combat')) {
-\tSBCI.huntingAttack()
+    SBCI.huntingAttack()
 }"
                                 }
                             ]
@@ -2280,7 +2280,7 @@ SBCI.huntingAttack()"
                             "action": "script",
                             "script": "SBCI.bladeshape = true
 if (SBCI.systemEnabled === true) {
-\tSBCI.huntingAttack()
+    SBCI.huntingAttack()
 }"
                         }
                     ],
@@ -2349,7 +2349,7 @@ SBCI.interrupt = false"
 var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SBCI').enabled
 
 if (SBCI.systemEnabled && reflexOn) {
-\tSBCI.huntingAttack()
+    SBCI.huntingAttack()
 }"
                         }
                     ],
@@ -2373,7 +2373,7 @@ SBCI.log('NO UNSTOPPABLE', 'red')
 var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SBCI').enabled
 
 if (SBCI.systemEnabled && reflexOn) {
-\tSBCI.huntingAttack()
+    SBCI.huntingAttack()
 }"
                         }
                     ],
@@ -2413,7 +2413,7 @@ if (SBCI.systemEnabled && reflexOn) {
 var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SBCI').enabled
 
 if (SBCI.systemEnabled && reflexOn) {
-\tSBCI.huntingAttack()
+    SBCI.huntingAttack()
 }"
                         },
                         {
@@ -2443,7 +2443,7 @@ if (SBCI.systemEnabled && reflexOn) {
 var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SBCI').enabled
 
 if (SBCI.systemEnabled && reflexOn) {
-\tSBCI.huntingAttack()
+    SBCI.huntingAttack()
 }"
                         }
                     ],
@@ -2466,7 +2466,7 @@ if (SBCI.systemEnabled && reflexOn) {
 var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SBCI').enabled
 
 if (SBCI.systemEnabled && reflexOn) {
-\tSBCI.huntingAttack()
+    SBCI.huntingAttack()
 }"
                         }
                     ],
@@ -2489,7 +2489,7 @@ if (SBCI.systemEnabled && reflexOn) {
 var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SBCI').enabled
 
 if (SBCI.systemEnabled && reflexOn) {
-\tSBCI.huntingAttack()
+    SBCI.huntingAttack()
 }"
                         }
                     ],
@@ -2605,11 +2605,11 @@ SBCI.huntingAttack()"
                         {
                             "action": "script",
                             "script": "if (get_variable('useBerserk')) {
-\tset_variable('useBerserk', false)
+    set_variable('useBerserk', false)
     SBCI.useBerserk = false
     SBCI.log('BERSERK OFF', 'white')
 } else {
-\tset_variable('useBerserk', true)
+    set_variable('useBerserk', true)
     SBCI.useBerserk = true
     SBCI.log('BERSERK ON', 'white')
 }"
@@ -2631,11 +2631,11 @@ SBCI.huntingAttack()"
                         {
                             "action": "script",
                             "script": "if (get_variable('useFever')) {
-\tset_variable('useFever', false)
+    set_variable('useFever', false)
     SBCI.useFever = false
     SBCI.log('FEVER OFF', 'white')
 } else {
-\tset_variable('useFever', true)
+    set_variable('useFever', true)
     SBCI.useFever = true
     SBCI.log('FEVER ON', 'white')
 }"
@@ -2873,7 +2873,7 @@ SBCI.huntingAttack()"
                         {
                             "action": "script",
                             "script": "if (SBCI.bullets == 0) {
-\tsend_command('gun spin')
+    send_command('gun spin')
 }"
                         }
                     ],
@@ -2911,11 +2911,11 @@ SBCI.huntingAttack()"
                         {
                             "action": "script",
                             "script": "if (get_variable('useAmbush')) {
-\tset_variable('useAmbush', false)
+    set_variable('useAmbush', false)
     SBCI.useAmbush = false
     SBCI.log('AMBUSH OFF', 'white')
 } else {
-\tset_variable('useAmbush', true)
+    set_variable('useAmbush', true)
     SBCI.useAmbush = true
     SBCI.log('AMBUSH ON', 'white')
 }"
@@ -2937,11 +2937,11 @@ SBCI.huntingAttack()"
                         {
                             "action": "script",
                             "script": "if (get_variable('useRapidfire')) {
-\tset_variable('useRapidfire', false)
+    set_variable('useRapidfire', false)
     SBCI.useRapidfire = false
     SBCI.log('RAPIDFIRE OFF', 'white')
 } else {
-\tset_variable('useRapidfire', true)
+    set_variable('useRapidfire', true)
     SBCI.useRapidfire = true
     SBCI.log('RAPIDFIRE ON', 'white')
 }"
@@ -3035,11 +3035,11 @@ SBCI.log(abilities, 'white')"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('useResistance')) {
-\tset_variable('useResistance', false)
+    set_variable('useResistance', false)
     SBCI.useResistance = false
     SBCI.log('Plasma Resistance Disabled', 'white')
 } else {
-\tset_variable('useResistance', true)
+    set_variable('useResistance', true)
     SBCI.useResistance = true
     SBCI.log('Plasma Resistance Enabled', 'white')
 }"
@@ -3060,11 +3060,11 @@ SBCI.log(abilities, 'white')"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('useSerrate')) {
-\tset_variable('useSerrate', false)
+    set_variable('useSerrate', false)
     SBCI.useSerrate = false
     SBCI.log('Serrate Disabled', 'white')
 } else {
-\tset_variable('useSerrate', true)
+    set_variable('useSerrate', true)
     SBCI.useSerrate = true
     SBCI.log('Serrate Enabled', 'white')
 }"
@@ -3085,11 +3085,11 @@ SBCI.log(abilities, 'white')"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('usePlasmaShield')) {
-\tset_variable('usePlasmaShield', false)
+    set_variable('usePlasmaShield', false)
     SBCI.usePlasmaShield = false
     SBCI.log('Plasma Shield Disabled', 'white')
 } else {
-\tset_variable('usePlasmaShield', true)
+    set_variable('usePlasmaShield', true)
     SBCI.usePlasmaShield = true
     SBCI.log('Plasma Shield Enabled', 'white')
 }"
@@ -3110,11 +3110,11 @@ SBCI.log(abilities, 'white')"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('useRamset')) {
-\tset_variable('useRamset', false)
+    set_variable('useRamset', false)
     SBCI.useRamset = false
     SBCI.log('Ramset Disabled', 'white')
 } else {
-\tset_variable('useRamset', true)
+    set_variable('useRamset', true)
     SBCI.useRamset = true
     SBCI.log('Ramset Enabled', 'white')
 }"
@@ -3135,11 +3135,11 @@ SBCI.log(abilities, 'white')"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('useDampening')) {
-\tset_variable('useDampening', false)
+    set_variable('useDampening', false)
     SBCI.useDampening = false
     SBCI.log('Dampening Disabled', 'white')
 } else {
-\tset_variable('useDampening', true)
+    set_variable('useDampening', true)
     SBCI.useDampening = true
     SBCI.log('Dampening Enabled', 'white')
 }"
@@ -3160,11 +3160,11 @@ SBCI.log(abilities, 'white')"
                                 {
                                     "action": "script",
                                     "script": "if (get_variable('useJamming')) {
-\tset_variable('useJamming', false)
+    set_variable('useJamming', false)
     SBCI.useJamming = false
     SBCI.log('Jamming Disabled', 'white')
 } else {
-\tset_variable('useJamming', true)
+    set_variable('useJamming', true)
     SBCI.useJamming = true
     SBCI.log('Jamming Enabled', 'white')
 }"
@@ -3482,7 +3482,7 @@ SBCI.huntingAttack()"
     set_variable('turretWeapon', args[2])
     set_variable('turretFollowup', args[3])
     set_variable('turretAlias', true)
-\tsend_command('turret construct turret')
+    send_command('turret construct turret')
 }
 "
                                 }
@@ -3527,7 +3527,7 @@ if (get_variable('turretMod').toUpperCase() == 'QPC') {
     send_command('gadget construct qpc')
 } else {
     send_command('turret mod ' + get_variable('turretMod'))
-\tif (get_variable('turretFollowup') != '') {send_command(get_variable('turretFollowup'))}
+    if (get_variable('turretFollowup') != '') {send_command(get_variable('turretFollowup'))}
     set_variable('turretAlias', false)
     SBCI.log('Turret ready!', 'white')
 }"
@@ -3919,10 +3919,10 @@ SBCI.log(abilities, 'white')"
                         {
                             "action": "script",
                             "script": "if (get_variable('useWorm')) {
-\tset_variable('useWorm', false)
+    set_variable('useWorm', false)
     SBCI.log('Burrowbot Worm Attack disabled', 'white')
 } else {
-\tset_variable('useWorm', true)
+    set_variable('useWorm', true)
     SBCI.log('Burrowbot Worm Attack enabled', 'white')
 }"
                         }
@@ -3943,10 +3943,10 @@ SBCI.log(abilities, 'white')"
                         {
                             "action": "script",
                             "script": "if (get_variable('useRelease')) {
-\tset_variable('useRelease', false)
+    set_variable('useRelease', false)
     SBCI.log('Burrowbot Worm Release Attack disabled', 'white')
 } else {
-\tset_variable('useRelease', true)
+    set_variable('useRelease', true)
     SBCI.log('Burrowbot Worm Release Attack enabled', 'white')
 }"
                         }
@@ -3967,10 +3967,10 @@ SBCI.log(abilities, 'white')"
                         {
                             "action": "script",
                             "script": "if (get_variable('useQPCBoost')) {
-\tset_variable('useQPCBoost', false)
+    set_variable('useQPCBoost', false)
     SBCI.log('QPC Boost after kill disabled', 'white')
 } else {
-\tset_variable('useQPCBoost', true)
+    set_variable('useQPCBoost', true)
     SBCI.log('QPC Boost after kill enabled', 'white')
 }"
                         }
