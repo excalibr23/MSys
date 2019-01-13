@@ -1,7 +1,7 @@
 {
     "name": "starwraith movement implant",
     "enabled": true,
-    "description": "v1.1. Use numpad to fly your ship and walk around. See MOVEHELP for more info.",
+    "description": "v1.2. Use numpad to fly your ship and walk around. See MOVEHELP for more info.",
     "type": "group",
     "id": 1,
     "items": [
@@ -11,6 +11,7 @@
             "enabled": true,
             "id": 47,
             "code": "//Commands to send on login
+client.package_enable('numpad movement', false);
 
 // Starwraith Movement Implant
 SMI = {
