@@ -71,7 +71,7 @@ SFCI = {
         }
     },
 //System Variables
-    goal: 'hunt3',
+    goal: 'hunt2',
     matchList: get_variable('matchList'),
     systemEnabled: true,
     offenseEnabled: false,
