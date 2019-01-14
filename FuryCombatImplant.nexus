@@ -1,0 +1,1578 @@
+{
+    "type": "group",
+    "name": "starwraith fury combat implant",
+    "enabled": true,
+    "id": 1,
+    "items": [
+        {
+            "type": "function",
+            "name": "onLoad",
+            "enabled": true,
+            "id": 2,
+            "code": "// Changelog
+// 20190113T1503EST: Copied main system to separate class systems
+
+// Place any code here you'd like to autorun when the system is loaded
+send_command('wakeup')
+SFCI = {
+// Core Implant Code
+    noticecolor: 'gold',
+    packagename: 'starwraith fury combat implant',
+    shortname: 'SFCI',
+    notice: function(text) {
+        display_notice(\"[\" + this.shortname + \"] \" + text, this.noticecolor);
+    },
+    loaded: function() {
+        //Send implant to browser log for debugging
+        console.log(this)
+        this.notice(\"Starwraith Fury Combat Implant v1.2 Loaded. Good hunting, and good death.\\n\");
+    },
+    helpbox: function(title,text) {
+        var helptext = \"<div class=\\\"mono\\\"><span style=\\\"color: #ffffff; \\\"><span style=\\\"background-color: #0000a0 \\\">\" + title + \"</span></span></div>\";
+        helptext += \"<div class=\\\"mono\\\">\" + text.replace(\"\\n\",\"</div><div class=\\\"mono\\\">\") + \"</div>\";
+        client.display_help_window(helptext);
+    },
+    disableGroup: function(name) {
+        var group = reflex_find_by_name('group', name, false, false, this.packagename)
+        reflex_disable(group)
+    },
+    enableGroup: function(name) {
+        var group = reflex_find_by_name('group', name, false, false, this.packagename)
+        reflex_enable(group)
+    },
+    log: function (x, fgcolor, bgcolor) {
+        let type = typeof x
+        switch(type) {
+          case 'number':
+          case 'string':
+          case 'boolean':
+            display_notice(x.toString(), fgcolor, bgcolor)
+            break;
+          case 'object':
+            for (var prop in x) {
+              display_notice(`${prop}: ${x[prop]}`, fgcolor, bgcolor)
+            }
+            break;
+          case 'undefined':
+            display_notice('undefined', fgcolor, bgcolor)
+            break;
+          default:
+            display_notice('wtf is this')
+        }
+    },
+    alert: function (text, fgcolor, bgcolor) {
+        text = text.toUpperCase()
+        let fullText = '-'.repeat(text.length+1) + '-------\\n--  '+ text + '  --\\n-------' + '-'.repeat(text.length+1)
+        display_notice(fullText, fgcolor, bgcolor)
+    },
+    debugMessage: function (text) {
+        if (get_variable('debug')) {
+            this.log(text, 'white', 'black')
+        }
+    },
+//System Variables
+    goal: 'hunt2',
+    matchList: get_variable('matchList'),
+    systemEnabled: true,
+    offenseEnabled: false,
+    break: get_variable('break'),
+    itemsInRoom: [],
+    damageThisFight: 0,
+    ttk: 0,
+    targetHealth: 0,
+    interrupt: false,
+//Character    
+    attack: get_variable('huntingAttack') + ' ',
+    class: '',
+    health: 0,
+    maxHealth: 0,
+    useHeal: get_variable('useHeal'),
+    healReady: true,
+//Fury
+    stance: '',
+    bladeshape: false,
+    rage: 0,
+    maxRage: 0,
+    unstoppable: false,
+    berserk: false,
+    useBerserk: get_variable('useBerserk'),
+    fever: false,
+    useFever: get_variable('useFever'),
+    hypertension: false,
+    infernoCharging: false,
+//Combat functions 
+    findTarget: function() {
+        var itemList = this.itemsInRoom
+        var killList = get_variable('killList')
+        var targetFound = false
+        
+        //Match room order
+        if (!this.matchList) {
+            for (i=0; i<itemList.length; i++) {
+                for (x=0; x<killList.length; x++) {
+                    if (itemList[i].name.includes(killList[x]) && itemList[i].attrib === 'm' && targetFound === false) {
+                        set_variable('tar', itemList[i].id)
+                        send_command('settarget ' + itemList[i].id)
+                        targetFound = true
+                        display_notice('New target: '+itemList[i].name, 'red', 'black')
+                    }
+                }
+            }
+        } else { //Match priority/list order
+            for (i=0; i<killList.length; i++) {
+                for (x=0; x<itemList.length; x++) {
+                    if (itemList[x].name.includes(killList[i]) && itemList[x].attrib === 'm' && targetFound === false) {
+                        set_variable('tar', itemList[x].id)
+                        send_command('settarget ' + itemList[x].id)
+                        targetFound = true
+                        display_notice('New target: '+itemList[x].name, 'red', 'black')
+                    }
+                }
+            }
+        }
+
+        if (!targetFound) {
+            //display_notice('No Target Found', 'red', 'black')
+            set_variable('tar', '')
+        }
+    },
+    huntingAttack: function() {
+        
+        if (!this.systemEnabled) {return}
+        var command = ''
+        
+        command += 'combo '
+            
+        if (this.interrupt && this.offenseEnabled) {
+            send_command('kith fever ' + get_variable('tar'))
+            return;
+        }
+            
+        if (this.health / this.maxHealth < .8 && this.healReady  && this.useHeal) {
+            send_command('kith suffuse')
+            return;
+        }else if (!this.bladeshape && get_variable('kithbladeshape') !== undefined && get_variable('kithbladeshape') !== '') {
+            send_command(get_variable('kithbladeshape'))
+            return;
+        }else if (get_variable('tar') == '' || this.offenseEnabled == false) {
+            return;
+        }else if (!this.fever && this.useFever) {
+            command = 'kith fever ';
+        }else if (this.goal == 'hunt1') {
+            //Battleflow attack
+            if (this.stance == 'Symmetry') {
+                command += 'swiftcut '
+            } else if (this.stance == 'Flare') {
+                command += 'wound '
+            } else if (this.stance == 'Eruption') {
+                if (this.hypertension) {
+                    command += 'bloodburn '
+                } else {
+                    command += 'hypertension '
+                }
+            } else if (this.stance == 'Ember') {
+                command += 'legspike '
+            }
+
+            //Rage Attack
+            if (this.unstoppable) {
+                command += 'slice '
+            } else if (this.stance == 'Symmetry') {
+                if (this.rage / this.maxRage > .13 && !this.berserk && this.useBerserk) {
+                    command += 'berserk '
+                } else {
+                    command += 'flyinglash '
+                }
+            } else if (this.stance == 'Flare') {
+                command += 'rend '
+            } else if (this.stance == 'Eruption') {
+                if (this.health / this.maxHealth < .7) {
+                    command += 'resistant '
+                } else {
+                    command += 'upperlash '
+                }
+            } else if (this.stance == 'Ember') {
+                if (this.rage / this.maxRage > .73  && this.unstoppable == false) {
+                    command += 'unstoppable '
+                } else {
+                    command += 'strike '
+                }
+            }
+        }else if (this.goal == 'hunt2') {
+            //Battleflow attack
+            if (this.stance == 'Symmetry') {
+                command += 'swiftcut '
+            } else if (this.stance == 'Flare') {
+                command += 'wound '
+            } else if (this.stance == 'Eruption') {
+                command += 'rupture '
+            }
+
+            //Rage Attack
+            if (this.unstoppable) {
+                command += 'slice '
+            } else if (this.stance == 'Symmetry') {
+                if (this.rage / this.maxRage > .13 && !this.berserk && this.useBerserk) {
+                    command += 'berserk '
+                } else {
+                    command += 'flyinglash '
+                }
+            } else if (this.stance == 'Flare') {
+                command += 'rend '
+            } else if (this.stance == 'Eruption') {
+                if (this.rage / this.maxRage > .73  && this.unstoppable == false) {
+                    command += 'unstoppable '
+                } else {
+                    command += 'strike '
+                }
+            }
+        }else if (this.goal == 'hunt3') {
+            var next = ''
+            command = 'combo '
+                
+            //Battleflow attack
+            if (this.stance == 'Symmetry') {
+                command += 'gutrend '
+                next = 'Ember'
+            } else if (this.stance == 'Ember') {
+                command += 'legspike '
+                next = 'Symmetry'
+            } else if (this.stance == 'Flare') {
+                command += 'sear '
+                next = 'Symmetry'
+            }
+
+            //Rage Attack
+            if (this.unstoppable) {
+                command += 'slice '
+            } else if (next == 'Symmetry') {
+                if (this.rage / this.maxRage > .8  && this.unstoppable == false) {
+                    command += 'unstoppable '
+                } else {
+                    command += 'deflect '
+                }
+            } else if (next == 'Ember') {
+                command += 'resistant '
+            } else if (next == 'Flare') {
+                command += 'reel '
+            }
+        }
+        
+        command += get_variable('tar')
+        send_command(command)
+    }
+}
+
+SFCI.loaded();",
+            "items": []
+        },
+        {
+            "type": "function",
+            "name": "onGMCP",
+            "enabled": true,
+            "id": 3,
+            "code": "// Place any code here you'd like to run when a GMCP message is received
+// - The GMCP message is received as \"args.gmcp_method\" and \"args.gmcp_args\"
+
+GMCP[args.gmcp_method] = args.gmcp_args
+
+/* ------------------------------------------ CHARACTER STUFF ----------------------------------- */
+
+if (args.gmcp_method == \"Char.Vitals\") {
+
+    // Track health changes
+    var change = SFCI.health - args.gmcp_args.hp;
+   
+    if (change > 0) {
+        SFCI.log('Damage taken: ' + change, 'yellow')
+    } else if (change < 0) {
+        SFCI.log('Damage healed: ' + Math.abs(change), '#6bdaee')
+    }
+    
+    SFCI.health = args.gmcp_args.hp
+    SFCI.maxHealth = args.gmcp_args.maxhp
+
+    SFCI.stance = args.gmcp_args.st
+    SFCI.rage = args.gmcp_args.rg
+    SFCI.maxRage = args.gmcp_args.maxrg
+}
+
+/* ----------------------------------- DEFENCES AND BUFFS --------------------------------------- */
+
+if (args.gmcp_method == 'Char.Defences.Add') {
+    
+    //Fury
+    //if (args.gmcp_args.name == 'Oblivion: Conqueror')  {
+    //    SFCI.empyreal = 'Conqueror'
+    //}
+
+}
+
+/* -------------------------------------------- ITEMS IN ROOM ----------------------------------- */
+
+//Get Items In Room
+if (args.gmcp_method == \"Char.Items.List\") {
+    SFCI.itemsInRoom = args.gmcp_args['items']
+}
+
+//Remove items when items leave
+if (args.gmcp_method == \"Char.Items.Remove\") {
+    let itemLeaving = args.gmcp_args['item']
+    
+    //Find index of item
+    SFCI.itemsInRoom = SFCI.itemsInRoom.filter(item => item.id !== itemLeaving.id);
+    
+}
+
+//Add items when items enter
+if (args.gmcp_method == \"Char.Items.Add\") {
+    let itemJoining = args.gmcp_args['item']
+    
+    //Find index of item
+    SFCI.itemsInRoom.push(itemJoining);
+    
+    if (SFCI.systemEnabled === true && !get_variable('tar')) {
+        SFCI.findTarget()
+    }
+    
+    if (SFCI.infernoCharging && itemJoining.attrib === 'm') {
+        send_command('asdf')
+        SFCI.infernoCharging = false
+        SFCI.alert('mob entered - inferno cancelled', 'white', 'red')
+    }
+}
+
+/* -------------------------------------------- PLAYERS IN ROOM ----------------------------------- */
+if (args.gmcp_method == \"Room.Players\") {
+    SFCI.playersInRoom = args.gmcp_args
+}
+
+/* --------------------------------------------- HELPERS --------------------------------- */
+if (args.gmcp_method == \"Room.Info\") {
+    if (SFCI.systemEnabled === true) {
+        SFCI.findTarget()
+    }
+}
+
+if (args.gmcp_method == \"IRE.Target.Info\") {
+    SFCI.targetHealth = args.gmcp_args['hpperc'].slice(0, -1)
+}
+",
+            "items": []
+        },
+        {
+            "type": "group",
+            "name": "Auto Hunt",
+            "enabled": true,
+            "id": 8,
+            "items": [
+                {
+                    "type": "group",
+                    "name": "Setup",
+                    "enabled": true,
+                    "id": 41,
+                    "items": [
+                        {
+                            "type": "alias",
+                            "name": "Combat Implant Setup - hsetup",
+                            "enabled": true,
+                            "id": 25,
+                            "matching": "begins",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "SFCI.log('-- Hunting List Setup.  Use \\'hsave\\' to keep a backup.  \\'hload\\' will load your backup.', 'white', 'black')
+SFCI.log('-- Use \\'hadd\\' <name> to add to the list and \\'hremove\\' <name> to remove items from this list. \\'hshow\\' will show the items on your list.', 'white', 'black')
+SFCI.log('-- Use \\'hattack\\' <attackName> to make it your primary attack that will be auto used.', 'white')
+SFCI.log('-- Use \\'hlist\\' to switch between room and priority list. Use \\'hup\\' or \\'hdown\\' <name> to increase or decrease an item on the priority list.', 'white')
+SFCI.log('-- Make sure you use \\'config usequeueing on\\'.  Then you can use other attacks to overwrite auto attacks.', 'white')
+
+if (get_variable('killList')       == undefined) {set_variable('killList', ['rockhopper'])}
+if (get_variable('debug')          == undefined) {set_variable('debug', false)}
+if (get_variable('matchList')      == undefined) {set_variable('matchList', true)}
+if (get_variable('break')          == undefined) {set_variable('break', true)}
+if (get_variable('useHeal')        == undefined) {set_variable('useHeal', true)}
+if (get_variable('useFreeze')      == undefined) {set_variable('useFreeze', false)}
+if (get_variable('useMultistrike') == undefined) {set_variable('useMultistrike', false)}
+if (get_variable('useFrenzy')      == undefined) {set_variable('useFrenzy', false)}
+if (get_variable('useDelay')       == undefined) {set_variable('useDelay', false)}
+if (get_variable('useBerserk')     == undefined) {set_variable('useBerserk', false)}
+if (get_variable('useFever')       == undefined) {set_variable('useFever', false)}
+if (get_variable('useAmbush')      == undefined) {set_variable('useAmbush', false)}
+if (get_variable('useRapidfire')   == undefined) {set_variable('useRapidfire', false)}"
+                                }
+                            ],
+                            "text": "hsetup",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "System Reset",
+                            "enabled": true,
+                            "id": 126,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "SFCI.log('-- Combat Implant has been reset to factory settings.', 'white', 'black')
+SFCI.log('-- If you have previously backed up your kill list you may use \\'hload\\' to reload it', 'white', 'black')
+
+set_variable('killList', ['rockhopper'])
+set_variable('debug', false)
+set_variable('useFreeze', false)
+set_variable('useMultistrike', false)
+set_variable('useFrenzy', false)
+set_variable('useDelay', false)
+set_variable('useBerserk', false)
+set_variable('useFever', false)
+set_variable('useAmbush', false)
+set_variable('useRapidfire', false)
+set_variable('useHeal', true)
+set_variable('matchList', true)
+set_variable('break', true)"
+                                }
+                            ],
+                            "text": "^hreset$",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Change Auto Attack",
+                            "enabled": true,
+                            "id": 26,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "SFCI.attack = args[1] + ' '
+set_variable('huntingAttack', args[1] + ' ')
+display_notice('Attack set to: ' + args[1], 'white', 'black')"
+                                }
+                            ],
+                            "text": "hattack (.+)",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable List Mode - hlist",
+                            "enabled": true,
+                            "id": 56,
+                            "matching": "begins",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('matchList')) {
+    SFCI.matchList = false
+    set_variable('matchList', false)
+    SFCI.log('Will match room listing', 'white')
+} else {
+    SFCI.matchList = true
+    set_variable('matchList', true)
+    SFCI.log('Will match priority listing', 'white')
+}"
+                                }
+                            ],
+                            "text": "hlist",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Break After Kill Mode - hbreak",
+                            "enabled": true,
+                            "id": 82,
+                            "matching": "begins",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('break')) {
+    SFCI.break = false
+    set_variable('break', false)
+    SFCI.log('Will continue after kill.', 'white')
+} else {
+    SFCI.break = true
+    set_variable('break', true)
+    SFCI.log('Will break after kill.', 'white')
+}"
+                                }
+                            ],
+                            "text": "hbreak",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Break Threshold",
+                            "enabled": true,
+                            "id": 169,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "set_variable('breakThreshold', args[1])
+SFCI.breakThreshold = args[1]"
+                                }
+                            ],
+                            "text": "^hbreakthreshold ([0-9]*)$"
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Slain",
+                    "enabled": true,
+                    "id": 5,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^(You) have slain a.*$|^.*has been slain by (.+)\\.$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.freeze = false
+SFCI.frenzy = false
+SFCI.negation = false
+SFCI.delaySwarm = false
+SFCI.fever = false
+SFCI.hypertension = false
+SFCI.ambush = false
+SFCI.backhand = false
+
+//var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
+//a.play()
+
+var autoList = ['You', 'Chronoxi Starwraith', 'Feraluna Starwraith', 'Mee', 'Casimar', 'Albion', 'Mykel']
+var onList = ''
+
+if (args[1]) {
+    onList = autoList.includes(args[1])
+} else {
+    onList = autoList.includes(args[2])
+}
+
+if (SFCI.systemEnabled === true && onList) {
+    SFCI.targetHealth = 0
+    send_command('clearqueue')
+    SFCI.findTarget()
+
+    if (SFCI.class == 'Engineer' && get_variable('useQPCBoost')) {
+        send_command('qpcboost')
+    }
+
+    if (SFCI.break) {
+        SFCI.offenseEnabled = false
+    }
+    
+    SFCI.huntingAttack()
+}
+
+var slainMessage = ''
+var now = new Date()
+if (SFCI.damageThisFight > 0 && SFCI.ttk > 0){
+    slainMessage = SFCI.damageThisFight + ' damage done this fight. | TTK: ' + (now.getTime() - SFCI.ttk)/1000 + 's | DPS: ' + Math.round(SFCI.damageThisFight / ((now.getTime() - SFCI.ttk)/1000))
+} else if (SFCI.damageThisFight > 0) {
+    slainMessage = SFCI.damageThisFight + ' damage done this fight.'
+} else if (SFCI.ttk > 0) {
+    slainMessage = 'TTK: ' + (now.getTime() - SFCI.ttk)/1000 + 's'
+}
+
+if (SFCI.damageThisFight > 0 || SFCI.ttk > 0){
+    SFCI.alert(slainMessage, 'lightgreen', 'darkblue')
+}
+
+SFCI.ttk = 0
+SFCI.damageThisFight = 0
+SFCI.interrupt = false"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Crash - AUTO OFF",
+                    "enabled": true,
+                    "id": 18,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^You prepare to crash out of the room.*$|^\\[Queue\\]: You will attempt to do CRASH .{1,4} when you recover balance.$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.systemEnabled = false
+display_notice('AUTO OFF', 'white', 'black')"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "keybind",
+                    "name": "",
+                    "enabled": true,
+                    "id": 10,
+                    "key": 96,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('debug') == true) {SFCI.log('I am attacking ' + get_variable('tar'), 'white')}
+SFCI.systemEnabled = true
+SFCI.offenseEnabled = true
+SFCI.huntingAttack()"
+                        }
+                    ],
+                    "key_alt": false,
+                    "key_ctrl": false,
+                    "key_shift": false,
+                    "items": []
+                },
+                {
+                    "type": "keybind",
+                    "name": "",
+                    "enabled": true,
+                    "id": 32,
+                    "key": 111,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (SFCI.systemEnabled === true) {
+  SFCI.systemEnabled = false
+  display_notice(\"Combat implant disabled\", 'white', 'black')
+} else {
+  SFCI.systemEnabled = true
+  display_notice(\"Combat implant enabled\", 'white', 'black')
+}"
+                        }
+                    ],
+                    "key_alt": false,
+                    "key_ctrl": false,
+                    "key_shift": false,
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Heal",
+                    "enabled": true,
+                    "id": 115,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (SFCI.class == 'Nanoseer') {
+  send_command('NANO REPAIR')
+} else if (SFCI.class == 'Fury') {
+  send_command('KITH SUFFUSE')
+} else if (SFCI.class == 'Scoundrel') {
+  send_command('STIM')
+} else if (SFCI.class == 'B.E.A.S.T.') {
+  send_command('suit support')
+} else if (SFCI.class == 'Engineer') {
+  send_command('operate stimjector')
+}"
+                        }
+                    ],
+                    "text": "h",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Add to hunting list - hadd <mob>",
+                    "enabled": true,
+                    "id": 13,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "display_notice('Adding: ' + args[1] + ' to list', 'white', 'black')
+let newList = get_variable('killList')
+newList.push(args[1])
+set_variable('killList', newList)"
+                        }
+                    ],
+                    "text": "hadd (.+)",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Remove from hunting list - hremove <mob>",
+                    "enabled": true,
+                    "id": 14,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "display_notice('Removing: ' + args[1] + ' from list', 'white', 'black')
+
+let newList = get_variable('killList')
+newList = newList.filter(item => item !== args[1]);
+
+set_variable('killList', newList)"
+                        }
+                    ],
+                    "text": "hremove (.+)",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Save Hunting List To Backup - hsave",
+                    "enabled": true,
+                    "id": 15,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "let newSave = get_variable('killList')
+set_variable('killListBackup', newSave)
+display_notice('Hunt List Saved', 'white', 'black')
+"
+                        }
+                    ],
+                    "text": "hsave",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Load Hunting List From Backup - hload",
+                    "enabled": true,
+                    "id": 16,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "let backupList = get_variable('killListBackup')
+set_variable('killList', backupList)
+display_notice('Hunt List Loaded from Backup', 'white', 'black')"
+                        }
+                    ],
+                    "text": "hload",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Show Hunting Targets - hshow",
+                    "enabled": true,
+                    "id": 17,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "let killList = get_variable('killList')
+for (i=0; i<killList.length; i++) {
+    display_notice(killList[i], 'white', 'black')
+}"
+                        }
+                    ],
+                    "text": "hshow",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Item Priority - hup/hdown <mob>",
+                    "enabled": true,
+                    "id": 52,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "var list = get_variable('killList')
+var nameIndex = list.indexOf(args[2])
+var name = list[nameIndex]
+
+if (list[nameIndex-1] && nameIndex && args[1] === 'hup') {
+    list[nameIndex] = list[nameIndex - 1]
+    list[nameIndex-1] = name
+} else if (list[nameIndex+1] && nameIndex && args[1] === 'hdown') {
+    list[nameIndex] = list[nameIndex + 1]
+    list[nameIndex+1] = name
+}
+
+set_variable('killList', list)
+
+for (i=0; i<list.length; i++) {
+    if(list[i] === name){
+        display_notice(list[i], 'gold', 'black')
+    } else {
+        display_notice(list[i])
+    }
+}"
+                        }
+                    ],
+                    "text": "^(hup|hdown) (.+)$",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Heal Toggle - hheal",
+                    "enabled": true,
+                    "id": 81,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useHeal')) {
+    set_variable('useHeal', false)
+    SFCI.useHeal = false
+    SFCI.log('HEAL OFF', 'white')
+} else {
+    set_variable('useHeal', true)
+    SFCI.useHeal = true
+    SFCI.log('HEAL ON', 'white')
+}"
+                        }
+                    ],
+                    "text": "hheal",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Kill",
+                    "enabled": true,
+                    "id": 120,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('debug') == true) {SFCI.log('I am attacking ' + get_variable('tar'), 'white')}
+SFCI.systemEnabled = true
+SFCI.offenseEnabled = true
+SFCI.huntingAttack()"
+                        }
+                    ],
+                    "text": "k",
+                    "items": []
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Generic",
+            "enabled": true,
+            "id": 4,
+            "items": [
+                {
+                    "type": "group",
+                    "name": "Interrupts",
+                    "enabled": true,
+                    "id": 147,
+                    "items": [
+                        {
+                            "type": "trigger",
+                            "name": "Super - Interrupt",
+                            "enabled": true,
+                            "id": 148,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "^Throwing back its grizzled head, a sly cania lets out a high-pitched, wavering howl.$|^A sluggish atzaparaki shakes off some of its torpor and draws in a deep breath, its sides beginning to swell alarmingly.$|^Light begins to focus deep within the body of a salt-crusted quartz creeper, growing to an almost painful radiance.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "SFCI.interrupt = true
+
+SFCI.alert('interrupting super', 'white', 'blue')
+SFCI.huntingAttack()
+"
+                                }
+                            ],
+                            "items": []
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Left battle",
+                    "enabled": true,
+                    "id": 6,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You are no longer in the throes of battle.",
+                    "actions": [
+                        {
+                            "action": "highlight",
+                            "highlight": "match",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#9488f6",
+                            "highlight_bg": "#000000"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Hide Queue",
+                    "enabled": false,
+                    "id": 7,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "text": "^\\[Queue\\]: You will attempt to do.*$|^Your swarm is already focused upon a multistrike.*$",
+                    "actions": [
+                        {
+                            "action": "gag"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Add Damage Per Kill",
+                    "enabled": true,
+                    "id": 57,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "Damage Dealt: (.+) .+",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (SFCI.ttk == 0) {
+    var now = new Date()
+    SFCI.ttk = now.getTime()
+}
+SFCI.damageThisFight += parseInt(args[1])"
+                        },
+                        {
+                            "action": "highlight",
+                            "highlight": "match",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#ff0000",
+                            "highlight_bg": "#000000"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Not following",
+                    "enabled": true,
+                    "id": 87,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "(.+) is no longer following you.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.log(args[1] + ' Stopped Following!', 'darkred')"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Crash + Direction - c<dir>",
+                    "enabled": true,
+                    "id": 33,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "send_command('cq')
+send_command('crash ' + args[1])"
+                        }
+                    ],
+                    "text": "c(nw|ne|se|sw|n|s|e|w|u|d|in|out)",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Javascript - js",
+                    "enabled": true,
+                    "id": 31,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.log(eval(args[1]))"
+                        }
+                    ],
+                    "text": "^js (.+)$",
+                    "items": []
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Fury",
+            "enabled": true,
+            "id": 69,
+            "items": [
+                {
+                    "type": "trigger",
+                    "name": "Kithblade Shaped",
+                    "enabled": true,
+                    "id": 70,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "Resting your hand on the hilt of",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.bladeshape = true
+if (SFCI.systemEnabled === true) {
+    SFCI.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Kithblade Unshaped",
+                    "enabled": true,
+                    "id": 86,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "text": "The blade of .+ shimmers and warps.+",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.alert('bladeshape off', 'white', 'lightred')
+SFCI.bladeshape = false
+
+var a = new Audio('https://freesound.org/people/Stopmotionbros/sounds/438991/download/438991__stopmotionbros__wind.m4a')
+a.play()"
+                        },
+                        {
+                            "action": "highlight",
+                            "highlight": "line",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#ffbc78",
+                            "highlight_bg": "#000000"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Fever On",
+                    "enabled": true,
+                    "id": 79,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "Your mind extends towards the vulnerabilities of .+ body, and with your connection to the universe's energy, you begin to increase the heat in every cell, flushing .+ with a raging fever.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.fever = true
+SFCI.interrupt = false"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Unstoppable On",
+                    "enabled": true,
+                    "id": 71,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "Your rage overwhelms you, you become unstoppable!",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.unstoppable = true
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SFCI').enabled
+
+if (SFCI.systemEnabled && reflexOn) {
+    SFCI.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Unstoppable Off",
+                    "enabled": true,
+                    "id": 72,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You no longer feel unstoppable!",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.unstoppable = false
+SFCI.log('NO UNSTOPPABLE', 'red')
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SFCI').enabled
+
+if (SFCI.systemEnabled && reflexOn) {
+    SFCI.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Hypertension On",
+                    "enabled": true,
+                    "id": 85,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^Tossing .+ to your off hand, you extend a bloodied palm towards .+ and then clench it into a fist, feeling .+ heart spasm and beat more quickly within .+ chest.$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.hypertension = true"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Heal Ready",
+                    "enabled": true,
+                    "id": 77,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "It is safe to suffuse yourself with kith energy again.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.healReady = true
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SFCI').enabled
+
+if (SFCI.systemEnabled && reflexOn) {
+    SFCI.huntingAttack()
+}"
+                        },
+                        {
+                            "action": "highlight",
+                            "highlight": "line",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#51d051",
+                            "highlight_bg": "#000000"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Heal Used",
+                    "enabled": true,
+                    "id": 78,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "The heart of distant stars and the fire at the center of every planet shimmers in your mind, and you draw upon that power, filling your body with an energy that heals your wounds and suffuses you with a flush of health.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.healReady = false
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SFCI').enabled
+
+if (SFCI.systemEnabled && reflexOn) {
+    SFCI.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Berserk On",
+                    "enabled": true,
+                    "id": 74,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^You go berserk, flailing .*$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.berserk = true
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SFCI').enabled
+
+if (SFCI.systemEnabled && reflexOn) {
+    SFCI.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Berserk Off",
+                    "enabled": true,
+                    "id": 75,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You are no longer berserk.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.berserk = false
+
+var reflexOn = reflex_find_by_name('trigger', 'Queue Attack Fury', false, false, 'SFCI').enabled
+
+if (SFCI.systemEnabled && reflexOn) {
+    SFCI.huntingAttack()
+}"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Attack after Inferno",
+                    "enabled": true,
+                    "id": 118,
+                    "matching": "substring",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "The searing wave of your inferno engulfs",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.systemEnabled = true
+SFCI.offenseEnabled = true
+SFCI.infernoCharging = false
+
+SFCI.huntingAttack()"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Queue Attack Fury",
+                    "enabled": true,
+                    "id": 73,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": true,
+                    "text": "^You flow smoothly into the.+stance.+|^You flow out of your stance.+|^Your mind extends towards the vulnerabilities of.*$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "SFCI.huntingAttack()
+"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Awaken Fury",
+                    "enabled": true,
+                    "id": 143,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "kith harden",
+                            "prefix_suffix": true
+                        },
+                        {
+                            "action": "waitfor",
+                            "text": "^You focus on hardening your skin|^Your internals are already hardened",
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "expire": "10"
+                        },
+                        {
+                            "action": "command",
+                            "command": "kith warmth",
+                            "prefix_suffix": true
+                        },
+                        {
+                            "action": "waitfor",
+                            "text": "^You focus on warming up your skin|^You're already protected",
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "expire": "10"
+                        },
+                        {
+                            "action": "command",
+                            "command": "kith balancing",
+                            "prefix_suffix": true
+                        },
+                        {
+                            "action": "waitfor",
+                            "text": "^You focus on your kith to prevent falling.|^You're already balancing",
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "expire": "10"
+                        },
+                        {
+                            "action": "command",
+                            "command": "kith firewreathe",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "wakeup",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Berserk Toggle - hberserk",
+                    "enabled": true,
+                    "id": 76,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useBerserk')) {
+    set_variable('useBerserk', false)
+    SFCI.useBerserk = false
+    SFCI.log('BERSERK OFF', 'white')
+} else {
+    set_variable('useBerserk', true)
+    SFCI.useBerserk = true
+    SFCI.log('BERSERK ON', 'white')
+}"
+                        }
+                    ],
+                    "text": "hberserk",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Fever Toggle - hfever",
+                    "enabled": true,
+                    "id": 80,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useFever')) {
+    set_variable('useFever', false)
+    SFCI.useFever = false
+    SFCI.log('FEVER OFF', 'white')
+} else {
+    set_variable('useFever', true)
+    SFCI.useFever = true
+    SFCI.log('FEVER ON', 'white')
+}"
+                        }
+                    ],
+                    "text": "hfever",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Fury Abilities - hfury",
+                    "enabled": true,
+                    "id": 84,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "var abilities = ''
+abilities += 'Berserk: ' + get_variable('useBerserk') + '\\n'
+abilities += 'Fever: ' + get_variable('useFever') + '\\n'
+abilities += 'Heal: ' + get_variable('useHeal') + '\\n'
+abilities += 'Bladeshape: ' + SFCI.bladeshape + '\\n'
+abilities += 'Desired blade shape set to: ' + get_variable('kithbladeshape') + '\\n'
+abilities += 'Goal: ' + SFCI.goal + '\\n'
+
+SFCI.log(abilities, 'white')"
+                        }
+                    ],
+                    "text": "hfury",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Set Bladeshape",
+                    "enabled": true,
+                    "id": 121,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "set_variable('kithbladeshape', args[1])
+SFCI.log('Set desired kithblade shape to: ' + get_variable('kithbladeshape'))"
+                        }
+                    ],
+                    "text": "^hblade (.+)",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Inferno - inf",
+                    "enabled": true,
+                    "id": 116,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "KITH INFERNO",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "inf",
+                    "items": []
+                },
+                {
+                    "type": "keybind",
+                    "name": "",
+                    "enabled": true,
+                    "id": 117,
+                    "key": 110,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "var dt = new Date()
+SFCI.ttk = dt.getTime()
+
+SFCI.infernoCharging = true
+
+send_command('kith inferno')"
+                        }
+                    ],
+                    "key_alt": false,
+                    "key_ctrl": false,
+                    "key_shift": false,
+                    "items": []
+                },
+                {
+                    "type": "keybind",
+                    "name": "",
+                    "enabled": true,
+                    "id": 122,
+                    "key": 106,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "kith suffuse"
+                        }
+                    ],
+                    "key_alt": false,
+                    "key_ctrl": false,
+                    "key_shift": false,
+                    "items": []
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Combat",
+            "enabled": true,
+            "id": 64,
+            "items": [
+                {
+                    "type": "group",
+                    "name": "Chat",
+                    "enabled": true,
+                    "id": 65,
+                    "items": [
+                        {
+                            "type": "alias",
+                            "name": "Target call - tt <name>",
+                            "enabled": false,
+                            "id": 67,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "SFCI.target = args[1]
+set_variable('tar', args[1])
+send_command('st ' + args[1])
+send_command('crt Target: ' + args[1])"
+                                }
+                            ],
+                            "text": "tt (.+)",
+                            "items": []
+                        }
+                    ],
+                    "actions": []
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "description": "SFCI v1.2"
+}

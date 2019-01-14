@@ -1,7 +1,7 @@
 {
     "name": "starwraith movement implant",
     "enabled": true,
-    "description": "v1.1. Use numpad to fly your ship and walk around. See MOVEHELP for more info.",
+    "description": "v1.3. Use numpad to fly your ship and walk around. See MOVEHELP for more info.",
     "type": "group",
     "id": 1,
     "items": [
@@ -11,6 +11,7 @@
             "enabled": true,
             "id": 47,
             "code": "//Commands to send on login
+client.package_enable('numpad movement', false);
 
 // Starwraith Movement Implant
 SMI = {
@@ -33,7 +34,7 @@ SMI = {
         client.display_help_window(helptext);
 \t},
     loaded: function() {
-\t\tSMI.notice(\"Starwraith Movement Implant v1.0 Loaded. Enter movehelp for more information.\\n\");
+\t\tSMI.notice(\"Starwraith Movement Implant v1.3 Loaded. Enter movehelp for more information.\\n\");
     }
 }
 
@@ -59,7 +60,7 @@ helptext += \"  Finally, to manually switch movement control:\\n\"
 helptext += \"  Ctrl+0=Disable, Ctrl+1=Land movement, Ctrl+2=Ship movement.\\n\\n\"
 helptext += \"  NOTE: Some shortcuts don't work on certain clients!\\n\"
 
-SMI.helpbox(\"Starwraith Movement Implant v1.0\",helptext);
+SMI.helpbox(\"Starwraith Movement Implant v1.3\",helptext);
 "
         },
         {
@@ -785,6 +786,223 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "command": "TAKEOFF LIST"
                         }
                     ]
+                },
+                {
+                    "type": "trigger",
+                    "name": "Autoexit Elevator",
+                    "enabled": true,
+                    "id": 57,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "The lift comes to a complete stop, a ping echoing from the control interface. You can now EXIT LIFT.",
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "EXIT LIFT"
+                        }
+                    ]
+                },
+                {
+                    "type": "trigger",
+                    "name": "Autoshow Station Transfer List",
+                    "enabled": true,
+                    "id": 59,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You can board a transport craft here, check STATION TRANSFER LIST.",
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "STATION TRANSFER LIST"
+                        }
+                    ]
+                },
+                {
+                    "type": "trigger",
+                    "name": "Autoshow Gatwarp Destinations",
+                    "enabled": true,
+                    "id": 60,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "There is a voidgate here. GATEWARP DESTINATIONS to start your travel across the cosmos.",
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "GATEWARP DESTINATIONS"
+                        }
+                    ]
+                },
+                {
+                    "type": "trigger",
+                    "name": "Autoshow Personal Teleporter",
+                    "enabled": true,
+                    "id": 61,
+                    "matching": "substring",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "There is a personal teleporter here. KEY PTP to activate it.",
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "KEY PTP"
+                        }
+                    ]
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Spaceship",
+            "enabled": true,
+            "id": 62,
+            "items": [
+                {
+                    "type": "alias",
+                    "name": "Ship Beacon - sb",
+                    "enabled": true,
+                    "id": 63,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "SHIP BEACON",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "sb"
+                },
+                {
+                    "type": "alias",
+                    "name": "Incursion List - il",
+                    "enabled": true,
+                    "id": 64,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "INCURSION LIST",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "il"
+                },
+                {
+                    "type": "alias",
+                    "name": "Incursion Map - im",
+                    "enabled": true,
+                    "id": 65,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "INCURSION MAP",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "im"
+                },
+                {
+                    "type": "alias",
+                    "name": "Starchart - sc <place>",
+                    "enabled": true,
+                    "id": 66,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "STARCHART @place",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "sc <place>"
+                },
+                {
+                    "type": "alias",
+                    "name": "Cargo Recover - cr <dir>",
+                    "enabled": true,
+                    "id": 67,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "CARGO RECOVER @dir",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "cr <dir>"
+                },
+                {
+                    "type": "alias",
+                    "name": "Cosmpiercer map - cpm",
+                    "enabled": true,
+                    "id": 68,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "CORMPIERCER MAP",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "cpm"
+                },
+                {
+                    "type": "alias",
+                    "name": "Cosmpiecer Liberate - cpl",
+                    "enabled": true,
+                    "id": 69,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "COSMPIERCER LIBERATE",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "cpl"
+                },
+                {
+                    "type": "alias",
+                    "name": "Cosmpiercer list - cp",
+                    "enabled": true,
+                    "id": 70,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "COSMPIERCER LIST",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "cp"
                 }
             ],
             "actions": []
