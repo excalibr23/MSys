@@ -1170,61 +1170,6 @@ SSCI.huntingAttack()
                     "actions": []
                 },
                 {
-                    "type": "group",
-                    "name": "Travel",
-                    "enabled": true,
-                    "id": 149,
-                    "items": [
-                        {
-                            "type": "trigger",
-                            "name": "Battlemaster Engineer Return",
-                            "enabled": true,
-                            "id": 125,
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": false,
-                            "text": "A tripod-mounted wormhole generator has been set up in the center of the cracked landing pad.",
-                            "actions": [
-                                {
-                                    "action": "linkify",
-                                    "linkify": "match",
-                                    "linkify_backref": "1",
-                                    "linkify_text_type": "capture",
-                                    "linkify_text": "",
-                                    "linkify_command_type": "value",
-                                    "linkify_command": "turn tripod&push tripod",
-                                    "linkify_color": "#26aa95"
-                                }
-                            ],
-                            "items": []
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Battlemaster Engineer Omni",
-                            "enabled": true,
-                            "id": 124,
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": false,
-                            "text": "A tripod-mounted wormhole generator has been set up in the center of the repair bay.",
-                            "actions": [
-                                {
-                                    "action": "linkify",
-                                    "linkify": "match",
-                                    "linkify_backref": "1",
-                                    "linkify_text_type": "capture",
-                                    "linkify_text": "",
-                                    "linkify_command_type": "value",
-                                    "linkify_command": "turn tripod&push tripod",
-                                    "linkify_color": "#26aa95"
-                                }
-                            ],
-                            "items": []
-                        }
-                    ],
-                    "actions": []
-                },
-                {
                     "type": "trigger",
                     "name": "Left battle",
                     "enabled": true,
