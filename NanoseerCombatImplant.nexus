@@ -14,6 +14,7 @@
 
 // Place any code here you'd like to autorun when the system is loaded
 send_command('wakeup')
+
 SNCI = {
 // Core Implant Code
     noticecolor: 'gold',
@@ -358,7 +359,8 @@ if (get_variable('useHeal')        == undefined) {set_variable('useHeal', true)}
 if (get_variable('useFreeze')      == undefined) {set_variable('useFreeze', false)}
 if (get_variable('useMultistrike') == undefined) {set_variable('useMultistrike', false)}
 if (get_variable('useFrenzy')      == undefined) {set_variable('useFrenzy', false)}
-if (get_variable('useDelay')       == undefined) {set_variable('useDelay', false)}"
+if (get_variable('useDelay')       == undefined) {set_variable('useDelay', false)}
+if (get_variable('huntingAttack')  == undefined) {set_variable('huntingAttack', 'swarm')}"
                                 }
                             ],
                             "text": "hsetup",
@@ -387,7 +389,8 @@ set_variable('useMultistrike', false)
 set_variable('useFrenzy', false)
 set_variable('useDelay', false)
 set_variable('matchList', true)
-set_variable('break', true)"
+set_variable('break', true)
+set_variable('huntingAttack', 'swarm')"
                                 }
                             ],
                             "text": "^hreset$",
