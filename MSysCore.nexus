@@ -29,11 +29,12 @@
 // 20190107T----EST: Added engineer repeat attacks
 // 20190107T----EST: Incorporated recurring airdrops to fully refill parts
 // 20190109T1708EST: Rebranded as Starwraith Combat Package
-// 20190111T1419SAST: Added Oga-specific switches.
 
 send_command('wakeup')
 MSys = {
 //System Variables
+    noticecolor: 'gold',
+    coreVersion: 1.3,
     goal: 'hunt2',
     matchList: get_variable('matchList'),
     systemEnabled: true,
@@ -80,16 +81,36 @@ MSys = {
     },
     debugMessage: function (text) {
         if (get_variable('debug')) {
-            this.log(text, 'white', 'black')
+            MSys.log(text, 'white', 'black')
         }
     },
+    notice: function(text) {
+        display_notice(\"[\" + MSys.shortname + \"] \" + text, MSys.noticecolor);
+    },
+    helpbox: function(title,text) {
+        var helptext = \"<div class=\\\"mono\\\"><span style=\\\"color: #ffffff; \\\"><span style=\\\"background-color: #0000a0 \\\">\" + title + \"</span></span></div>\";
+        helptext += \"<div class=\\\"mono\\\">\" + text.replace(\"\\n\",\"</div><div class=\\\"mono\\\">\") + \"</div>\";
+        client.display_help_window(helptext);
+    },
+    disableGroup: function(name) {
+        var group = reflex_find_by_name('group', name, false, false, 'MSys')
+        reflex_disable(group)
+    },
+    enableGroup: function(name) {
+        var group = reflex_find_by_name('group', name, false, false, 'MSys')
+        reflex_enable(group)
+    },
+    reflexOn: function (name) {
+        return reflex_find_by_name('trigger', name, false, false, 'MSys').enabled
+    },
+// Hunting
     findTarget: function() {
-        var itemList = this.itemsInRoom
+        var itemList = MSys.itemsInRoom
         var killList = get_variable('killList')
         var targetFound = false
         
         //Match room order
-        if (!this.matchList) {
+        if (!MSys.matchList) {
             for (i=0; i<itemList.length; i++) {
                 for (x=0; x<killList.length; x++) {
                     if (itemList[i].name.includes(killList[x]) && itemList[i].attrib === 'm' && targetFound === false) {
@@ -117,21 +138,8 @@ MSys = {
             //display_notice('No Target Found', 'red', 'black')
             set_variable('tar', '')
         }
-    },
-    disableGroup: function(name) {
-        var group = reflex_find_by_name('group', name, false, false, 'MSys')
-        reflex_disable(group)
-    },
-    enableGroup: function(name) {
-        var group = reflex_find_by_name('group', name, false, false, 'MSys')
-        reflex_enable(group)
     }
-}
-
-//Send MSys to browser log for debugging
-console.log(MSys)
-
-MSys.alert('Starwraith Combat Package Loaded. Good hunting.', 'gold')",
+}",
             "items": []
         },
         {
@@ -146,11 +154,6 @@ GMCP[args.gmcp_method] = args.gmcp_args
 
 /* ------------------------------------------ CHARACTER STUFF ----------------------------------- */
 
-// Seen when doing score
-if (args.gmcp_method == \"Char.Status\" && args.gmcp_args.first_name) {
-    MSys.first_name = args.gmcp_args.first_name;
-}
-
 if (args.gmcp_method == \"Char.Vitals\") {
 
     // Track health changes
@@ -164,8 +167,6 @@ if (args.gmcp_method == \"Char.Vitals\") {
     
     MSys.health = args.gmcp_args.hp
     MSys.maxHealth = args.gmcp_args.maxhp
-
-    // Check class
 }
 
 /* -------------------------------------------- ITEMS IN ROOM ----------------------------------- */
@@ -191,10 +192,8 @@ if (args.gmcp_method == \"Char.Items.Add\") {
     //Find index of item
     MSys.itemsInRoom.push(itemJoining);
     
-    if (MSys.systemEnabled === true) {
-    \tif (!get_variable('tar')) {
-        \tMSys.findTarget()
-        }
+    if (MSys.systemEnabled === true && !get_variable('tar')) {
+        MSys.findTarget()
     }
 }
 
@@ -780,150 +779,6 @@ MSys.huntingAttack()
                     "actions": []
                 },
                 {
-                    "type": "group",
-                    "name": "Travel",
-                    "enabled": true,
-                    "id": 149,
-                    "items": [
-                        {
-                            "type": "trigger",
-                            "name": "Battlemaster Engineer Return",
-                            "enabled": true,
-                            "id": 125,
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": false,
-                            "text": "A tripod-mounted wormhole generator has been set up in the center of the cracked landing pad.",
-                            "actions": [
-                                {
-                                    "action": "linkify",
-                                    "linkify": "match",
-                                    "linkify_backref": "1",
-                                    "linkify_text_type": "capture",
-                                    "linkify_text": "",
-                                    "linkify_command_type": "value",
-                                    "linkify_command": "turn tripod&push tripod",
-                                    "linkify_color": "#26aa95"
-                                }
-                            ],
-                            "items": []
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Battlemaster Engineer Omni",
-                            "enabled": true,
-                            "id": 124,
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": false,
-                            "text": "A tripod-mounted wormhole generator has been set up in the center of the repair bay.",
-                            "actions": [
-                                {
-                                    "action": "linkify",
-                                    "linkify": "match",
-                                    "linkify_backref": "1",
-                                    "linkify_text_type": "capture",
-                                    "linkify_text": "",
-                                    "linkify_command_type": "value",
-                                    "linkify_command": "turn tripod&push tripod",
-                                    "linkify_color": "#26aa95"
-                                }
-                            ],
-                            "items": []
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Gatewarp Destinations",
-                            "enabled": true,
-                            "id": 146,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "text": "There is a voidgate here. GATEWARP DESTINATIONS to start your travel across the cosmos.",
-                            "actions": [
-                                {
-                                    "action": "command",
-                                    "command": "Gatewarp Destinations"
-                                }
-                            ],
-                            "items": []
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Station Transfer List",
-                            "enabled": true,
-                            "id": 144,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "text": "You can board a transport craft here, check STATION TRANSFER LIST.",
-                            "actions": [
-                                {
-                                    "action": "command",
-                                    "command": "STATION TRANSFER LIST"
-                                }
-                            ],
-                            "items": []
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Takeoff List",
-                            "enabled": true,
-                            "id": 174,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "text": "You can board a transport craft here, check TAKEOFF LIST.",
-                            "actions": [
-                                {
-                                    "action": "command",
-                                    "command": "TAKEOFF LIST"
-                                }
-                            ],
-                            "items": []
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Takeoff List - tl",
-                            "enabled": true,
-                            "id": 119,
-                            "matching": "regexp",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "command",
-                                    "command": "Takeoff List",
-                                    "prefix_suffix": true
-                                }
-                            ],
-                            "text": "tl",
-                            "items": []
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Station Transfer List - stl",
-                            "enabled": true,
-                            "id": 83,
-                            "matching": "regexp",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "command",
-                                    "command": "Station Transfer List",
-                                    "prefix_suffix": true
-                                }
-                            ],
-                            "text": "stl",
-                            "items": []
-                        }
-                    ],
-                    "actions": []
-                },
-                {
                     "type": "trigger",
                     "name": "Left battle",
                     "enabled": true,
@@ -976,6 +831,13 @@ MSys.huntingAttack()
     MSys.ttk = now.getTime()
 }
 MSys.damageThisFight += parseInt(args[1])"
+                        },
+                        {
+                            "action": "highlight",
+                            "highlight": "match",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#ff0000",
+                            "highlight_bg": "#000000"
                         }
                     ],
                     "items": []
@@ -1032,166 +894,6 @@ send_command('crash ' + args[1])"
                         }
                     ],
                     "text": "^js (.+)$",
-                    "items": []
-                }
-            ],
-            "actions": []
-        },
-        {
-            "type": "group",
-            "name": "Spaceship",
-            "enabled": true,
-            "id": 11,
-            "items": [
-                {
-                    "type": "alias",
-                    "name": "Ship Beacon - sb",
-                    "enabled": true,
-                    "id": 12,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "command",
-                            "command": "SHIP BEACON",
-                            "prefix_suffix": true
-                        }
-                    ],
-                    "text": "sb",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Incursion List - il",
-                    "enabled": true,
-                    "id": 60,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "command",
-                            "command": "Incursion List",
-                            "prefix_suffix": true
-                        }
-                    ],
-                    "text": "il",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Incursion Map - im",
-                    "enabled": true,
-                    "id": 62,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "command",
-                            "command": "Incursion Map",
-                            "prefix_suffix": true
-                        }
-                    ],
-                    "text": "im",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Starchart - sc <place>",
-                    "enabled": true,
-                    "id": 61,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "send_command('starchart ' + args[1])"
-                        }
-                    ],
-                    "text": "^sc (.*)$",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Cargo Recover - cr <dir>",
-                    "enabled": true,
-                    "id": 63,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "command",
-                            "command": "cargo recover @1",
-                            "prefix_suffix": true
-                        }
-                    ],
-                    "text": "^cr (.+)$",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Cosmpiercer map - cpm",
-                    "enabled": true,
-                    "id": 51,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "command",
-                            "command": "Cosmpiercer map",
-                            "prefix_suffix": true
-                        }
-                    ],
-                    "text": "cpm",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Cosmpiecer Liberate - cpl",
-                    "enabled": true,
-                    "id": 68,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "command",
-                            "command": "cosmpiercer liberate",
-                            "prefix_suffix": true
-                        }
-                    ],
-                    "text": "cpl",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Cosmpiercer list - cp",
-                    "enabled": true,
-                    "id": 50,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "command",
-                            "command": "Cosmpiercer list",
-                            "prefix_suffix": true
-                        }
-                    ],
-                    "text": "cp",
                     "items": []
                 }
             ],

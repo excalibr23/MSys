@@ -9,7 +9,14 @@
             "name": "onLoad",
             "enabled": true,
             "id": 2,
-            "code": "//Fury
+            "code": "if (MSys == undefined || MSys.coreVersion == undefined || MSys.coreVersion < 1.3) {
+    display_notice('Starwraith Fury Package requires MSysCore v1.3 or later','gold');
+    return;
+}
+
+
+//Fury
+MSys.shortname = 'SFCI'
 MSys.stance = ''
 MSys.bladeshape = false
 MSys.rage = 0
@@ -25,84 +32,84 @@ MSys.huntingAttack = function() {
     //Fury
     var command = 'combo '
 
-    if (this.interrupt && this.offenseEnabled) {
+    if (MSys.interrupt && MSys.offenseEnabled) {
         send_command('kith fever ' + get_variable('tar'))
         return;
     }
 
-    if (this.health / this.maxHealth < .8 && this.healReady  && this.useHeal) {
+    if (MSys.health / MSys.maxHealth < .8 && MSys.healReady  && MSys.useHeal) {
         send_command('kith suffuse')
         return;
-    }else if (!this.bladeshape && get_variable('kithbladeshape') !== undefined && get_variable('kithbladeshape') !== '') {
+    }else if (!MSys.bladeshape && get_variable('kithbladeshape') !== undefined && get_variable('kithbladeshape') !== '') {
         send_command(get_variable('kithbladeshape'))
         return;
-    }else if (get_variable('tar') == '' || this.offenseEnabled == false) {
+    }else if (get_variable('tar') == '' || MSys.offenseEnabled == false) {
         return;
-    }else if (!this.fever && this.useFever) {
+    }else if (!MSys.fever && MSys.useFever) {
         command = 'kith fever ';
-    }else if (this.goal == 'hunt1') {
+    }else if (MSys.goal == 'hunt1') {
         //Battleflow attack
-        if (this.stance == 'Symmetry') {
+        if (MSys.stance == 'Symmetry') {
             command += 'swiftcut '
-        } else if (this.stance == 'Flare') {
+        } else if (MSys.stance == 'Flare') {
             command += 'wound '
-        } else if (this.stance == 'Eruption') {
-            if (this.hypertension) {
+        } else if (MSys.stance == 'Eruption') {
+            if (MSys.hypertension) {
                 command += 'bloodburn '
             } else {
                 command += 'hypertension '
             }
-        } else if (this.stance == 'Ember') {
+        } else if (MSys.stance == 'Ember') {
             command += 'legspike '
         }
 
         //Rage Attack
-        if (this.unstoppable) {
+        if (MSys.unstoppable) {
             command += 'slice '
-        } else if (this.stance == 'Symmetry') {
-            if (this.rage / this.maxRage > .13 && !this.berserk && this.useBerserk) {
+        } else if (MSys.stance == 'Symmetry') {
+            if (MSys.rage / MSys.maxRage > .13 && !MSys.berserk && MSys.useBerserk) {
                 command += 'berserk '
             } else {
                 command += 'flyinglash '
             }
-        } else if (this.stance == 'Flare') {
+        } else if (MSys.stance == 'Flare') {
             command += 'rend '
-        } else if (this.stance == 'Eruption') {
-            if (this.health / this.maxHealth < .7) {
+        } else if (MSys.stance == 'Eruption') {
+            if (MSys.health / MSys.maxHealth < .7) {
                 command += 'resistant '
             } else {
                 command += 'upperlash '
             }
-        } else if (this.stance == 'Ember') {
-            if (this.rage / this.maxRage > .73  && this.unstoppable == false) {
+        } else if (MSys.stance == 'Ember') {
+            if (MSys.rage / MSys.maxRage > .73  && MSys.unstoppable == false) {
                 command += 'unstoppable '
             } else {
                 command += 'strike '
             }
         }
-    }else if (this.goal == 'hunt2' && MSys.first_name != 'Oga') {
+    }else if (MSys.goal == 'hunt2' && MSys.first_name != 'Oga') {
         //Battleflow attack
-        if (this.stance == 'Symmetry') {
+        if (MSys.stance == 'Symmetry') {
             command += 'swiftcut '
-        } else if (this.stance == 'Flare') {
+        } else if (MSys.stance == 'Flare') {
             command += 'wound '
-        } else if (this.stance == 'Eruption') {
+        } else if (MSys.stance == 'Eruption') {
             command += 'rupture '
         }
 
         //Rage Attack
-        if (this.unstoppable) {
+        if (MSys.unstoppable) {
             command += 'slice '
-        } else if (this.stance == 'Symmetry') {
-            if (this.rage / this.maxRage > .13 && !this.berserk && this.useBerserk) {
+        } else if (MSys.stance == 'Symmetry') {
+            if (MSys.rage / MSys.maxRage > .13 && !MSys.berserk && MSys.useBerserk) {
                 command += 'berserk '
             } else {
                 command += 'flyinglash '
             }
-        } else if (this.stance == 'Flare') {
+        } else if (MSys.stance == 'Flare') {
             command += 'rend '
-        } else if (this.stance == 'Eruption') {
-            if (this.rage / this.maxRage > .73  && this.unstoppable == false) {
+        } else if (MSys.stance == 'Eruption') {
+            if (MSys.rage / MSys.maxRage > .73  && MSys.unstoppable == false) {
                 command += 'unstoppable '
             } else {
                 command += 'strike '
@@ -113,22 +120,22 @@ MSys.huntingAttack = function() {
         command = 'combo '
 
         //Battleflow attack
-        if (this.stance == 'Symmetry') {
+        if (MSys.stance == 'Symmetry') {
             command += 'gutrend '
             next = 'Ember'
-        } else if (this.stance == 'Ember') {
+        } else if (MSys.stance == 'Ember') {
             command += 'legspike '
             next = 'Symmetry'
-        } else if (this.stance == 'Flare') {
+        } else if (MSys.stance == 'Flare') {
             command += 'sear '
             next = 'Symmetry'
         }
 
         //Rage Attack
-        if (this.unstoppable) {
+        if (MSys.unstoppable) {
             command += 'slice '
         } else if (next == 'Symmetry') {
-            if (this.rage / this.maxRage > .8  && this.unstoppable == false) {
+            if (MSys.rage / MSys.maxRage > .8  && MSys.unstoppable == false) {
                 command += 'unstoppable '
             } else {
                 command += 'deflect '
@@ -144,8 +151,10 @@ MSys.huntingAttack = function() {
     send_command(command)
 }
 
+//Send implant to browser log for debugging
+console.log(MSys)
 
-MSys.alert('Starwraith Fury Package Loaded. Good hunting.', 'gold')",
+MSys.notice(\"Starwraith Fury Combat Implant v1.3 Loaded. Good hunting, and good death.\\n\");",
             "items": []
         },
         {
@@ -159,11 +168,6 @@ MSys.alert('Starwraith Fury Package Loaded. Good hunting.', 'gold')",
 GMCP[args.gmcp_method] = args.gmcp_args
 
 /* ------------------------------------------ CHARACTER STUFF ----------------------------------- */
-
-// Seen when doing score
-if (args.gmcp_method == \"Char.Status\" && args.gmcp_args.first_name) {
-    MSys.first_name = args.gmcp_args.first_name;
-}
 
 if (args.gmcp_method == \"Char.Vitals\") {
 
