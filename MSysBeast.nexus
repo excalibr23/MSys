@@ -10,7 +10,7 @@
             "enabled": true,
             "id": 2,
             "code": "if (MSys == undefined || MSys.coreVersion == undefined || MSys.coreVersion < 1.3) {
-    display_notice('Starwraith B.E.A.S.T. Package requires MSysCore v1.3 or later','gold');
+    display_notice('Starwraith B.E.A.S.T. Combat Implant requires MSysCore v1.3 or later','gold');
     return;
 }
 
@@ -72,9 +72,6 @@ MSys.huntingAttack = function() {
     send_command(command)
     return
 }
-
-//Send implant to browser log for debugging
-console.log(MSys)
 
 MSys.loaded(\"Starwraith B.E.A.S.T. Combat Implant v1.3\");
 send_command('wakeup')",
@@ -562,5 +559,5 @@ MSys.huntingAttack()"
             "actions": []
         }
     ],
-    "description": "MSysBeast v1.3"
+    "description": "Starwraith B.E.A.S.T. Combat Implant v1.3"
 }

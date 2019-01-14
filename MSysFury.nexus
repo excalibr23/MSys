@@ -10,7 +10,7 @@
             "enabled": true,
             "id": 2,
             "code": "if (MSys == undefined || MSys.coreVersion == undefined || MSys.coreVersion < 1.3) {
-    display_notice('Starwraith Fury Package requires MSysCore v1.3 or later','gold');
+    display_notice('Starwraith Fury Combat Implant requires MSysCore v1.3 or later','gold');
     return;
 }
 
@@ -149,9 +149,6 @@ MSys.huntingAttack = function() {
     command += get_variable('tar')
     send_command(command)
 }
-
-//Send implant to browser log for debugging
-console.log(MSys)
 
 MSys.loaded(\"Starwraith Fury Combat Implant v1.3\");
 send_command('wakeup')",
@@ -680,5 +677,5 @@ MSys.huntingAttack()"
             "actions": []
         }
     ],
-    "description": "MSysFury v1.3"
+    "description": "Starwraith Fury Combat Implant v1.3"
 }

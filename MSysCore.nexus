@@ -88,6 +88,9 @@ MSys = {
         display_notice(\"[\" + MSys.shortname + \"] \" + text, MSys.noticecolor);
     },
     loaded: function(name) {
+        //Send implant to browser log for debugging
+\t\tconsole.log(MSys)
+
         MSys.notice(name + \" Loaded. Good hunting, and good death.\\n\")
     },
     helpbox: function(title,text) {
