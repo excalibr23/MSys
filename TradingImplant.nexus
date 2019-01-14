@@ -1,0 +1,162 @@
+{
+    "name": "starwraith trading implant",
+    "enabled": true,
+    "description": "v0.2",
+    "type": "group",
+    "id": 1,
+    "items": [
+        {
+            "type": "function",
+            "name": "onLoad",
+            "enabled": true,
+            "id": 2,
+            "code": "//Commands to send on login
+
+// Starwraith Trading Implant
+STI = {
+    STATE_START: 0,
+    STATE_HEADER: 1,
+    STATE_DIVIDER: 2,
+    STATE_CONTENT: 3,
+    state: 0,
+    content: \"\",
+    noticecolor: 'gold',
+    packagename: 'starwraith trading implant',
+    disableGroup: function(name) {
+        var group = reflex_find_by_name('group', name, false, false, STI.packagename)
+        reflex_disable(group)
+    },
+    enableGroup: function(name) {
+        var group = reflex_find_by_name('group', name, false, false, STI.packagename)
+        reflex_enable(group)
+    },
+    disable: function(name, type = 'group') {
+        var group = reflex_find_by_name(type, name, false, false, STI.packagename)
+        reflex_disable(group)
+    },
+    enable: function(name, type = 'group') {
+        var group = reflex_find_by_name(type, name, false, false, STI.packagename)
+        reflex_enable(group)
+    },
+    notice: function(text) {
+        display_notice(\"[STI] \" + text, STI.noticecolor);
+    },
+    helpbox: function(title,text) {
+        var helptext = \"<div class=\\\"mono\\\"><span style=\\\"color: #ffffff; \\\"><span style=\\\"background-color: #0000a0 \\\">\" + title + \"</span></span></div>\";
+        helptext += \"<div class=\\\"mono\\\">\" + text.replace(\"\\n\",\"</div><div class=\\\"mono\\\">\") + \"</div>\";
+        client.display_help_window(helptext);
+\t},
+    loaded: function() {
+\t\tSTI.notice(\"Starwraith Trading Implant v0.2 Loaded. See tradinghelp for more information.\\n\");
+    },
+    parse_order_line: function(input) {
+        var id     = input.substring(0,6).trim();
+        var cargo  = input.substring(6,22).trim();
+        var qty    = input.substring(22,38).trim();
+        var dest   = input.substring(38,62).trim();
+        var price  = input.substring(62,72).trim();
+        var escrow = input.substring(72).trim();
+        
+        return id + \";\" + cargo  + \";\" + qty + \";\" + dest + \";\" + price  + \";\" + escrow;
+\t}
+}
+
+STI.loaded();"
+        },
+        {
+            "type": "group",
+            "name": "Parsing",
+            "enabled": true,
+            "id": 3,
+            "items": [
+                {
+                    "type": "trigger",
+                    "name": "Start Market Orders",
+                    "enabled": false,
+                    "id": 5,
+                    "matching": "exact",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "text": "-------------------------------&lt; Market orders &gt;-------------------------------",
+                    "actions": [
+                        {
+                            "action": "highlight",
+                            "highlight": "match",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#ffff00",
+                            "highlight_bg": "#000000"
+                        },
+                        {
+                            "action": "script",
+                            "script": "STI.state = STI.STATE_HEADER;
+STI.content = \"\";"
+                        },
+                        {
+                            "action": "enable",
+                            "type": "trigger",
+                            "name": "Order Lines"
+                        }
+                    ]
+                },
+                {
+                    "type": "trigger",
+                    "name": "Order Lines",
+                    "enabled": false,
+                    "id": 7,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": ".*",
+                    "actions": [
+                        {
+                            "action": "gag"
+                        },
+                        {
+                            "action": "script",
+                            "script": "switch (STI.state) {
+    case STI.STATE_HEADER: // Parse the headers
+        var values = args.input.split(/ {2,}/).join(\";\");
+        STI.content += values + '\\n';
+        
+        STI.state = STI.STATE_DIVIDER;
+    \tbreak;
+
+    case STI.STATE_DIVIDER: // Ignore the first divider
+        STI.state = STI.STATE_CONTENT;
+    \tbreak;
+
+    case STI.STATE_CONTENT:
+        if (args.input.startsWith(\"Type MORE to continue reading.\")) {
+            send_command('MORE');
+            /*
+            STI.state = STI.STATE_START;
+            STI.disable('Order Lines','trigger'); // Stop capturing
+            console.log('CONTENT:');
+            console.log(STI.content); 
+            */
+            
+        } else if (args.input.length < 72) {
+            // Ignore
+        } else if (args.input == \"-------------------------------------------------------------------------------\") {
+            STI.state = STI.STATE_START;
+            STI.disable('Order Lines','trigger'); // Stop capturing
+            
+            // Do something with the content
+            console.log('CONTENT:');
+            console.log(STI.content); 
+        } else {
+            // Parse the content
+            STI.content += STI.parse_order_line(args.input) + '\\n';
+        }
+    \tbreak;
+        
+  default:
+}"
+                        }
+                    ]
+                }
+            ],
+            "actions": []
+        }
+    ]
+}
