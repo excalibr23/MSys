@@ -30,7 +30,6 @@
 // 20190107T----EST: Incorporated recurring airdrops to fully refill parts
 // 20190109T1708EST: Rebranded as Starwraith Combat Package
 
-send_command('wakeup')
 MSys = {
 //System Variables
     noticecolor: 'gold',
