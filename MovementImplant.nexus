@@ -1,7 +1,7 @@
 {
     "name": "starwraith movement implant",
     "enabled": true,
-    "description": "v1.2. Use numpad to fly your ship and walk around. See MOVEHELP for more info.",
+    "description": "v1.3. Use numpad to fly your ship and walk around. See MOVEHELP for more info.",
     "type": "group",
     "id": 1,
     "items": [

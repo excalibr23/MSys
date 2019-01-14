@@ -484,11 +484,6 @@ GMCP[args.gmcp_method] = args.gmcp_args
 
 /* ------------------------------------------ CHARACTER STUFF ----------------------------------- */
 
-// Seen when doing score
-if (args.gmcp_method == \"Char.Status\" && args.gmcp_args.first_name) {
-    SECI.first_name = args.gmcp_args.first_name;
-}
-
 if (args.gmcp_method == \"Char.Vitals\") {
 
     // Track health changes
@@ -568,16 +563,8 @@ if (args.gmcp_method == \"Char.Items.Add\") {
     //Find index of item
     SECI.itemsInRoom.push(itemJoining);
     
-    if (SECI.systemEnabled === true) {
-        if (!get_variable('tar')) {
-            SECI.findTarget()
-        }
-    }
-    
-    if (SECI.infernoCharging && itemJoining.attrib === 'm') {
-        send_command('asdf')
-        SECI.infernoCharging = false
-        SECI.alert('mob entered - inferno cancelled', 'white', 'red')
+    if (SECI.systemEnabled === true && !get_variable('tar')) {
+        SECI.findTarget()
     }
 }
 
@@ -801,7 +788,7 @@ SECI.hypertension = false
 SECI.ambush = false
 SECI.backhand = false
 
-var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
+//var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
 //a.play()
 
 var autoList = ['You', 'Chronoxi Starwraith', 'Feraluna Starwraith', 'Mee', 'Casimar', 'Albion', 'Mykel']
@@ -858,7 +845,7 @@ SECI.interrupt = false"
                     "matching": "regexp",
                     "whole_words": true,
                     "case_sensitive": true,
-                    "text": "^You prepare to crash out of the room.*$",
+                    "text": "^You prepare to crash out of the room.*$|^\\[Queue\\]: You will attempt to do CRASH .{1,4} when you recover balance.$",
                     "actions": [
                         {
                             "action": "script",
@@ -1277,6 +1264,13 @@ SECI.huntingAttack()
     SECI.ttk = now.getTime()
 }
 SECI.damageThisFight += parseInt(args[1])"
+                        },
+                        {
+                            "action": "highlight",
+                            "highlight": "match",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#ff0000",
+                            "highlight_bg": "#000000"
                         }
                     ],
                     "items": []

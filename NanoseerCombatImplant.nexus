@@ -531,7 +531,7 @@ if (args.gmcp_method == \"Char.Vitals\") {
 
 if (args.gmcp_method == 'Char.Defences.Add') {
     
-    //Fury
+    //Nanoseer
     if (args.gmcp_args.name == 'Oblivion: Conqueror')  {
         SNCI.empyreal = 'Conqueror'
     } else if (args.gmcp_args.name == 'Oblivion: Traveller')  {
@@ -568,10 +568,8 @@ if (args.gmcp_method == \"Char.Items.Add\") {
     //Find index of item
     SNCI.itemsInRoom.push(itemJoining);
     
-    if (SNCI.systemEnabled === true) {
-        if (!get_variable('tar')) {
-            SNCI.findTarget()
-        }
+    if (SNCI.systemEnabled === true && !get_variable('tar')) {
+        SNCI.findTarget()
     }
     
     if (SNCI.infernoCharging && itemJoining.attrib === 'm') {
@@ -801,7 +799,7 @@ SNCI.hypertension = false
 SNCI.ambush = false
 SNCI.backhand = false
 
-var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
+//var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
 //a.play()
 
 var autoList = ['You', 'Chronoxi Starwraith', 'Feraluna Starwraith', 'Mee', 'Casimar', 'Albion', 'Mykel']
@@ -858,7 +856,7 @@ SNCI.interrupt = false"
                     "matching": "regexp",
                     "whole_words": true,
                     "case_sensitive": true,
-                    "text": "^You prepare to crash out of the room.*$",
+                    "text": "^You prepare to crash out of the room.*$|^\\[Queue\\]: You will attempt to do CRASH .{1,4} when you recover balance.$",
                     "actions": [
                         {
                             "action": "script",
@@ -1222,6 +1220,13 @@ SNCI.huntingAttack()
     SNCI.ttk = now.getTime()
 }
 SNCI.damageThisFight += parseInt(args[1])"
+                        },
+                        {
+                            "action": "highlight",
+                            "highlight": "match",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#ff0000",
+                            "highlight_bg": "#000000"
                         }
                     ],
                     "items": []

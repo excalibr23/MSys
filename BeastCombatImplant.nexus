@@ -254,12 +254,6 @@ if (args.gmcp_method == \"Char.Items.Add\") {
     if (SBCI.systemEnabled === true && !get_variable('tar')) {
         SBCI.findTarget()
     }
-    
-    //if (SBCI.infernoCharging && itemJoining.attrib === 'm') {
-    //    send_command('asdf')
-    //    SBCI.infernoCharging = false
-    //    SBCI.alert('mob entered - inferno cancelled', 'white', 'red')
-    //}
 }
 
 /* -------------------------------------------- PLAYERS IN ROOM ----------------------------------- */
@@ -459,7 +453,7 @@ SBCI.breakThreshold = args[1]"
                             "script": "SBCI.backhand = false
 SBCI.launch = false
 
-var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
+//var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
 //a.play()
 
 var autoList = ['You', 'Chronoxi Starwraith', 'Feraluna Starwraith', 'Mee', 'Casimar', 'Albion', 'Mykel']

@@ -194,7 +194,6 @@ if (args.gmcp_method == \"Char.Vitals\") {
 
 //if (args.gmcp_method == 'Char.Defences.Add') {
     
-    //Fury
     //if (args.gmcp_args.name == 'Oblivion: Conqueror')  {
     //    SSCI.empyreal = 'Conqueror'
     //}
@@ -223,10 +222,8 @@ if (args.gmcp_method == \"Char.Items.Add\") {
     //Find index of item
     SSCI.itemsInRoom.push(itemJoining);
     
-    if (SSCI.systemEnabled === true) {
-        if (!get_variable('tar')) {
-            SSCI.findTarget()
-        }
+    if (SSCI.systemEnabled === true && !get_variable('tar')) {
+        SSCI.findTarget()
     }
 }
 
@@ -478,7 +475,7 @@ SSCI.interrupt = false"
                     "matching": "regexp",
                     "whole_words": true,
                     "case_sensitive": true,
-                    "text": "^You prepare to crash out of the room.*$",
+                    "text": "^You prepare to crash out of the room.*$|^\\[Queue\\]: You will attempt to do CRASH .{1,4} when you recover balance.$",
                     "actions": [
                         {
                             "action": "script",
@@ -842,6 +839,13 @@ SSCI.huntingAttack()
     SSCI.ttk = now.getTime()
 }
 SSCI.damageThisFight += parseInt(args[1])"
+                        },
+                        {
+                            "action": "highlight",
+                            "highlight": "match",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#ff0000",
+                            "highlight_bg": "#000000"
                         }
                     ],
                     "items": []
