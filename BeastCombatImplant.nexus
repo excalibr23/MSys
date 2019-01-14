@@ -25,7 +25,7 @@ SBCI = {
     loaded: function() {
         //Send implant to browser log for debugging
         console.log(this)
-        this.notice(\"Starwraith B.E.A.S.T. Combat Implant v1.0 Loaded. Good hunting, and good death.\\n\");
+        this.notice(\"Starwraith B.E.A.S.T. Combat Implant v1.2 Loaded. Good hunting, and good death.\\n\");
     },
     helpbox: function(title,text) {
         var helptext = \"<div class=\\\"mono\\\"><span style=\\\"color: #ffffff; \\\"><span style=\\\"background-color: #0000a0 \\\">\" + title + \"</span></span></div>\";
@@ -1499,5 +1499,5 @@ send_command('crt Target: ' + args[1])"
             "actions": []
         }
     ],
-    "description": "SBCI v1.0"
+    "description": "SBCI v1.2"
 }
