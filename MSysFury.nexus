@@ -1,6 +1,6 @@
 {
     "type": "group",
-    "name": "MSysFury",
+    "name": "msysfury",
     "enabled": true,
     "id": 1,
     "items": [
@@ -13,7 +13,6 @@
     display_notice('Starwraith Fury Package requires MSysCore v1.3 or later','gold');
     return;
 }
-
 
 //Fury
 MSys.shortname = 'SFCI'
@@ -154,7 +153,8 @@ MSys.huntingAttack = function() {
 //Send implant to browser log for debugging
 console.log(MSys)
 
-MSys.notice(\"Starwraith Fury Combat Implant v1.3 Loaded. Good hunting, and good death.\\n\");",
+MSys.loaded(\"Starwraith Fury Combat Implant v1.3\");
+send_command('wakeup')",
             "items": []
         },
         {
@@ -196,260 +196,409 @@ if (args.gmcp_method == \"Char.Items.Add\") {
             "id": 69,
             "items": [
                 {
-                    "type": "trigger",
-                    "name": "Kithblade Shaped",
+                    "type": "group",
+                    "name": "Configuration",
                     "enabled": true,
-                    "id": 70,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "Resting your hand on the hilt of",
-                    "actions": [
+                    "id": 144,
+                    "items": [
                         {
-                            "action": "script",
-                            "script": "MSys.bladeshape = true
+                            "type": "alias",
+                            "name": "Fury Abilities - hfury",
+                            "enabled": true,
+                            "id": 84,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "var abilities = ''
+abilities += 'Berserk: ' + get_variable('useBerserk') + '\\n'
+abilities += 'Fever: ' + get_variable('useFever') + '\\n'
+abilities += 'Heal: ' + get_variable('useHeal') + '\\n'
+abilities += 'Bladeshape: ' + MSys.bladeshape + '\\n'
+abilities += 'Desired blade shape set to: ' + get_variable('kithbladeshape') + '\\n'
+abilities += 'Goal: ' + MSys.goal + '\\n'
+
+MSys.log(abilities, 'white')"
+                                }
+                            ],
+                            "text": "hfury",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Berserk Toggle - hberserk",
+                            "enabled": true,
+                            "id": 76,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.toggle('useBerserk', 'Berserk');"
+                                }
+                            ],
+                            "text": "hberserk",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Fever Toggle - hfever",
+                            "enabled": true,
+                            "id": 80,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.toggle('useFever', 'Fever');"
+                                }
+                            ],
+                            "text": "hfever",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Set Bladeshape",
+                            "enabled": true,
+                            "id": 121,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "set_variable('kithbladeshape', args[1])
+MSys.notice('Set desired kithblade shape to: ' + get_variable('kithbladeshape'))"
+                                }
+                            ],
+                            "text": "^hblade (.+)",
+                            "items": []
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Shortcuts",
+                    "enabled": true,
+                    "id": 145,
+                    "items": [
+                        {
+                            "type": "alias",
+                            "name": "Inferno - inf",
+                            "enabled": true,
+                            "id": 116,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "KITH INFERNO",
+                                    "prefix_suffix": true
+                                }
+                            ],
+                            "text": "inf",
+                            "items": []
+                        },
+                        {
+                            "type": "keybind",
+                            "name": "",
+                            "enabled": true,
+                            "id": 117,
+                            "key": 110,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "var dt = new Date()
+MSys.ttk = dt.getTime()
+
+MSys.infernoCharging = true
+
+send_command('KITH INFERNO')"
+                                }
+                            ],
+                            "key_alt": false,
+                            "key_ctrl": false,
+                            "key_shift": false,
+                            "items": []
+                        },
+                        {
+                            "type": "keybind",
+                            "name": "",
+                            "enabled": true,
+                            "id": 122,
+                            "key": 106,
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "KITH SUFFUSE"
+                                }
+                            ],
+                            "key_alt": false,
+                            "key_ctrl": false,
+                            "key_shift": false,
+                            "items": []
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Ability Activations",
+                    "enabled": true,
+                    "id": 146,
+                    "items": [
+                        {
+                            "type": "trigger",
+                            "name": "Kithblade Shaped",
+                            "enabled": true,
+                            "id": 70,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "Resting your hand on the hilt of",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.bladeshape = true
 if (MSys.systemEnabled === true) {
 \tMSys.huntingAttack()
 }"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Kithblade Unshaped",
-                    "enabled": true,
-                    "id": 86,
-                    "matching": "regexp",
-                    "whole_words": false,
-                    "case_sensitive": false,
-                    "text": "The blade of .+ shimmers and warps.+",
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "MSys.alert('bladeshape off', 'white', 'lightred')
-MSys.bladeshape = false
-
-var a = new Audio('https://freesound.org/people/Stopmotionbros/sounds/438991/download/438991__stopmotionbros__wind.m4a')
-a.play()"
+                                }
+                            ],
+                            "items": []
                         },
                         {
-                            "action": "highlight",
-                            "highlight": "line",
-                            "highlight_backref": "1",
-                            "highlight_fg": "#ffbc78",
-                            "highlight_bg": "#000000"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Fever On",
-                    "enabled": true,
-                    "id": 79,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "Your mind extends towards the vulnerabilities of .+ body, and with your connection to the universe's energy, you begin to increase the heat in every cell, flushing .+ with a raging fever.",
-                    "actions": [
+                            "type": "trigger",
+                            "name": "Kithblade Unshaped",
+                            "enabled": true,
+                            "id": 86,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "The blade of .+ shimmers and warps.+",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.alert('bladeshape off', 'white', 'lightred')
+MSys.bladeshape = false
+
+//var a = new Audio('https://freesound.org/people/Stopmotionbros/sounds/438991/download/438991__stopmotionbros__wind.m4a')
+//a.play()"
+                                },
+                                {
+                                    "action": "highlight",
+                                    "highlight": "line",
+                                    "highlight_backref": "1",
+                                    "highlight_fg": "#ffbc78",
+                                    "highlight_bg": "#000000"
+                                }
+                            ],
+                            "items": []
+                        },
                         {
-                            "action": "script",
-                            "script": "MSys.fever = true
+                            "type": "trigger",
+                            "name": "Fever On",
+                            "enabled": true,
+                            "id": 79,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "Your mind extends towards the vulnerabilities of .+ body, and with your connection to the universe's energy, you begin to increase the heat in every cell, flushing .+ with a raging fever.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.fever = true
 MSys.interrupt = false"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Unstoppable On",
-                    "enabled": true,
-                    "id": 71,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "Your rage overwhelms you, you become unstoppable!",
-                    "actions": [
+                                }
+                            ],
+                            "items": []
+                        },
                         {
-                            "action": "script",
-                            "script": "MSys.unstoppable = true
+                            "type": "trigger",
+                            "name": "Unstoppable On",
+                            "enabled": true,
+                            "id": 71,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "Your rage overwhelms you, you become unstoppable!",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.unstoppable = true
+MSys.log('YES UNSTOPPABLE', 'red')
 
 if (MSys.systemEnabled) {
 \tMSys.huntingAttack()
 }"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Unstoppable Off",
-                    "enabled": true,
-                    "id": 72,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "You no longer feel unstoppable!",
-                    "actions": [
+                                }
+                            ],
+                            "items": []
+                        },
                         {
-                            "action": "script",
-                            "script": "MSys.unstoppable = false
+                            "type": "trigger",
+                            "name": "Unstoppable Off",
+                            "enabled": true,
+                            "id": 72,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You no longer feel unstoppable!",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.unstoppable = false
 MSys.log('NO UNSTOPPABLE', 'red')
 
 if (MSys.systemEnabled) {
 \tMSys.huntingAttack()
 }"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Hypertension On",
-                    "enabled": true,
-                    "id": 85,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "^Tossing .+ to your off hand, you extend a bloodied palm towards .+ and then clench it into a fist, feeling .+ heart spasm and beat more quickly within .+ chest.$",
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "MSys.hypertension = true"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Heal Ready",
-                    "enabled": true,
-                    "id": 77,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "It is safe to suffuse yourself with kith energy again.",
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "MSys.healReady = true
-
-if (MSys.systemEnabled) {
-\tMSys.huntingAttack()
-}"
+                                }
+                            ],
+                            "items": []
                         },
                         {
-                            "action": "highlight",
-                            "highlight": "line",
-                            "highlight_backref": "1",
-                            "highlight_fg": "#51d051",
-                            "highlight_bg": "#000000"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Heal Used",
-                    "enabled": true,
-                    "id": 78,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "The heart of distant stars and the fire at the center of every planet shimmers in your mind, and you draw upon that power, filling your body with an energy that heals your wounds and suffuses you with a flush of health.",
-                    "actions": [
+                            "type": "trigger",
+                            "name": "Hypertension On",
+                            "enabled": true,
+                            "id": 85,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "^Tossing .+ to your off hand, you extend a bloodied palm towards .+ and then clench it into a fist, feeling .+ heart spasm and beat more quickly within .+ chest.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.hypertension = true"
+                                }
+                            ],
+                            "items": []
+                        },
                         {
-                            "action": "script",
-                            "script": "MSys.healReady = false
+                            "type": "trigger",
+                            "name": "Heal Ready",
+                            "enabled": true,
+                            "id": 77,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "It is safe to suffuse yourself with kith energy again.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.healReady = true
 
 if (MSys.systemEnabled) {
 \tMSys.huntingAttack()
 }"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Berserk On",
-                    "enabled": true,
-                    "id": 74,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "^You go berserk, flailing .*$",
-                    "actions": [
+                                },
+                                {
+                                    "action": "highlight",
+                                    "highlight": "line",
+                                    "highlight_backref": "1",
+                                    "highlight_fg": "#51d051",
+                                    "highlight_bg": "#000000"
+                                }
+                            ],
+                            "items": []
+                        },
                         {
-                            "action": "script",
-                            "script": "MSys.berserk = true
+                            "type": "trigger",
+                            "name": "Heal Used",
+                            "enabled": true,
+                            "id": 78,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "The heart of distant stars and the fire at the center of every planet shimmers in your mind, and you draw upon that power, filling your body with an energy that heals your wounds and suffuses you with a flush of health.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.healReady = false
 
 if (MSys.systemEnabled) {
 \tMSys.huntingAttack()
 }"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Berserk Off",
-                    "enabled": true,
-                    "id": 75,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "You are no longer berserk.",
-                    "actions": [
+                                }
+                            ],
+                            "items": []
+                        },
                         {
-                            "action": "script",
-                            "script": "MSys.berserk = false
+                            "type": "trigger",
+                            "name": "Berserk On",
+                            "enabled": true,
+                            "id": 74,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "^You go berserk, flailing .*$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.berserk = true
 
 if (MSys.systemEnabled) {
 \tMSys.huntingAttack()
 }"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Attack after Inferno",
-                    "enabled": true,
-                    "id": 118,
-                    "matching": "substring",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "The searing wave of your inferno engulfs",
-                    "actions": [
+                                }
+                            ],
+                            "items": []
+                        },
                         {
-                            "action": "script",
-                            "script": "MSys.systemEnabled = true
+                            "type": "trigger",
+                            "name": "Berserk Off",
+                            "enabled": true,
+                            "id": 75,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You are no longer berserk.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.berserk = false
+
+if (MSys.systemEnabled) {
+\tMSys.huntingAttack()
+}"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Attack after Inferno",
+                            "enabled": true,
+                            "id": 118,
+                            "matching": "substring",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "The searing wave of your inferno engulfs",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.systemEnabled = true
 MSys.offenseEnabled = true
 MSys.infernoCharging = false
 
 MSys.huntingAttack()"
+                                }
+                            ],
+                            "items": []
                         }
                     ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Queue Attack Fury",
-                    "enabled": true,
-                    "id": 73,
-                    "matching": "regexp",
-                    "whole_words": false,
-                    "case_sensitive": true,
-                    "text": "^You flow smoothly into the.+stance.+|^You flow out of your stance.+|^Your mind extends towards the vulnerabilities of.*$",
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "MSys.huntingAttack()
-"
-                        }
-                    ],
-                    "items": []
+                    "actions": []
                 },
                 {
                     "type": "alias",
@@ -510,163 +659,26 @@ MSys.huntingAttack()"
                     "items": []
                 },
                 {
-                    "type": "alias",
-                    "name": "Berserk Toggle - hberserk",
+                    "type": "trigger",
+                    "name": "Queue Attack Fury",
                     "enabled": true,
-                    "id": 76,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "if (get_variable('useBerserk')) {
-\tset_variable('useBerserk', false)
-    MSys.useBerserk = false
-    MSys.log('BERSERK OFF', 'white')
-} else {
-\tset_variable('useBerserk', true)
-    MSys.useBerserk = true
-    MSys.log('BERSERK ON', 'white')
-}"
-                        }
-                    ],
-                    "text": "hberserk",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Fever Toggle - hfever",
-                    "enabled": true,
-                    "id": 80,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "if (get_variable('useFever')) {
-\tset_variable('useFever', false)
-    MSys.useFever = false
-    MSys.log('FEVER OFF', 'white')
-} else {
-\tset_variable('useFever', true)
-    MSys.useFever = true
-    MSys.log('FEVER ON', 'white')
-}"
-                        }
-                    ],
-                    "text": "hfever",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Fury Abilities - hfury",
-                    "enabled": true,
-                    "id": 84,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "var abilities = ''
-abilities += 'Berserk: ' + get_variable('useBerserk') + '\\n'
-abilities += 'Fever: ' + get_variable('useFever') + '\\n'
-abilities += 'Heal: ' + get_variable('useHeal') + '\\n'
-abilities += 'Bladeshape: ' + MSys.bladeshape + '\\n'
-abilities += 'Desired blade shape set to: ' + get_variable('kithbladeshape') + '\\n'
-abilities += 'Goal: ' + MSys.goal + '\\n'
-
-MSys.log(abilities, 'white')"
-                        }
-                    ],
-                    "text": "hfury",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Set Bladeshape",
-                    "enabled": true,
-                    "id": 121,
+                    "id": 73,
                     "matching": "regexp",
                     "whole_words": false,
-                    "case_sensitive": false,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "set_variable('kithbladeshape', args[1])
-MSys.log('Set desired kithblade shape to: ' + get_variable('kithbladeshape'))"
-                        }
-                    ],
-                    "text": "^hblade (.+)",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Inferno - inf",
-                    "enabled": true,
-                    "id": 116,
-                    "matching": "exact",
-                    "whole_words": true,
                     "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "command",
-                            "command": "KITH INFERNO",
-                            "prefix_suffix": true
-                        }
-                    ],
-                    "text": "inf",
-                    "items": []
-                },
-                {
-                    "type": "keybind",
-                    "name": "",
-                    "enabled": true,
-                    "id": 117,
-                    "key": 110,
+                    "text": "^You flow smoothly into the.+stance.+|^You flow out of your stance.+|^Your mind extends towards the vulnerabilities of.*$",
                     "actions": [
                         {
                             "action": "script",
-                            "script": "var dt = new Date()
-MSys.ttk = dt.getTime()
-
-MSys.infernoCharging = true
-
-send_command('kith inferno')"
+                            "script": "MSys.huntingAttack()
+"
                         }
                     ],
-                    "key_alt": false,
-                    "key_ctrl": false,
-                    "key_shift": false,
-                    "items": []
-                },
-                {
-                    "type": "keybind",
-                    "name": "",
-                    "enabled": true,
-                    "id": 122,
-                    "key": 106,
-                    "actions": [
-                        {
-                            "action": "command",
-                            "command": "kith suffuse"
-                        }
-                    ],
-                    "key_alt": false,
-                    "key_ctrl": false,
-                    "key_shift": false,
                     "items": []
                 }
             ],
             "actions": []
         }
     ],
-    "description": "Exported reflexes: MSysFury"
+    "description": "MSysFury v1.3"
 }

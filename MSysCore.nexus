@@ -1,6 +1,6 @@
 {
     "type": "group",
-    "name": "MSysCore",
+    "name": "msyscore",
     "enabled": true,
     "id": 1,
     "items": [
@@ -87,6 +87,9 @@ MSys = {
     notice: function(text) {
         display_notice(\"[\" + MSys.shortname + \"] \" + text, MSys.noticecolor);
     },
+    loaded: function(name) {
+        MSys.notice(name + \" Loaded. Good hunting, and good death.\\n\")
+    },
     helpbox: function(title,text) {
         var helptext = \"<div class=\\\"mono\\\"><span style=\\\"color: #ffffff; \\\"><span style=\\\"background-color: #0000a0 \\\">\" + title + \"</span></span></div>\";
         helptext += \"<div class=\\\"mono\\\">\" + text.replace(\"\\n\",\"</div><div class=\\\"mono\\\">\") + \"</div>\";
@@ -102,6 +105,18 @@ MSys = {
     },
     reflexOn: function (name) {
         return reflex_find_by_name('trigger', name, false, false, 'MSys').enabled
+    },
+    toggle: function (variable, name) {
+\t\tif (get_variable(variable)) {
+    \t\tset_variable(variable, false)
+\t\t    MSys.notice(name + ' Disabled', 'white')
+            return false;
+\t\t} else {
+    \t\tset_variable(variable, true)
+    \t\tMSys.useSerrate = true
+    \t\tMSys.notice(name + ' Enabled', 'white')
+            return true;
+\t\t}    
     },
 // Hunting
     findTarget: function() {
@@ -939,5 +954,5 @@ send_command('crt Target: ' + args[1])"
             "actions": []
         }
     ],
-    "description": "Exported reflexes: MSysCore"
+    "description": "MSysCore v1.3"
 }
