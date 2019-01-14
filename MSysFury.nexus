@@ -1,6 +1,6 @@
 {
     "type": "group",
-    "name": "msysfury",
+    "name": "MSysFury",
     "enabled": true,
     "id": 1,
     "items": [
@@ -677,5 +677,5 @@ MSys.huntingAttack()"
             "actions": []
         }
     ],
-    "description": "Starwraith Fury Combat Implant v1.3"
+    "description": "Exported reflexes: MSysFury"
 }

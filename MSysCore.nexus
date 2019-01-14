@@ -1,6 +1,6 @@
 {
     "type": "group",
-    "name": "msyscore",
+    "name": "MSysCore",
     "enabled": true,
     "id": 1,
     "items": [
@@ -34,6 +34,7 @@ MSys = {
 //System Variables
     noticecolor: 'gold',
     coreVersion: 1.3,
+    shortname: 'CORE',
     goal: 'hunt2',
     matchList: get_variable('matchList'),
     systemEnabled: true,
@@ -97,17 +98,6 @@ MSys = {
         helptext += \"<div class=\\\"mono\\\">\" + text.replace(\"\\n\",\"</div><div class=\\\"mono\\\">\") + \"</div>\";
         client.display_help_window(helptext);
     },
-    disableGroup: function(name) {
-        var group = reflex_find_by_name('group', name, false, false, 'MSys')
-        reflex_disable(group)
-    },
-    enableGroup: function(name) {
-        var group = reflex_find_by_name('group', name, false, false, 'MSys')
-        reflex_enable(group)
-    },
-    reflexOn: function (name) {
-        return reflex_find_by_name('trigger', name, false, false, 'MSys').enabled
-    },
     toggle: function (variable, name) {
 \t\tif (get_variable(variable)) {
     \t\tset_variable(variable, false)
@@ -156,7 +146,9 @@ MSys = {
             set_variable('tar', '')
         }
     }
-}",
+}
+
+MSys.loaded(\"Starwraith Core Implant v1.3\");",
             "items": []
         },
         {
@@ -779,7 +771,7 @@ MSys.huntingAttack()"
                             "matching": "regexp",
                             "whole_words": true,
                             "case_sensitive": true,
-                            "text": "^Throwing back its grizzled head, a sly cania lets out a high-pitched, wavering howl.$|^A sluggish atzaparaki shakes off some of its torpor and draws in a deep breath, its sides beginning to swell alarmingly.$|^Light begins to focus deep within the body of a salt-crusted quartz creeper, growing to an almost painful radiance.$",
+                            "text": "^Throwing back its grizzled head, a sly cania lets out a high-pitched, wavering howl.$|^A sluggish atzaparaki shakes off some of its torpor and draws in a deep breath, its sides beginning to swell alarmingly.$|^Light begins to focus deep within the body of a salt-crusted quartz creeper, growing to an almost painful radiance.$|^Staggering backwards, shoulder joint grinding, a crystal-clawed rock giant draws back one of its massive, stony limbs, preparing to swing it.$",
                             "actions": [
                                 {
                                     "action": "script",
@@ -956,5 +948,5 @@ send_command('crt Target: ' + args[1])"
             "actions": []
         }
     ],
-    "description": "MSysCore v1.3"
+    "description": "Exported reflexes: MSysCore"
 }
