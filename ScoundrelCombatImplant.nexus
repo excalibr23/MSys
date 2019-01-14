@@ -2884,18 +2884,17 @@ SSCI.huntingAttack()"
                     "name": "Construct Ripper - rip",
                     "enabled": true,
                     "id": 97,
-                    "matching": "exact",
-                    "whole_words": true,
+                    "matching": "regex",
+                    "whole_words": false,
                     "case_sensitive": true,
                     "prefix_suffix": true,
                     "actions": [
                         {
-                            "action": "command",
-                            "command": "ied construct ripper",
-                            "prefix_suffix": true
+                            "action": "script",
+                            "script": "send_command('ied construct ripper from ' + args[1])"
                         }
                     ],
-                    "text": "rip",
+                    "text": "^rip (.*)",
                     "items": []
                 },
                 {
