@@ -1,0 +1,617 @@
+{
+    "type": "group",
+    "name": "msysengineer",
+    "enabled": true,
+    "id": 1,
+    "items": [
+        {
+            "type": "function",
+            "name": "onLoad",
+            "enabled": true,
+            "id": 2,
+            "code": "if (MSys == undefined || MSys.coreVersion == undefined || MSys.coreVersion < 1.3) {
+    display_notice('Starwraith Engineer Combat Implant v1.3 requires MSysCore v1.3 or later','gold');
+    return;
+}
+
+//Fury
+MSys.shortname = 'SECI'
+MSys.parts = 0
+MSys.repeat = true
+MSys.wormDeployed = false
+MSys.huntingAttack = function() {
+    if (!MSys.systemEnabled) {return}
+    var command = ''
+
+    //Engineer
+    if (MSys.health / MSys.maxHealth < .8 && MSys.healReady && MSys.useHeal) {
+        MSys.debugMessage('Activating stimjector')
+        send_command('operate stimjector')
+
+    }else if (get_variable('tar') == '' || MSys.offenseEnabled == false) {
+        return;
+
+    }else if (!MSys.repeat && get_variable('useRepeat') && get_variable('repeatAttack') != '') {
+        MSys.debugMessage('Initiating repeat')
+        command =  'bot repeat '
+        command += get_variable('engineerRepeatAttack')
+        command += ' '
+
+    } else if (get_variable('useWorm') && MSys.targetHealth > 0.7 && !MSys.wormDeployed) {
+        MSys.debugMessage('Executing burrowbot worm attack')
+        command = 'bot worm '
+
+    } else if (get_variable('useRelease') && MSys.wormDeployed && MSys.targetHealth < 0.3) {
+        MSys.debugMessage('Releasing burrowbot')
+        command = 'bot release '
+    } else {
+        MSys.debugMessage('Executing default engineer attack')
+        command = 'bot claw '
+    }
+
+    MSys.debugMessage('Attempting command: ' + command) 
+    command += get_variable('tar')
+    send_command(command)
+}
+
+MSys.loaded(\"Starwraith Engineer Combat Implant v1.3\");
+send_command('wakeup')
+",
+            "items": []
+        },
+        {
+            "type": "function",
+            "name": "onGMCP",
+            "enabled": true,
+            "id": 3,
+            "code": "// Place any code here you'd like to run when a GMCP message is received
+// - The GMCP message is received as \"args.gmcp_method\" and \"args.gmcp_args\"
+
+GMCP[args.gmcp_method] = args.gmcp_args
+
+/* ------------------------------------------ CHARACTER STUFF ----------------------------------- */
+
+if (args.gmcp_method == \"Char.Vitals\") {
+    MSys.parts = args.gmcp_args.pt
+}
+
+/* ----------------------------------- DEFENCES AND BUFFS --------------------------------------- */
+
+//if (args.gmcp_method == 'Char.Defences.Add') {
+    //if (args.gmcp_args.name == 'Oblivion: Conqueror')  {
+    //    SECI.empyreal = 'Conqueror'
+    //}
+//}",
+            "items": []
+        },
+        {
+            "type": "group",
+            "name": "Engineer",
+            "enabled": true,
+            "id": 109,
+            "items": [
+                {
+                    "type": "group",
+                    "name": "Configuration",
+                    "enabled": true,
+                    "id": 152,
+                    "items": [
+                        {
+                            "type": "alias",
+                            "name": "List Ability Configuration",
+                            "enabled": true,
+                            "id": 113,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "var abilities = ''
+abilities += 'Heal:          ' + get_variable('useHeal') + '\\n'
+abilities += 'Repeat Attack: ' + get_variable('engineerRepeatAttack') + '\\n'
+abilities += 'Use Repeat:    ' + get_variable('useRepeat') + '\\n'
+abilities += 'Repeat Avail:  ' + MSys.repeat + '\\n'
+abilities += 'Use Worm:      ' + get_variable('useWorm') + '\\n'
+abilities += 'Worm Deployed: ' + MSys.wormDeployed + '\\n'
+abilities += 'Use Release:   ' + get_variable('useRelease') + '\\n'
+abilities += 'QPC Boost:     ' + get_variable('useQPCBoost') + '\\n'
+
+MSys.log(abilities, 'white')"
+                                }
+                            ],
+                            "text": "hengineer",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Repeat",
+                            "enabled": true,
+                            "id": 135,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (args[1] != 'clear') {
+    set_variable('engineerRepeatAttack', args[1])
+    set_variable('useRepeat', true)
+    MSys.notice('Enabled bot repeat with attack: ' + args[1])
+} else {
+    set_variable('engineerRepeatAttack', '')
+    set_variable('useRepeat', false)
+    MSys.notice('Disabled bot repeat command', 'white')
+}"
+                                }
+                            ],
+                            "text": "hrepeat (.+)",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Worm",
+                            "enabled": true,
+                            "id": 141,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.toggle('useWorm','Burrowbot Worm Attack');"
+                                }
+                            ],
+                            "text": "hworm",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Worm Release",
+                            "enabled": true,
+                            "id": 142,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.toggle('useRelease','Burrowbot Worm Release Attack');"
+                                }
+                            ],
+                            "text": "hrelease",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable QPCBoost",
+                            "enabled": true,
+                            "id": 151,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.toggle('useQPCBoost','QPC Boost after kill');"
+                                }
+                            ],
+                            "text": "hqpcboost"
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Ability Activations",
+                    "enabled": true,
+                    "id": 153,
+                    "items": [
+                        {
+                            "type": "trigger",
+                            "name": "Stimjector Used",
+                            "enabled": true,
+                            "id": 111,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You activate your stimjector, feeling a rush of vitality as it releases healing nanites into your bloodstream.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.healReady = false"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Stimjector Ready",
+                            "enabled": true,
+                            "id": 112,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You can again use a stimjector.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.healReady = true
+MSys.huntingAttack()"
+                                },
+                                {
+                                    "action": "highlight",
+                                    "highlight": "line",
+                                    "highlight_backref": "1",
+                                    "highlight_fg": "#00efff",
+                                    "highlight_bg": "#000000"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Repeat Active",
+                            "enabled": true,
+                            "id": 137,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You build an instruction loop",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.repeat = false
+MSys.huntingAttack()"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Repeat Available",
+                            "enabled": true,
+                            "id": 138,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You can again order a repeated attack.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.repeat = true"
+                                },
+                                {
+                                    "action": "highlight",
+                                    "highlight": "line",
+                                    "highlight_backref": "1",
+                                    "highlight_fg": "#fbbe80",
+                                    "highlight_bg": "#000000"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Burrowbot Active",
+                            "enabled": true,
+                            "id": 139,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "and starts burrowing into its flesh.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.wormDeployed = true
+MSys.huntingAttack()"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Burrowbot Returned",
+                            "enabled": true,
+                            "id": 140,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^A knife-mawed burrowbot violently emerges|ceases burrowing",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.wormDeployed = false
+MSys.huntingAttack()"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Turret Unpowered",
+                            "enabled": true,
+                            "id": 150,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "doesn't have enough power to attack.$",
+                            "actions": [
+                                {
+                                    "action": "highlight",
+                                    "highlight": "line",
+                                    "highlight_backref": "1",
+                                    "highlight_fg": "#f863df",
+                                    "highlight_bg": "#000000"
+                                }
+                            ]
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Turret Construction",
+                    "enabled": true,
+                    "id": 129,
+                    "items": [
+                        {
+                            "type": "alias",
+                            "name": "Construct Turret",
+                            "enabled": true,
+                            "id": 128,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (args[1] == '' || args[2] == '') {
+    MSys.log('Usage: hturret <mod> <weapon> <follow up command>', 'darkyellow')
+} else {
+    set_variable('turretMod', args[1])
+    set_variable('turretWeapon', args[2])
+    set_variable('turretFollowup', args[3])
+    set_variable('turretAlias', true)
+    send_command('turret construct turret')
+}
+"
+                                }
+                            ],
+                            "text": "hturret ([a-z]+) ([a-z]+)[ ]?(.*)",
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Frame Constructed",
+                            "enabled": true,
+                            "id": 130,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^Circuitboards, robotic servos, power sources, and an operating system come together under your capable hands to form a modular weapons turret",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('turretAlias') == true) {
+    send_command('turret install ' + get_variable('turretWeapon'))
+}"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Weapon Mounted",
+                            "enabled": true,
+                            "id": 131,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^Smoothly, you socket the .* barrel|That barrel is already installed on the turret",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('turretAlias') != true) {return;}
+
+if (get_variable('turretMod').toUpperCase() == 'QPC') {
+    send_command('gadget construct qpc')
+} else {
+    send_command('turret mod ' + get_variable('turretMod'))
+    if (get_variable('turretFollowup') != '') {send_command(get_variable('turretFollowup'))}
+    set_variable('turretAlias', false)
+    MSys.log('Turret ready!', 'white')
+}"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Mod Mounted",
+                            "enabled": true,
+                            "id": 133,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^Metal ratchets satisfyingly into place and code whirrs down",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('turretAlias') != true) {return;}
+send_command(get_variable('turretFollowup'))
+set_variable('turretAlias', false)
+MSys.log('Turret ready!', 'white')"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "QPC Ready",
+                            "enabled": true,
+                            "id": 132,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^Using your vast engineering knowledge, you effortlessly construct a cylindrical quantum power cell",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('turretAlias') != true) {
+    return;
+} else if (get_variable('turretMod').toUpperCase() == 'QPC') {
+    send_command('turret mod qpc')
+}"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Deploy Sentry Turret",
+                            "enabled": true,
+                            "id": 134,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "send_command('turret deploy ' + args[1])"
+                                },
+                                {
+                                    "action": "waitfor",
+                                    "text": "Dropping a turret with a mounted flamethrower barrel",
+                                    "matching": "substring",
+                                    "whole_words": false,
+                                    "case_sensitive": false,
+                                    "expire": "10"
+                                },
+                                {
+                                    "action": "command",
+                                    "command": "workstation deploy",
+                                    "prefix_suffix": false
+                                },
+                                {
+                                    "action": "waitfor",
+                                    "text": "You fold down the legs of your workstation",
+                                    "matching": "substring",
+                                    "whole_words": false,
+                                    "case_sensitive": false,
+                                    "expire": "10"
+                                },
+                                {
+                                    "action": "command",
+                                    "command": "turret sentrymode",
+                                    "prefix_suffix": true
+                                },
+                                {
+                                    "action": "waitfor",
+                                    "text": "Fingers whirring across the holokeyboard",
+                                    "matching": "substring",
+                                    "whole_words": false,
+                                    "case_sensitive": false,
+                                    "expire": "10"
+                                },
+                                {
+                                    "action": "command",
+                                    "command": "workstation pack",
+                                    "prefix_suffix": true
+                                }
+                            ],
+                            "text": "^deploysentry[ ]?([0-9]*)$",
+                            "items": []
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Utility",
+                    "enabled": true,
+                    "id": 136,
+                    "items": [
+                        {
+                            "type": "trigger",
+                            "name": "Airdrop Return",
+                            "enabled": true,
+                            "id": 123,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "^An aerodynamic drone flies in, decelerating rapidly. It drops a supply of spare parts into your hands.$",
+                            "actions": [
+                                {
+                                    "action": "highlight",
+                                    "highlight": "line",
+                                    "highlight_backref": "1",
+                                    "highlight_fg": "#00c7ff",
+                                    "highlight_bg": "#000000"
+                                },
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('refillParts') == true) {
+    if (MSys.parts < 60) {
+        send_command('bot airdrop')
+    } else {
+        set_variable('refillParts', false)
+    }
+}"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Refill Parts",
+                            "enabled": true,
+                            "id": 127,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "set_variable('refillParts', true)
+send_command('bot airdrop')
+"
+                                }
+                            ],
+                            "text": "^hfillParts$",
+                            "items": []
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Queue Attack Engineer",
+                    "enabled": true,
+                    "id": 114,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^A crane-armed carrybot claws .* shredding .* skin.$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.huntingAttack()"
+                        }
+                    ],
+                    "items": []
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "description": "Starwraith Engineer Combat Implant v1.3"
+}

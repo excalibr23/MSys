@@ -10,7 +10,7 @@
             "enabled": true,
             "id": 2,
             "code": "if (MSys == undefined || MSys.coreVersion == undefined || MSys.coreVersion < 1.3) {
-    display_notice('Starwraith Fury Combat Implant requires MSysCore v1.3 or later','gold');
+    display_notice('Starwraith Fury Combat Implant v1.3 requires MSysCore v1.3 or later','gold');
     return;
 }
 
@@ -236,7 +236,7 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.toggle('useBerserk', 'Berserk');"
+                                    "script": "MSys.useBerserk = MSys.toggle('useBerserk', 'Berserk');"
                                 }
                             ],
                             "text": "hberserk",
@@ -254,7 +254,7 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.toggle('useFever', 'Fever');"
+                                    "script": "MSys.useFever = MSys.toggle('useFever', 'Fever');"
                                 }
                             ],
                             "text": "hfever",

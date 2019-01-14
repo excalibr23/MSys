@@ -10,7 +10,7 @@
             "enabled": true,
             "id": 2,
             "code": "if (MSys == undefined || MSys.coreVersion == undefined || MSys.coreVersion < 1.3) {
-    display_notice('Starwraith B.E.A.S.T. Combat Implant requires MSysCore v1.3 or later','gold');
+    display_notice('Starwraith B.E.A.S.T. Combat Implant v1.3 requires MSysCore v1.3 or later','gold');
     return;
 }
 
@@ -155,7 +155,7 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.toggle('useResistance', 'Plasma Resistance');"
+                                    "script": "MSys.useResistance = MSys.toggle('useResistance', 'Plasma Resistance');"
                                 }
                             ],
                             "text": "hresistance"
@@ -172,7 +172,7 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.toggle('useSerrate', 'Serrate');"
+                                    "script": "MSys.useSerrate = MSys.toggle('useSerrate', 'Serrate');"
                                 }
                             ],
                             "text": "hserrate"
@@ -189,7 +189,7 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.toggle('usePlasmaShield', 'Plasma Shield');"
+                                    "script": "MSys.usePlasmaShield = MSys.toggle('usePlasmaShield', 'Plasma Shield');"
                                 }
                             ],
                             "text": "hplasmashield"
@@ -206,7 +206,7 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.toggle('useRamset', 'Ramset');"
+                                    "script": "MSys.useRamset = MSys.toggle('useRamset', 'Ramset');"
                                 }
                             ],
                             "text": "hramset"
@@ -223,7 +223,7 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.toggle('useDampening', 'Dampening');"
+                                    "script": "MSys.useDampening = MSys.toggle('useDampening', 'Dampening');"
                                 }
                             ],
                             "text": "hdampening"
@@ -240,7 +240,7 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.toggle('useJamming', 'Jamming');"
+                                    "script": "MSys.useJamming = MSys.toggle('useJamming', 'Jamming');"
                                 }
                             ],
                             "text": "hjamming"
@@ -257,7 +257,7 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.toggle('useLaunch', 'Launch');"
+                                    "script": "MSys.useLaunch = MSys.toggle('useLaunch', 'Launch');"
                                 }
                             ],
                             "text": "hlaunch"

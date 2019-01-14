@@ -10,7 +10,7 @@
             "enabled": true,
             "id": 2,
             "code": "if (MSys == undefined || MSys.coreVersion == undefined || MSys.coreVersion < 1.3) {
-    display_notice('Starwraith Nanoseer Combat Implant requires MSysCore v1.3 or later','gold');
+    display_notice('Starwraith Nanoseer Combat Implant v1.3 requires MSysCore v1.3 or later','gold');
     return;
 }
 
@@ -209,7 +209,7 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.toggle('useFreeze', 'Freeze');"
+                                    "script": "MSys.useFreeze = MSys.toggle('useFreeze', 'Freeze');"
                                 }
                             ],
                             "text": "hfreeze",
@@ -227,7 +227,7 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.toggle('useMultistrike', 'Multistrike');"
+                                    "script": "MSys.useMultistrike = MSys.toggle('useMultistrike', 'Multistrike');"
                                 }
                             ],
                             "text": "^hmulti(strike)?$",
@@ -245,7 +245,7 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.toggle('useFrenzy', 'Frenzy');"
+                                    "script": "MSys.useFrenzy = MSys.toggle('useFrenzy', 'Frenzy');"
                                 }
                             ],
                             "text": "hfrenzy",
@@ -293,7 +293,7 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.toggle('usePointZero', 'Point Zero');"
+                                    "script": "MSys.usePointZero = MSys.toggle('usePointZero', 'Point Zero');"
                                 }
                             ],
                             "text": "hpointzero"
@@ -310,7 +310,7 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.toggle('useSpeedup', 'Speedup');"
+                                    "script": "MSys.useSpeedup = MSys.toggle('useSpeedup', 'Speedup');"
                                 }
                             ],
                             "text": "hspeedup"
@@ -327,7 +327,7 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.toggle('useNegation', 'Negation');"
+                                    "script": "MSys.useNegation = MSys.toggle('useNegation', 'Negation');"
                                 }
                             ],
                             "text": "hnegation"
