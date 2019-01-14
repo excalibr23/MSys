@@ -1,0 +1,317 @@
+{
+    "type": "group",
+    "name": "msysscoundrel",
+    "enabled": true,
+    "id": 1,
+    "items": [
+        {
+            "type": "function",
+            "name": "onLoad",
+            "enabled": true,
+            "id": 2,
+            "code": "if (MSys == undefined || MSys.coreVersion == undefined || MSys.coreVersion < 1.3) {
+    display_notice('Starwraith Scoundrel Combat Implant v1.3 requires MSysCore v1.3 or later','gold');
+    return;
+}
+
+// Scoundrel
+MSys.shortname = 'SSCI'
+MSys.bullets = 0
+MSys.ambush = false
+MSys.useAmbush = get_variable('useAmbush')
+MSys.rapidfire = false
+MSys.useRapidfire = get_variable('useRapidfire')
+MSys.huntingAttack = function() {
+    if (!MSys.systemEnabled) {return}
+    var command = ''
+
+    if (MSys.health / MSys.maxHealth < .8 && MSys.healReady && MSys.useHeal) {
+        send_command('stim')
+        return
+    } else if (MSys.offenseEnabled == false || get_variable('tar') == '') {
+        return
+    } else if (MSys.bullets == 0) {
+        command += 'ied fling ripper at '
+    } else if (MSys.bullets == 1) {
+        command += 'gun crackshot '
+    } else if (!MSys.ambush && MSys.useAmbush && MSys.bullets) {
+        command += 'gun ambush '
+    } else if (!MSys.rapidfire && MSys.useRapidfire) {
+        command += 'gun rapidfire '
+    } else {
+        command += 'gun crackshot '
+    }
+
+    command += get_variable('tar')
+    send_command(command)
+}
+
+MSys.loaded(\"Starwraith Scoundrel Combat Implant v1.3\");
+//send_command('wakeup');",
+            "items": []
+        },
+        {
+            "type": "function",
+            "name": "onGMCP",
+            "enabled": true,
+            "id": 3,
+            "code": "// Place any code here you'd like to run when a GMCP message is received
+// - The GMCP message is received as \"args.gmcp_method\" and \"args.gmcp_args\"
+
+GMCP[args.gmcp_method] = args.gmcp_args
+
+/* ------------------------------------------ CHARACTER STUFF ----------------------------------- */
+
+if (args.gmcp_method == \"Char.Vitals\") {
+    MSys.bullets = args.gmcp_args.bl
+}
+
+/* ----------------------------------- DEFENCES AND BUFFS --------------------------------------- */
+
+//if (args.gmcp_method == 'Char.Defences.Add') {
+    //if (args.gmcp_args.name == 'Oblivion: Conqueror')  {
+    //    SSCI.empyreal = 'Conqueror'
+    //}
+//}",
+            "items": []
+        },
+        {
+            "type": "group",
+            "name": "Scoundrel",
+            "enabled": true,
+            "id": 89,
+            "items": [
+                {
+                    "type": "group",
+                    "name": "Configuration",
+                    "enabled": true,
+                    "id": 102,
+                    "items": [
+                        {
+                            "type": "alias",
+                            "name": "Scoundrel Abilities - hscoundrel",
+                            "enabled": true,
+                            "id": 101,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "var abilities = ''
+abilities += 'Ambush: ' + get_variable('useAmbush') + '\\n'
+abilities += 'Rapidfire: ' + get_variable('useRapidfire') + '\\n'
+abilities += 'Heal: ' + get_variable('useHeal') + '\\n'
+abilities += 'Bullets: ' + MSys.bullets + '\\n'
+
+MSys.log(abilities, 'white')"
+                                }
+                            ],
+                            "text": "hscoundrel",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Ambush Toggle - hambush",
+                            "enabled": true,
+                            "id": 99,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useAmbush = MSys.toggle('useAmbush', 'Ambush');"
+                                }
+                            ],
+                            "text": "hambush",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Rapidfire Toggle - hrapidfire ",
+                            "enabled": true,
+                            "id": 100,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useRapidfire = MSys.toggle('useRapidfire', 'Rapid Fire');"
+                                }
+                            ],
+                            "text": "hrapidfire",
+                            "items": []
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Shortcuts",
+                    "enabled": true,
+                    "id": 104,
+                    "items": [
+                        {
+                            "type": "alias",
+                            "name": "Construct Ripper - rip",
+                            "enabled": true,
+                            "id": 97,
+                            "matching": null,
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "send_command('ied construct ripper from ' + args[1])"
+                                }
+                            ],
+                            "text": "^rip (.*)",
+                            "items": []
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Ability Activations",
+                    "enabled": true,
+                    "id": 103,
+                    "items": [
+                        {
+                            "type": "trigger",
+                            "name": "Ambush Used",
+                            "enabled": true,
+                            "id": 91,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "^Without warning, you snatch .* from your belt and fire it from the hip at .*, moving too rapidly to be spotted until the bullet is already leaving the barrel.$|^You cannot ambush anyone, as you already are fighting!$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.ambush = true
+MSys.huntingAttack()"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Rapidfire Used",
+                            "enabled": true,
+                            "id": 92,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "Placing your hand on the hammer of .*, you quickly fire off two shots at .* in rapid succession.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.rapidfire = true"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Rapidfire Ready",
+                            "enabled": true,
+                            "id": 93,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You are again ready to dualshoot.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.rapidfire = false"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Stim Used",
+                            "enabled": true,
+                            "id": 95,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You jam a stim into your vein and healing nanites surge through your body.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.healReady = false"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Stim Ready",
+                            "enabled": true,
+                            "id": 96,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You can again use a stim.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.healReady = true
+MSys.huntingAttack()"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Spin if empty and no target",
+                            "enabled": true,
+                            "id": 98,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "There is nothing and nobody here of that name - find a different target for your bomb.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (MSys.bullets == 0) {
+    send_command('gun spin')
+}"
+                                }
+                            ],
+                            "items": []
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Queue Attack Scoundrel",
+                    "enabled": true,
+                    "id": 94,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^Drawing your shoulder back, you fling a handful.*$|^.*kicks in your grip and an explosive noise cracks.*$|^.*you quickly fire off two shots at.*$|^You jam a stim into your vein and healing nanites surge through your body.$|^Spinning.*motion is effortless and smooth.$|jingling, rattling percussion.$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.huntingAttack()"
+                        }
+                    ],
+                    "items": []
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "description": "Starwraith Scoundrel Combat Implant v1.3"
+}
