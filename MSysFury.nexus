@@ -1,6 +1,6 @@
 {
     "type": "group",
-    "name": "MSysFury",
+    "name": "msysfury",
     "enabled": true,
     "id": 1,
     "items": [
@@ -9,8 +9,11 @@
             "name": "onLoad",
             "enabled": true,
             "id": 2,
-            "code": "if (MSys == undefined || MSys.coreVersion == undefined || MSys.coreVersion < 1.3) {
-    display_notice('Starwraith Fury Combat Implant v1.3 requires MSysCore v1.3 or later','gold');
+            "code": "MSys.SFCIversion = 1.4
+MSys.SFCIrequiredCore = 1.4
+
+if (MSys == undefined || MSys.coreVersion == undefined || MSys.coreVersion < MSys.SFCIrequiredCore) {
+    display_notice('Starwraith Fury Combat Implant v' + MSys.SFCIversion + ' requires MSysCore v' + MSys.SFCIrequiredCore + ' or later','gold');
     return;
 }
 
@@ -150,7 +153,7 @@ MSys.huntingAttack = function() {
     send_command(command)
 }
 
-MSys.loaded(\"Starwraith Fury Combat Implant v1.3\");
+MSys.loaded(\"Starwraith Fury Combat Implant v\" + MSys.SFCIversion + \" Loaded. See HFURY and HSETUP for config options. Good hunting, and good death.\");
 send_command('wakeup')",
             "items": []
         },
@@ -200,17 +203,28 @@ if (args.gmcp_method == \"Char.Items.Add\") {
                     "items": [
                         {
                             "type": "alias",
-                            "name": "Fury Abilities - hfury",
+                            "name": "hfury - Fury Abilities",
                             "enabled": true,
                             "id": 84,
                             "matching": "exact",
                             "whole_words": true,
-                            "case_sensitive": true,
+                            "case_sensitive": false,
                             "prefix_suffix": true,
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "var abilities = ''
+                                    "script": "MSys.notice(\"Commands:\", MSys.color.config)
+
+var commands = ''
+commands += 'hberserk - toggle using Berserk\\n'
+commands += 'hfever - toggle using Fever\\n'
+commands += 'hblade <shape> - set the desired Bladeshape\\n'
+
+MSys.log(commands, 'white')
+
+MSys.notice(\"Current settings:\", MSys.color.config)
+
+var abilities = ''
 abilities += 'Berserk: ' + get_variable('useBerserk') + '\\n'
 abilities += 'Fever: ' + get_variable('useFever') + '\\n'
 abilities += 'Heal: ' + get_variable('useHeal') + '\\n'
@@ -226,12 +240,12 @@ MSys.log(abilities, 'white')"
                         },
                         {
                             "type": "alias",
-                            "name": "Berserk Toggle - hberserk",
+                            "name": "hberserk - Toggle Berserk ",
                             "enabled": true,
                             "id": 76,
                             "matching": "exact",
                             "whole_words": true,
-                            "case_sensitive": true,
+                            "case_sensitive": false,
                             "prefix_suffix": true,
                             "actions": [
                                 {
@@ -244,12 +258,12 @@ MSys.log(abilities, 'white')"
                         },
                         {
                             "type": "alias",
-                            "name": "Fever Toggle - hfever",
+                            "name": "hfever - Toggle Fever",
                             "enabled": true,
                             "id": 80,
                             "matching": "exact",
                             "whole_words": true,
-                            "case_sensitive": true,
+                            "case_sensitive": false,
                             "prefix_suffix": true,
                             "actions": [
                                 {
@@ -262,7 +276,7 @@ MSys.log(abilities, 'white')"
                         },
                         {
                             "type": "alias",
-                            "name": "Set Bladeshape",
+                            "name": "hblade - Set Bladeshape",
                             "enabled": true,
                             "id": 121,
                             "matching": "regexp",
@@ -387,18 +401,11 @@ if (MSys.systemEnabled === true) {
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.alert('bladeshape off', 'white', 'lightred')
+                                    "script": "MSys.notice('Bladeshape Off', MSys.color.warning)
 MSys.bladeshape = false
 
 //var a = new Audio('https://freesound.org/people/Stopmotionbros/sounds/438991/download/438991__stopmotionbros__wind.m4a')
 //a.play()"
-                                },
-                                {
-                                    "action": "highlight",
-                                    "highlight": "line",
-                                    "highlight_backref": "1",
-                                    "highlight_fg": "#ffbc78",
-                                    "highlight_bg": "#000000"
                                 }
                             ],
                             "items": []
@@ -434,7 +441,7 @@ MSys.interrupt = false"
                                 {
                                     "action": "script",
                                     "script": "MSys.unstoppable = true
-MSys.log('YES UNSTOPPABLE', 'red')
+MSys.log('YES UNSTOPPABLE', MSys.color.info)
 
 if (MSys.systemEnabled) {
 \tMSys.huntingAttack()
@@ -456,7 +463,7 @@ if (MSys.systemEnabled) {
                                 {
                                     "action": "script",
                                     "script": "MSys.unstoppable = false
-MSys.log('NO UNSTOPPABLE', 'red')
+MSys.log('NO UNSTOPPABLE', MSys.color.warning)
 
 if (MSys.systemEnabled) {
 \tMSys.huntingAttack()
@@ -677,5 +684,5 @@ MSys.huntingAttack()"
             "actions": []
         }
     ],
-    "description": "Exported reflexes: MSysFury"
+    "description": "Starwraith Fury Combat Implant v1.4"
 }
