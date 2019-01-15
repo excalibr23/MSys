@@ -43,6 +43,8 @@ MSys = {
     damageThisFight: 0,
     ttk: 0,
     targetHealth: 0,
+    xpGains: [],
+    avgXpGain: 0,
     interrupt: false,
     color: {
         notice: 'gold',
@@ -198,6 +200,18 @@ if (args.gmcp_method == \"Char.Vitals\") {
    
     if (change > 0) {
     \tMSys.log('XP gained: ' + change, MSys.color.xp, MSys.color.xpbg)
+
+        var now = new Date()
+        
+        // Add new value
+        MSys.xpGains.push({xp: change, time: now})
+
+        // Remove old values
+        MSys.xpGains = MSys.xpGains.filter((t) => now - t.time < 1000*60) // 1 minute
+        
+        // Caclulate average
+        MSys.avgXpGain = MSys.xpGains.reduce((acc, add) => acc + add.xp, 0) / MSys.xpGains.length
+
     } else if (change < 0) {
         MSys.log('XP lost: ' + Math.abs(change), MSys.color.warning)
     }
@@ -205,7 +219,7 @@ if (args.gmcp_method == \"Char.Vitals\") {
     MSys.level = args.gmcp_args.charstats[0].substring(7)
     MSys.xp = args.gmcp_args.xp
     MSys.nl = args.gmcp_args.nl // next level
-    MSys.xpLeft = MSys.xp / MSys.nl * 100    
+    MSys.xpLeft = MSys.xp / MSys.nl * 100
 }
 
 /* -------------------------------------------- ITEMS IN ROOM ----------------------------------- */
@@ -721,7 +735,13 @@ if (MSys.damageThisFight > 0 && MSys.ttk > 0) {
     slainParts.push('DPS: ' + Math.round(MSys.damageThisFight / ((now.getTime() - MSys.ttk)/1000)))
 }
 
-slainParts.push('XP left: ' + MSys.xpLeft);
+slainParts.push('XP left: ' + Math.round(MSys.xpLeft));
+
+if (MSys.avgXpGain > 0) {
+    slainParts.push('XP/min: ' + Math.round(MSys.avgXpGain))
+    
+    slainParts.push('Min left:' + Math.round(MSys.xpLeft/MSys.avgXpGain));
+}
 
 MSys.notice(slainParts.join(' | '), MSys.color.fightSummary, MSys.color.fightSummarybg)
 
