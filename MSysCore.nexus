@@ -210,7 +210,7 @@ if (args.gmcp_method == \"Char.Vitals\") {
         MSys.xpGains = MSys.xpGains.filter((t) => now - t.time < 1000*60) // 1 minute
         
         // Caclulate average
-        MSys.avgXpGain = MSys.xpGains.reduce((acc, add) => acc + add.xp, 0) / MSys.xpGains.length
+        MSys.avgXpGain = MSys.xpGains.reduce((acc, add) => acc + add.xp, 0)
 
     } else if (change < 0) {
         MSys.log('XP lost: ' + Math.abs(change), MSys.color.warning)
