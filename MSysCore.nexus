@@ -219,7 +219,7 @@ if (args.gmcp_method == \"Char.Vitals\") {
     MSys.level = args.gmcp_args.charstats[0].substring(7)
     MSys.xp = args.gmcp_args.xp
     MSys.nl = args.gmcp_args.nl // next level
-    MSys.xpLeft = MSys.xp / MSys.nl * 100
+    MSys.xpLeft = (MSys.xp / MSys.nl * 100) - MSys.xp
 }
 
 /* -------------------------------------------- ITEMS IN ROOM ----------------------------------- */
