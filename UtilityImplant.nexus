@@ -1,7 +1,7 @@
 {
-    "name": "starwraith utility implant",
+    "name": "UtilityImplant",
     "enabled": true,
-    "description": "v0.1 Does various useful things like autoselling junk.",
+    "description": "Exported reflexes: UtilityImplant",
     "type": "group",
     "id": 1,
     "items": [
@@ -10,20 +10,12 @@
             "name": "onLoad",
             "enabled": true,
             "id": 2,
-            "code": "//Commands to send on login
+            "code": "//V0.2 - Added some triggers for ease of travel. Removed unneeded functions
 
 // Starwraith Movement Implant
 SUI = {
     noticecolor: 'gold',
     packagename: 'starwraith utility implant',
-    disableGroup: function(name) {
-        var group = reflex_find_by_name('group', name, false, false, SUI.packagename)
-        reflex_disable(group)
-    },
-    enableGroup: function(name) {
-        var group = reflex_find_by_name('group', name, false, false, SUI.packagename)
-        reflex_enable(group)
-    },
     notice: function(text) {
         display_notice(\"[SUI] \" + text, SUI.noticecolor);
     },
@@ -33,11 +25,12 @@ SUI = {
         client.display_help_window(helptext);
 \t},
     loaded: function() {
-\t\tSUI.notice(\"Starwraith Utility Implant v0.1 Loaded. See UTILITYHELP for more information.\\n\");
+\t\tSUI.notice(\"Starwraith Utility Implant v0.2 Loaded. See UTILITYHELP for more information.\\n\");
     }
 }
 
-SUI.loaded();"
+SUI.loaded();",
+            "items": []
         },
         {
             "type": "group",
@@ -59,7 +52,85 @@ SUI.loaded();"
                             "action": "command",
                             "command": "SELL JUNK"
                         }
-                    ]
+                    ],
+                    "items": []
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Travel",
+            "enabled": true,
+            "id": 9,
+            "items": [
+                {
+                    "type": "trigger",
+                    "name": "Station Transfer List",
+                    "enabled": true,
+                    "id": 5,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You can board a transport craft here, check STATION TRANSFER LIST.",
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "STATION TRANSFER LIST"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Key PTP",
+                    "enabled": true,
+                    "id": 6,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "There is a personal teleporter here. KEY PTP to activate it.",
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "Key PTP"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Takeoff List",
+                    "enabled": true,
+                    "id": 7,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You can board a transport craft here, check TAKEOFF LIST.",
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "Takeoff List"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Gatewarp Destinations",
+                    "enabled": true,
+                    "id": 8,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "There is a voidgate here. GATEWARP DESTINATIONS to start your travel across the cosmos.",
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "Gatewarp Destinations"
+                        }
+                    ],
+                    "items": []
                 }
             ],
             "actions": []

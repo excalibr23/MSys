@@ -1,0 +1,563 @@
+{
+    "type": "group",
+    "name": "msysbeast",
+    "enabled": true,
+    "id": 1,
+    "items": [
+        {
+            "type": "function",
+            "name": "onLoad",
+            "enabled": true,
+            "id": 2,
+            "code": "if (MSys == undefined || MSys.coreVersion == undefined || MSys.coreVersion < 1.3) {
+    display_notice('Starwraith B.E.A.S.T. Combat Implant v1.3 requires MSysCore v1.3 or later','gold');
+    return;
+}
+
+//B.E.A.S.T.
+MSys.shortname = 'SBCI'
+MSys.backhand = false,
+MSys.plasma = 0
+MSys.maxPlasma = 0
+MSys.useResistance = get_variable('useResistance')
+MSys.useSerrate = get_variable('useSerrate')
+MSys.usePlasmaShield = get_variable('usePlasmaShield')
+MSys.useRamset = get_variable('useRamset')
+MSys.useDampening = get_variable('useDampening')
+MSys.useJamming = get_variable('useJamming')
+MSys.useLaunch = get_variable('useLaunch')
+MSys.resistance = false
+MSys.serrate = false
+MSys.plasmaShield = false
+MSys.ramset = false
+MSys.dampening = false
+MSys.jamming = false
+MSys.launch = false
+MSys.huntingAttack = function() {
+    if (!MSys.systemEnabled) {return}
+    var command = ''
+        
+    if (MSys.health / MSys.maxHealth < .8 && MSys.healReady && MSys.useHeal) {
+        command += 'suit support'
+    } else if (!MSys.resistance   && MSys.useResistance)    { 
+        command += 'plasma resistance'
+    } else if (!MSys.serrate      && MSys.useSerrate)       { 
+        command += 'mwp serrate'
+    } else if (!MSys.plasmaShield && MSys.usePlasmaShield)  { 
+        command += 'plasma shield'
+    } else if (!MSys.ramset       && MSys.useRamset)        { 
+        command += 'suit ramset'
+    } else if (!MSys.dampening    && MSys.useDampening)     { 
+        command += 'suit dampening'
+    } else if (!MSys.jamming      && MSys.useJamming)       { 
+        command += 'suit jamming'
+    } else if (!MSys.offenseEnabled || get_variable('tar') == '') {
+        message  = 'Aggressive actions are disabled\\n'
+        message += 'Offense Enabled: ' + MSys.offenseEnabled + '\\n'
+        message += 'Target Variable: ' + get_variable('tar') + '\\n'
+        MSys.debugMessage(message)
+        return
+
+    } else if (!MSys.launch && MSys.useLaunch) { 
+        command += 'mwp launch '
+    }else if (!MSys.backhand) { 
+        command += 'suit backhand '
+    } else { 
+        command += 'mwp wristblade '
+    }
+
+    if (command[command.length - 1] == ' ') {command += get_variable('tar')}
+
+    MSys.debugMessage('Executing command: \"' + command + '\"')
+    send_command(command)
+    return
+}
+
+MSys.loaded(\"Starwraith B.E.A.S.T. Combat Implant v1.3\");
+send_command('wakeup')",
+            "items": []
+        },
+        {
+            "type": "function",
+            "name": "onGMCP",
+            "enabled": true,
+            "id": 3,
+            "code": "// Place any code here you'd like to run when a GMCP message is received
+// - The GMCP message is received as \"args.gmcp_method\" and \"args.gmcp_args\"
+
+GMCP[args.gmcp_method] = args.gmcp_args
+
+/* ------------------------------------------ CHARACTER STUFF ----------------------------------- */
+
+if (args.gmcp_method == \"Char.Vitals\") {
+\t//B.E.A.S.T. Plasma Management
+    MSys.plasma = args.gmcp_args.pl
+    MSys.maxPlasma = args.gmcp_args.maxpl
+}",
+            "items": []
+        },
+        {
+            "type": "group",
+            "name": "B.E.A.S.T.",
+            "enabled": true,
+            "id": 102,
+            "items": [
+                {
+                    "type": "group",
+                    "name": "Configuration",
+                    "enabled": true,
+                    "id": 171,
+                    "items": [
+                        {
+                            "type": "alias",
+                            "name": "",
+                            "enabled": true,
+                            "id": 110,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "var abilities = ''
+abilities += 'Heal: ' + get_variable('useHeal') + '\\n'
+abilities += 'useResistance:   ' + get_variable('useResistance') + '\\n'
+abilities += 'useSerrate:      ' + get_variable('useSerrate') + '\\n'
+abilities += 'usePlasmaShield: ' + get_variable('usePlasmaShield') + '\\n'
+abilities += 'useRamset:       ' + get_variable('useRamset') + '\\n'
+abilities += 'useDampening:    ' + get_variable('useDampening') + '\\n'
+abilities += 'useJamming:      ' + get_variable('useJamming') + '\\n'
+abilities += 'useLaunch:       ' + get_variable('useLaunch') + '\\n'
+abilities += 'resistance:   ' + MSys.resistance + '\\n'
+abilities += 'serrate:      ' + MSys.serrate + '\\n'
+abilities += 'plasmaShield: ' + MSys.plasmaShield + '\\n'
+abilities += 'ramset:       ' + MSys.ramset + '\\n'
+abilities += 'dampening:    ' + MSys.dampening + '\\n'
+abilities += 'jamming:      ' + MSys.jamming + '\\n'
+abilities += 'launch:       ' + MSys.launch + '\\n'
+
+MSys.log(abilities, 'white')"
+                                }
+                            ],
+                            "text": "hbeast",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Resistance",
+                            "enabled": true,
+                            "id": 177,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useResistance = MSys.toggle('useResistance', 'Plasma Resistance');"
+                                }
+                            ],
+                            "text": "hresistance"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Serrate",
+                            "enabled": true,
+                            "id": 178,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useSerrate = MSys.toggle('useSerrate', 'Serrate');"
+                                }
+                            ],
+                            "text": "hserrate"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Plasma Shield",
+                            "enabled": true,
+                            "id": 179,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.usePlasmaShield = MSys.toggle('usePlasmaShield', 'Plasma Shield');"
+                                }
+                            ],
+                            "text": "hplasmashield"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Ramset",
+                            "enabled": true,
+                            "id": 180,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useRamset = MSys.toggle('useRamset', 'Ramset');"
+                                }
+                            ],
+                            "text": "hramset"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Dampening",
+                            "enabled": true,
+                            "id": 181,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useDampening = MSys.toggle('useDampening', 'Dampening');"
+                                }
+                            ],
+                            "text": "hdampening"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Jamming",
+                            "enabled": true,
+                            "id": 182,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useJamming = MSys.toggle('useJamming', 'Jamming');"
+                                }
+                            ],
+                            "text": "hjamming"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Launch",
+                            "enabled": true,
+                            "id": 188,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useLaunch = MSys.toggle('useLaunch', 'Launch');"
+                                }
+                            ],
+                            "text": "hlaunch"
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Shortcuts",
+                    "enabled": true,
+                    "id": 175,
+                    "items": [
+                        {
+                            "type": "alias",
+                            "name": "Suit Contingency",
+                            "enabled": true,
+                            "id": 104,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "suit contingency",
+                                    "prefix_suffix": true
+                                }
+                            ],
+                            "text": "con",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Overclock",
+                            "enabled": true,
+                            "id": 105,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "suit overclock",
+                                    "prefix_suffix": true
+                                }
+                            ],
+                            "text": "oc",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Heal",
+                            "enabled": true,
+                            "id": 172,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "suit support",
+                                    "prefix_suffix": true
+                                }
+                            ],
+                            "text": "heal"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Flying",
+                            "enabled": true,
+                            "id": 173,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "suit jumpjets",
+                                    "prefix_suffix": true
+                                }
+                            ],
+                            "text": "fly"
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Ability Activations",
+                    "enabled": true,
+                    "id": 170,
+                    "items": [
+                        {
+                            "type": "trigger",
+                            "name": "Plasma Resistance Active",
+                            "enabled": true,
+                            "id": 183,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You deploy extra heat sinks|^Your extra heat sinks are already",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.resistance = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Serrate Active",
+                            "enabled": true,
+                            "id": 184,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You rotate your wristblade|^You're already using",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.serrate = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Ramset Active",
+                            "enabled": true,
+                            "id": 185,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You key in a command and feel a thud|^You're already employing",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.ramset = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Dampening Active",
+                            "enabled": true,
+                            "id": 186,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You activate your B\\.E\\.A\\.S\\.T\\.'s EM shielding protocol\\.$|^You're already utili.ing measures to mitigate EM attacks\\.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.dampening = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Jamming Active",
+                            "enabled": true,
+                            "id": 187,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You engage your radar jamming|^You are already jamming",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.jamming = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Backhand Used",
+                            "enabled": true,
+                            "id": 103,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "^You overdrive your suit's movement circuits, delivering a vicious backhanded blow.*",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.backhand = true
+MSys.huntingAttack()"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Support Used",
+                            "enabled": true,
+                            "id": 107,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "^You activate your suit's emergency life support system.*$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.healReady = false
+MSys.huntingAttack()"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Support Ready",
+                            "enabled": true,
+                            "id": 108,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "Your HUD indicates that you may use your life support system once again.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.healReady = true
+MSys.huntingAttack()"
+                                },
+                                {
+                                    "action": "highlight",
+                                    "highlight": "line",
+                                    "highlight_backref": "1",
+                                    "highlight_fg": "#6dd4e1",
+                                    "highlight_bg": "#000000"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Missile Launch Detected",
+                            "enabled": true,
+                            "id": 189,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You fire a homing missile into the air",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.launch = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Queue Attack BEAST",
+                    "enabled": true,
+                    "id": 106,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^With servo-assisted might, you drive your wristblade.*$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.huntingAttack()"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Wakeup BEAST",
+                    "enabled": true,
+                    "id": 176,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "plasma heatup on",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "wakeup"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "description": "Starwraith B.E.A.S.T. Combat Implant v1.3"
+}
