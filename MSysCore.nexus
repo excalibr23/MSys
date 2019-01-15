@@ -51,7 +51,10 @@ MSys = {
         target: 'orange',
         heal: '#6bdaee',
         xp: 'white',
+        xpbg: 'darkblue',
         config: 'white',
+        fightSummary: 'white',
+        fightSummarybg: 'darkblue',
     },
 //Character    
     attack: get_variable('huntingAttack') + ' ',
@@ -93,14 +96,13 @@ MSys = {
         }
     },
     notice: function(text, fgcolor = MSys.color.notice, bgcolor = 'black') {
-        var name = \"[\" + MSys.shortname + \"] \";
-        display_notice(name + text, fgcolor, bgcolor);
+        display_notice(\"[\" + MSys.shortname + \"] \" + text, fgcolor, bgcolor);
     },
-    loaded: function(name) {
+    loaded: function(text) {
         //Send implant to browser log for debugging
 \t\tconsole.log(MSys)
 
-        MSys.notice(name + \" Loaded. Good hunting, and good death.\\n\")
+        MSys.notice(text + \"\\n\")
     },
     helpbox: function(title,text) {
         var helptext = \"<div class=\\\"mono\\\"><span style=\\\"color: #ffffff; \\\"><span style=\\\"background-color: #0000a0 \\\">\" + title + \"</span></span></div>\";
@@ -157,7 +159,7 @@ MSys = {
     }
 }
 
-MSys.loaded(\"Starwraith Core Implant v\" + MSys.coreVersion);",
+MSys.loaded(\"Starwraith Core Implant v\" + MSys.coreVersion + \" Loaded.\");",
             "items": []
         },
         {
@@ -186,13 +188,18 @@ if (args.gmcp_method == \"Char.Vitals\") {
     MSys.health = args.gmcp_args.hp
     MSys.maxHealth = args.gmcp_args.maxhp
 
+    // Check class
+    if (!MSys.class || MSys.class != args.gmcp_args.class) {
+        MSys.class = args.gmcp_args.class
+    }
+    
     // Track XP changes
     var change = args.gmcp_args.xp - MSys.xp;
    
     if (change > 0) {
-    \tMSys.notice('XP gained: ' + change, MSys.color.xp)
+    \tMSys.log('XP gained: ' + change, MSys.color.xp, MSys.color.xpbg)
     } else if (change < 0) {
-        MSys.notice('XP lost: ' + Math.abs(change), MSys.color.warning)
+        MSys.log('XP lost: ' + Math.abs(change), MSys.color.warning)
     }
 
     MSys.level = args.gmcp_args.charstats[0].substring(7)
@@ -247,34 +254,46 @@ if (args.gmcp_method == \"IRE.Target.Info\") {
         },
         {
             "type": "group",
-            "name": "Auto Hunt",
+            "name": "Configuration",
             "enabled": true,
-            "id": 8,
+            "id": 41,
             "items": [
                 {
-                    "type": "group",
-                    "name": "Setup",
+                    "type": "alias",
+                    "name": "hsetup - Combat Implant Setup",
                     "enabled": true,
-                    "id": 41,
-                    "items": [
+                    "id": 25,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
                         {
-                            "type": "alias",
-                            "name": "Combat Implant Setup - hsetup",
-                            "enabled": true,
-                            "id": 25,
-                            "matching": "begins",
-                            "whole_words": true,
-                            "case_sensitive": false,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.log('-- Hunting List Setup.  Use \\'hsave\\' to keep a backup.  \\'hload\\' will load your backup.', 'white', 'black')
-MSys.log('-- Use \\'hadd\\' <name> to add to the list and \\'hremove\\' <name> to remove items from this list. \\'hshow\\' will show the items on your list.', 'white', 'black')
-MSys.log('-- Use \\'hattack\\' <attackName> to make it your primary attack that will be auto used.', 'white')
-MSys.log('-- Use \\'hlist\\' to switch between room and priority list. Use \\'hup\\' or \\'hdown\\' <name> to increase or decrease an item on the priority list.', 'white')
-MSys.log('-- Make sure you use \\'config usequeueing on\\'.  Then you can use other attacks to overwrite auto attacks.', 'white')
+                            "action": "script",
+                            "script": "MSys.notice(\"Hunting List Commands:\", MSys.color.config)
 
+var commands = ''
+commands += 'hsave - Save hunting list to backup\\n'
+commands += 'hload - Load hunting list from backup\\n'
+commands += 'hreset - Reset hunting system to factory defaults\\n\\n'
+
+commands += 'hshow - Show hunting target list\\n'
+commands += 'hadd <mob> - Add <mob> to hunting list\\n'
+commands += 'hremove <mob> - Remove <mob> from hunting list\\n'
+commands += 'hup/down <name> - Move an item up or down on the priority list\\n\\n'
+
+commands += 'hlist - toggle between using room and list priority\\n'
+commands += 'hbreak - enable/disable break after kill\\n'
+//commands += 'hbreakthreshold <number> - enable/disable break threshold\\n' // Still used? -Oga
+commands += 'hheal - enable/disable heal\\n'
+commands += 'h - manual heal command\\n'
+//commands += 'hattack <attackName> - Change the primary attack that will be auto used.\\n' // Still used? -Oga
+
+MSys.log(commands, MSys.color.config)
+
+MSys.log('Make sure you use \\'config usequeueing on\\'.  Then you can use other attacks to overwrite auto attacks.', MSys.color.config)
+
+// Defaults if not set
 if (get_variable('killList')       == undefined) {set_variable('killList', ['rockhopper'])}
 if (get_variable('debug')          == undefined) {set_variable('debug', false)}
 if (get_variable('matchList')      == undefined) {set_variable('matchList', true)}
@@ -287,26 +306,77 @@ if (get_variable('useDelay')       == undefined) {set_variable('useDelay', false
 if (get_variable('useBerserk')     == undefined) {set_variable('useBerserk', false)}
 if (get_variable('useFever')       == undefined) {set_variable('useFever', false)}
 if (get_variable('useAmbush')      == undefined) {set_variable('useAmbush', false)}
-if (get_variable('useRapidfire')   == undefined) {set_variable('useRapidfire', false)}"
-                                }
-                            ],
-                            "text": "hsetup",
-                            "items": []
-                        },
+if (get_variable('useRapidfire')   == undefined) {set_variable('useRapidfire', false)}
+
+MSys.notice(\"Current settings:\", MSys.color.config)
+
+var settings = ''
+settings += 'Priority: ' + (get_variable('matchList')==true ? \"List\" : \"Room\") + '\\n'
+settings += 'Break: ' + (get_variable('break')==true ? \"Will break after kill\" : \"Will continue after kill\") + '\\n'
+settings += 'Heal: ' + get_variable('useHeal') + '\\n'
+
+MSys.log(settings, MSys.color.config)
+"
+                        }
+                    ],
+                    "text": "hsetup",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "hsave - Save Hunting List To Backup",
+                    "enabled": true,
+                    "id": 15,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
                         {
-                            "type": "alias",
-                            "name": "System Reset",
-                            "enabled": true,
-                            "id": 126,
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": false,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.log('-- Combat Implant has been reset to factory settings.', 'white', 'black')
-MSys.log('-- If you have previously backed up your kill list you may use \\'hload\\' to reload it', 'white', 'black')
+                            "action": "script",
+                            "script": "let newSave = get_variable('killList')
+set_variable('killListBackup', newSave)
+MSys.notice('Hunt List Saved', MSys.color.config)
+"
+                        }
+                    ],
+                    "text": "hsave",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "hload - Load Hunting List From Backup",
+                    "enabled": true,
+                    "id": 16,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "let backupList = get_variable('killListBackup')
+set_variable('killList', backupList)
+MSys.notice('Hunt List Loaded from Backup', MSys.color.config)"
+                        }
+                    ],
+                    "text": "hload",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "hreset - System Reset",
+                    "enabled": true,
+                    "id": 126,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.notice('Hunting settings have been reset to factory settings.', MSys.color.config)
+MSys.notice('If you have previously backed up your kill list you may use \\'hload\\' to reload it', MSys.color.config)
 
 set_variable('killList', ['rockhopper'])
 set_variable('debug', false)
@@ -321,105 +391,271 @@ set_variable('useRapidfire', false)
 set_variable('useHeal', true)
 set_variable('matchList', true)
 set_variable('break', true)"
-                                }
-                            ],
-                            "text": "^hreset$",
-                            "items": []
-                        },
+                        }
+                    ],
+                    "text": "^hreset$",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "hshow - Show Hunting Targets",
+                    "enabled": true,
+                    "id": 17,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
                         {
-                            "type": "alias",
-                            "name": "Change Auto Attack",
-                            "enabled": true,
-                            "id": 26,
-                            "matching": "regexp",
-                            "whole_words": true,
-                            "case_sensitive": false,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.attack = args[1] + ' '
-set_variable('huntingAttack', args[1] + ' ')
-display_notice('Attack set to: ' + args[1], 'white', 'black')"
-                                }
-                            ],
-                            "text": "hattack (.+)",
-                            "items": []
-                        },
+                            "action": "script",
+                            "script": "MSys.notice(\"Hunting list:\", MSys.color.config)
+let killList = get_variable('killList')
+for (i=0; i<killList.length; i++) {
+\tdisplay_notice(killList[i], 'white', 'black')
+}"
+                        }
+                    ],
+                    "text": "hshow",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "hadd <mob> - Add to hunting list",
+                    "enabled": true,
+                    "id": 13,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
                         {
-                            "type": "alias",
-                            "name": "Enable/Disable List Mode - hlist",
-                            "enabled": true,
-                            "id": 56,
-                            "matching": "begins",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "if (get_variable('matchList')) {
+                            "action": "script",
+                            "script": "MSys.notice('Adding: ' + args[1] + ' to list', MSys.color.config)
+let newList = get_variable('killList')
+newList.push(args[1])
+set_variable('killList', newList)"
+                        }
+                    ],
+                    "text": "hadd (.+)",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "hremove <mob> - Remove from hunting list",
+                    "enabled": true,
+                    "id": 14,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.notice('Removing: ' + args[1] + ' from list', MSys.color.config)
+
+let newList = get_variable('killList')
+newList = newList.filter(item => item !== args[1]);
+
+set_variable('killList', newList)"
+                        }
+                    ],
+                    "text": "hremove (.+)",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "hup/hdown <mob> - Item Priority",
+                    "enabled": true,
+                    "id": 52,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.notice(\"Hunting list:\", MSys.color.config)
+
+var list = get_variable('killList')
+var nameIndex = list.indexOf(args[2])
+var name = list[nameIndex]
+
+if (list[nameIndex-1] && nameIndex && args[1] === 'hup') {
+\tlist[nameIndex] = list[nameIndex - 1]
+    list[nameIndex-1] = name
+} else if (list[nameIndex+1] && nameIndex && args[1] === 'hdown') {
+    list[nameIndex] = list[nameIndex + 1]
+    list[nameIndex+1] = name
+}
+
+set_variable('killList', list)
+
+for (i=0; i<list.length; i++) {
+\tif(list[i] === name){
+    \tdisplay_notice(list[i], 'gold', 'black')
+    } else {
+    \tdisplay_notice(list[i])
+    }
+}"
+                        }
+                    ],
+                    "text": "^(hup|hdown) (.+)$",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "hlist - Enable/Disable List Mode",
+                    "enabled": true,
+                    "id": 56,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('matchList')) {
     MSys.matchList = false
     set_variable('matchList', false)
-    MSys.log('Will match room listing', 'white')
+    MSys.notice('Will match room listing', MSys.color.config)
 } else {
 \tMSys.matchList = true
     set_variable('matchList', true)
-    MSys.log('Will match priority listing', 'white')
+    MSys.notice('Will match priority listing', MSys.color.config)
 }"
-                                }
-                            ],
-                            "text": "hlist",
-                            "items": []
-                        },
+                        }
+                    ],
+                    "text": "hlist",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "hbreak - Enable/Disable Break After Kill Mode",
+                    "enabled": true,
+                    "id": 82,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
                         {
-                            "type": "alias",
-                            "name": "Enable/Disable Break After Kill Mode - hbreak",
-                            "enabled": true,
-                            "id": 82,
-                            "matching": "begins",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "if (get_variable('break')) {
+                            "action": "script",
+                            "script": "if (get_variable('break')) {
     MSys.break = false
     set_variable('break', false)
-    MSys.log('Will continue after kill.', 'white')
+    MSys.notice('Will continue after kill.', MSys.color.config)
 } else {
 \tMSys.break = true
     set_variable('break', true)
-    MSys.log('Will break after kill.', 'white')
+    MSys.notice('Will break after kill.', MSys.color.config)
 }"
-                                }
-                            ],
-                            "text": "hbreak",
-                            "items": []
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Enable/Disable Break Threshold",
-                            "enabled": true,
-                            "id": 169,
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": true,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "set_variable('breakThreshold', args[1])
-MSys.breakThreshold = args[1]"
-                                }
-                            ],
-                            "text": "^hbreakthreshold ([0-9]*)$",
-                            "items": []
                         }
                     ],
-                    "actions": []
+                    "text": "hbreak",
+                    "items": []
                 },
+                {
+                    "type": "alias",
+                    "name": "hbreakthreshold <n> - Enable/Disable Break Threshold",
+                    "enabled": true,
+                    "id": 169,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "set_variable('breakThreshold', args[1])
+MSys.breakThreshold = args[1]"
+                        }
+                    ],
+                    "text": "^hbreakthreshold ([0-9]*)$",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Heal Toggle - hheal",
+                    "enabled": true,
+                    "id": 81,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('useHeal')) {
+\tset_variable('useHeal', false)
+    MSys.useHeal = false
+    MSys.notice('Heal off', MSys.color.config)
+} else {
+\tset_variable('useHeal', true)
+    MSys.useHeal = true
+    MSys.notice('Heal on', MSys.color.config)
+}"
+                        }
+                    ],
+                    "text": "hheal",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Heal - h",
+                    "enabled": true,
+                    "id": 115,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (MSys.class == 'Nanoseer') {
+  send_command('NANO REPAIR')
+} else if (MSys.class == 'Fury') {
+  send_command('KITH SUFFUSE')
+} else if (MSys.class == 'Scoundrel') {
+  send_command('STIM')
+} else if (MSys.class == 'B.E.A.S.T.') {
+  send_command('SUIT SUPPORT')
+} else if (MSys.class == 'Engineer') {
+  send_command('OPERATE STIMJECTOR')
+}"
+                        }
+                    ],
+                    "text": "h",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "hattack - Change Auto Attack",
+                    "enabled": true,
+                    "id": 26,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.attack = args[1] + ' '
+set_variable('huntingAttack', args[1] + ' ')
+MSys.notice('Attack set to: ' + args[1], 'white', 'black')"
+                        }
+                    ],
+                    "text": "hattack (.+)",
+                    "items": []
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Auto Hunt",
+            "enabled": true,
+            "id": 8,
+            "items": [
                 {
                     "type": "trigger",
                     "name": "Slain",
@@ -479,7 +715,7 @@ if (MSys.damageThisFight > 0 && MSys.ttk > 0){
 }
 
 if (MSys.damageThisFight > 0 || MSys.ttk > 0){
-    MSys.notice(slainMessage, 'lightgreen', 'darkblue')
+    MSys.notice(slainMessage, MSys.color.fightSummary, MSys.color.fightSummarybg)
 }
 
 MSys.ttk = 0
@@ -548,204 +784,6 @@ MSys.huntingAttack()"
                     "key_alt": false,
                     "key_ctrl": false,
                     "key_shift": false,
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Heal",
-                    "enabled": true,
-                    "id": 115,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "if (MSys.class == 'Nanoseer') {
-  send_command('NANO REPAIR')
-} else if (MSys.class == 'Fury') {
-  send_command('KITH SUFFUSE')
-} else if (MSys.class == 'Scoundrel') {
-  send_command('STIM')
-} else if (MSys.class == 'B.E.A.S.T.') {
-  send_command('suit support')
-} else if (MSys.class == 'Engineer') {
-  send_command('operate stimjector')
-}"
-                        }
-                    ],
-                    "text": "h",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Add to hunting list - hadd <mob>",
-                    "enabled": true,
-                    "id": 13,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": false,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "display_notice('Adding: ' + args[1] + ' to list', 'white', 'black')
-let newList = get_variable('killList')
-newList.push(args[1])
-set_variable('killList', newList)"
-                        }
-                    ],
-                    "text": "hadd (.+)",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Remove from hunting list - hremove <mob>",
-                    "enabled": true,
-                    "id": 14,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": false,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "display_notice('Removing: ' + args[1] + ' from list', 'white', 'black')
-
-let newList = get_variable('killList')
-newList = newList.filter(item => item !== args[1]);
-
-set_variable('killList', newList)"
-                        }
-                    ],
-                    "text": "hremove (.+)",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Save Hunting List To Backup - hsave",
-                    "enabled": true,
-                    "id": 15,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": false,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "let newSave = get_variable('killList')
-set_variable('killListBackup', newSave)
-display_notice('Hunt List Saved', 'white', 'black')
-"
-                        }
-                    ],
-                    "text": "hsave",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Load Hunting List From Backup - hload",
-                    "enabled": true,
-                    "id": 16,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": false,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "let backupList = get_variable('killListBackup')
-set_variable('killList', backupList)
-display_notice('Hunt List Loaded from Backup', 'white', 'black')"
-                        }
-                    ],
-                    "text": "hload",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Show Hunting Targets - hshow",
-                    "enabled": true,
-                    "id": 17,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": false,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "let killList = get_variable('killList')
-for (i=0; i<killList.length; i++) {
-\tdisplay_notice(killList[i], 'white', 'black')
-}"
-                        }
-                    ],
-                    "text": "hshow",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Item Priority - hup/hdown <mob>",
-                    "enabled": true,
-                    "id": 52,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "var list = get_variable('killList')
-var nameIndex = list.indexOf(args[2])
-var name = list[nameIndex]
-
-if (list[nameIndex-1] && nameIndex && args[1] === 'hup') {
-\tlist[nameIndex] = list[nameIndex - 1]
-    list[nameIndex-1] = name
-} else if (list[nameIndex+1] && nameIndex && args[1] === 'hdown') {
-    list[nameIndex] = list[nameIndex + 1]
-    list[nameIndex+1] = name
-}
-
-set_variable('killList', list)
-
-for (i=0; i<list.length; i++) {
-\tif(list[i] === name){
-    \tdisplay_notice(list[i], 'gold', 'black')
-    } else {
-    \tdisplay_notice(list[i])
-    }
-}"
-                        }
-                    ],
-                    "text": "^(hup|hdown) (.+)$",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Heal Toggle - hheal",
-                    "enabled": true,
-                    "id": 81,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "if (get_variable('useHeal')) {
-\tset_variable('useHeal', false)
-    MSys.useHeal = false
-    MSys.log('HEAL OFF', 'white')
-} else {
-\tset_variable('useHeal', true)
-    MSys.useHeal = true
-    MSys.log('HEAL ON', 'white')
-}"
-                        }
-                    ],
-                    "text": "hheal",
                     "items": []
                 },
                 {
