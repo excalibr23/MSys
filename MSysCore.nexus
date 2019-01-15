@@ -1,6 +1,6 @@
 {
     "type": "group",
-    "name": "msyscore",
+    "name": "MSysCore",
     "enabled": true,
     "id": 1,
     "items": [
@@ -45,6 +45,7 @@ MSys = {
     targetHealth: 0,
     xpGains: [],
     avgXpGain: 0,
+    showXP: get_variable('showXP'),
     interrupt: false,
     color: {
         notice: 'gold',
@@ -198,7 +199,7 @@ if (args.gmcp_method == \"Char.Vitals\") {
     // Track XP changes
     var change = args.gmcp_args.xp - MSys.xp;
    
-    if (change > 0) {
+    if (change > 0 && MSys.showXP) {
     \tMSys.log('XP gained: ' + change, MSys.color.xp, MSys.color.xpbg)
 
         var now = new Date()
@@ -212,7 +213,7 @@ if (args.gmcp_method == \"Char.Vitals\") {
         // Caclulate average
         MSys.avgXpGain = MSys.xpGains.reduce((acc, add) => acc + add.xp, 0)
 
-    } else if (change < 0) {
+    } else if (change < 0 && MSys.showXP) {
         MSys.log('XP lost: ' + Math.abs(change), MSys.color.warning)
     }
 
@@ -300,6 +301,7 @@ commands += 'hup/down <name> - Move an item up or down on the priority list\\n\\
 
 commands += 'hlist - toggle between using room and list priority\\n'
 commands += 'hbreak - enable/disable break after kill\\n'
+commands += 'hxp - show XP information after kill\\n'
 //commands += 'hbreakthreshold <number> - enable/disable break threshold\\n' // Still used? -Oga
 commands += 'hheal - enable/disable heal\\n'
 commands += 'h - manual heal command\\n'
@@ -314,6 +316,7 @@ if (get_variable('killList')       == undefined) {set_variable('killList', ['roc
 if (get_variable('debug')          == undefined) {set_variable('debug', false)}
 if (get_variable('matchList')      == undefined) {set_variable('matchList', true)}
 if (get_variable('break')          == undefined) {set_variable('break', true)}
+if (get_variable('showXP')         == undefined) {set_variable('showXP', true)}
 if (get_variable('useHeal')        == undefined) {set_variable('useHeal', true)}
 if (get_variable('useFreeze')      == undefined) {set_variable('useFreeze', false)}
 if (get_variable('useMultistrike') == undefined) {set_variable('useMultistrike', false)}
@@ -591,7 +594,7 @@ MSys.breakThreshold = args[1]"
                 },
                 {
                     "type": "alias",
-                    "name": "Heal Toggle - hheal",
+                    "name": "hheal - Heal Toggle",
                     "enabled": true,
                     "id": 81,
                     "matching": "exact",
@@ -617,7 +620,33 @@ MSys.breakThreshold = args[1]"
                 },
                 {
                     "type": "alias",
-                    "name": "Heal - h",
+                    "name": "hxp - XP Toggle",
+                    "enabled": true,
+                    "id": 170,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('showXP')) {
+\tset_variable('showXP', false)
+    MSys.showXP = false
+    MSys.notice('Show XP off', MSys.color.config)
+} else {
+\tset_variable('showXP', true)
+    MSys.showXP = true
+    MSys.notice('Show XP on', MSys.color.config)
+}"
+                        }
+                    ],
+                    "text": "hxp",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "h - Heal",
                     "enabled": true,
                     "id": 115,
                     "matching": "exact",
@@ -646,7 +675,7 @@ MSys.breakThreshold = args[1]"
                 {
                     "type": "alias",
                     "name": "hattack - Change Auto Attack",
-                    "enabled": true,
+                    "enabled": false,
                     "id": 26,
                     "matching": "regexp",
                     "whole_words": true,
@@ -735,15 +764,17 @@ if (MSys.damageThisFight > 0 && MSys.ttk > 0) {
     slainParts.push('DPS: ' + Math.round(MSys.damageThisFight / ((now.getTime() - MSys.ttk)/1000)))
 }
 
-slainParts.push('XP left: ' + Math.round(MSys.xpLeft));
+if (MSys.showXP) {
+    slainParts.push('XP left: ' + Math.round(MSys.xpLeft));
 
-if (MSys.avgXpGain > 0) {
-    slainParts.push('XP/min: ' + Math.round(MSys.avgXpGain))
-    
-    slainParts.push('Min left:' + Math.round(MSys.xpLeft/MSys.avgXpGain));
+    if (MSys.avgXpGain > 0) {
+        slainParts.push('XP/min: ' + Math.round(MSys.avgXpGain))
+
+        slainParts.push('Min left:' + Math.round(MSys.xpLeft/MSys.avgXpGain));
+    }
 }
 
-MSys.notice(slainParts.join(' | '), MSys.color.fightSummary, MSys.color.fightSummarybg)
+MSys.alert(slainParts.join(' | '), MSys.color.fightSummary, MSys.color.fightSummarybg)
 
 MSys.ttk = 0
 MSys.damageThisFight = 0
@@ -1029,5 +1060,5 @@ send_command('crt Target: ' + args[1])"
             "actions": []
         }
     ],
-    "description": "MSysCore v1.4"
+    "description": "Exported reflexes: MSysCore"
 }
