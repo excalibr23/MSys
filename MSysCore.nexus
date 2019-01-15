@@ -204,6 +204,8 @@ if (args.gmcp_method == \"Char.Vitals\") {
 
     MSys.level = args.gmcp_args.charstats[0].substring(7)
     MSys.xp = args.gmcp_args.xp
+    MSys.nl = args.gmcp_args.nl // next level
+    MSys.xpLeft = MSys.xp / MSys.nl * 100    
 }
 
 /* -------------------------------------------- ITEMS IN ROOM ----------------------------------- */
@@ -704,19 +706,24 @@ if (MSys.systemEnabled === true && onList) {
     MSys.huntingAttack()
 }
 
-var slainMessage = ''
+var slainParts = []
 var now = new Date()
-if (MSys.damageThisFight > 0 && MSys.ttk > 0){
-\tslainMessage = MSys.damageThisFight + ' damage done this fight. | TTK: ' + (now.getTime() - MSys.ttk)/1000 + 's | DPS: ' + Math.round(MSys.damageThisFight / ((now.getTime() - MSys.ttk)/1000))
-} else if (MSys.damageThisFight > 0) {
-\tslainMessage = MSys.damageThisFight + ' damage done this fight.'
-} else if (MSys.ttk > 0) {
-\tslainMessage = 'TTK: ' + (now.getTime() - MSys.ttk)/1000 + 's'
+
+if (MSys.damageThisFight > 0) {
+    slainParts.push(MSys.damageThisFight + ' damage done this fight.');
 }
 
-if (MSys.damageThisFight > 0 || MSys.ttk > 0){
-    MSys.notice(slainMessage, MSys.color.fightSummary, MSys.color.fightSummarybg)
+if (MSys.ttk > 0){
+    slainParts.push('TTK: ' + (now.getTime() - MSys.ttk)/1000 + 's')
 }
+
+if (MSys.damageThisFight > 0 && MSys.ttk > 0) {
+    slainParts.push('DPS: ' + Math.round(MSys.damageThisFight / ((now.getTime() - MSys.ttk)/1000)))
+}
+
+slainParts.push('XP left: ' + MSys.xpLeft);
+
+MSys.notice(slainParts.join(' | '), MSys.color.fightSummary, MSys.color.fightSummarybg)
 
 MSys.ttk = 0
 MSys.damageThisFight = 0

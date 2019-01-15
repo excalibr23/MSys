@@ -605,51 +605,6 @@ MSys.huntingAttack()"
                     "actions": []
                 },
                 {
-                    "type": "group",
-                    "name": "XP",
-                    "enabled": true,
-                    "id": 149,
-                    "items": [
-                        {
-                            "type": "trigger",
-                            "name": "XP prompt trigger",
-                            "enabled": true,
-                            "id": 147,
-                            "matching": "substring",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "text": "Health: <hp>/<hpmax> RG: <rage>% ST: <stance> [<status>] XP:<xp>%/",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "// NOTE: This trigger requires the following prompt configuration:
-// CONFIG PROMPT NORMAL Health: ^g@health^x/^g@maxhealth^x RG: @resource1 ST: @resource2 [@balance@wwbalance@combat] XP:^W@%xp%^x/
-MSys.xpPercentage = args[2];
-replace_current_line(args['input'].length-1, 2, MSys.xp + 'xp', MSys.color.xp, 'black')
-"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "XP config trigger",
-                            "enabled": true,
-                            "id": 148,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "text": "Health: <hp>/<hpmax> RG: <rage>% ST: <stance> [<status>] ",
-                            "actions": [
-                                {
-                                    "action": "command",
-                                    "command": "CONFIG PROMPT NORMAL Health: ^g@health^x/^g@maxhealth^x RG: @resource1 ST: @resource2 [@balance@wwbalance@combat] XP:^W@%xp%^x/"
-                                }
-                            ]
-                        }
-                    ],
-                    "actions": []
-                },
-                {
                     "type": "alias",
                     "name": "Awaken Fury",
                     "enabled": true,
