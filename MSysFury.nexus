@@ -1,6 +1,6 @@
 {
     "type": "group",
-    "name": "MSysFury",
+    "name": "msysfury",
     "enabled": true,
     "id": 1,
     "items": [
@@ -9,8 +9,11 @@
             "name": "onLoad",
             "enabled": true,
             "id": 2,
-            "code": "if (MSys == undefined || MSys.coreVersion == undefined || MSys.coreVersion < 1.3) {
-    display_notice('Starwraith Fury Combat Implant v1.3 requires MSysCore v1.3 or later','gold');
+            "code": "MSys.SFCIversion = 1.4
+MSys.SFCIrequiredCore = 1.4
+
+if (MSys == undefined || MSys.coreVersion == undefined || MSys.coreVersion < MSys.SFCIrequiredCore) {
+    display_notice('Starwraith Fury Combat Implant v' + MSys.SFCIversion + ' requires MSysCore v' + MSys.SFCIrequiredCore + ' or later','gold');
     return;
 }
 
@@ -150,7 +153,7 @@ MSys.huntingAttack = function() {
     send_command(command)
 }
 
-MSys.loaded(\"Starwraith Fury Combat Implant v1.3\");
+MSys.loaded(\"Starwraith Fury Combat Implant v\" + MSys.SFCIversion);
 send_command('wakeup')",
             "items": []
         },
@@ -598,6 +601,51 @@ MSys.huntingAttack()"
                     "actions": []
                 },
                 {
+                    "type": "group",
+                    "name": "XP",
+                    "enabled": true,
+                    "id": 149,
+                    "items": [
+                        {
+                            "type": "trigger",
+                            "name": "XP prompt trigger",
+                            "enabled": true,
+                            "id": 147,
+                            "matching": "substring",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "Health: <hp>/<hpmax> RG: <rage>% ST: <stance> [<status>] XP:<xp>%/",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "// NOTE: This trigger requires the following prompt configuration:
+// CONFIG PROMPT NORMAL Health: ^g@health^x/^g@maxhealth^x RG: @resource1 ST: @resource2 [@balance@wwbalance@combat] XP:^W@%xp%^x/
+MSys.xpPercentage = args[2];
+replace_current_line(args['input'].length-1, 2, MSys.xp + 'xp', MSys.color.xp, 'black')
+"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "XP config trigger",
+                            "enabled": true,
+                            "id": 148,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "Health: <hp>/<hpmax> RG: <rage>% ST: <stance> [<status>] ",
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "CONFIG PROMPT NORMAL Health: ^g@health^x/^g@maxhealth^x RG: @resource1 ST: @resource2 [@balance@wwbalance@combat] XP:^W@%xp%^x/"
+                                }
+                            ]
+                        }
+                    ],
+                    "actions": []
+                },
+                {
                     "type": "alias",
                     "name": "Awaken Fury",
                     "enabled": true,
@@ -677,5 +725,5 @@ MSys.huntingAttack()"
             "actions": []
         }
     ],
-    "description": "Exported reflexes: MSysFury"
+    "description": "Starwraith Fury Combat Implant v1.4"
 }

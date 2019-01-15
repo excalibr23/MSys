@@ -1,6 +1,6 @@
 {
     "type": "group",
-    "name": "MSysCore",
+    "name": "msyscore",
     "enabled": true,
     "id": 1,
     "items": [
@@ -32,8 +32,7 @@
 
 MSys = {
 //System Variables
-    noticecolor: 'gold',
-    coreVersion: 1.3,
+    coreVersion: 1.4,
     shortname: 'CORE',
     goal: 'hunt2',
     matchList: get_variable('matchList'),
@@ -45,6 +44,15 @@ MSys = {
     ttk: 0,
     targetHealth: 0,
     interrupt: false,
+    color: {
+        notice: 'gold',
+        info: 'yellow',
+        warning: 'red',
+        target: 'orange',
+        heal: '#6bdaee',
+        xp: 'white',
+        config: 'white',
+    },
 //Character    
     attack: get_variable('huntingAttack') + ' ',
     class: '',
@@ -84,8 +92,9 @@ MSys = {
             MSys.log(text, 'white', 'black')
         }
     },
-    notice: function(text) {
-        display_notice(\"[\" + MSys.shortname + \"] \" + text, MSys.noticecolor);
+    notice: function(text, fgcolor = MSys.color.notice, bgcolor = 'black') {
+        var name = \"[\" + MSys.shortname + \"] \";
+        display_notice(name + text, fgcolor, bgcolor);
     },
     loaded: function(name) {
         //Send implant to browser log for debugging
@@ -101,12 +110,12 @@ MSys = {
     toggle: function (variable, name) {
 \t\tif (get_variable(variable)) {
     \t\tset_variable(variable, false)
-\t\t    MSys.notice(name + ' Disabled', 'white')
+\t\t    MSys.notice(name + ' Disabled', MSys.color.config)
             return false;
 \t\t} else {
     \t\tset_variable(variable, true)
     \t\tMSys.useSerrate = true
-    \t\tMSys.notice(name + ' Enabled', 'white')
+    \t\tMSys.notice(name + ' Enabled', MSys.color.config)
             return true;
 \t\t}    
     },
@@ -124,7 +133,7 @@ MSys = {
                         set_variable('tar', itemList[i].id)
                         send_command('settarget ' + itemList[i].id)
                         targetFound = true
-                        display_notice('New target: '+itemList[i].name, 'red', 'black')
+                        MSys.notice('New target: '+itemList[i].name, MSys.color.target, 'black')
                     }
                 }
             }
@@ -135,20 +144,20 @@ MSys = {
                         set_variable('tar', itemList[x].id)
                         send_command('settarget ' + itemList[x].id)
                         targetFound = true
-                        display_notice('New target: '+itemList[x].name, 'red', 'black')
+                        MSys.notice('New target: '+itemList[x].name, MSys.color.target, 'black')
                     }
                 }
             }
         }
 
         if (!targetFound) {
-            //display_notice('No Target Found', 'red', 'black')
+            //MSys.notice('No Target Found', MSys.color.target, 'black')
             set_variable('tar', '')
         }
     }
 }
 
-MSys.loaded(\"Starwraith Core Implant v1.3\");",
+MSys.loaded(\"Starwraith Core Implant v\" + MSys.coreVersion);",
             "items": []
         },
         {
@@ -169,13 +178,25 @@ if (args.gmcp_method == \"Char.Vitals\") {
     var change = MSys.health - args.gmcp_args.hp;
    
     if (change > 0) {
-    \tMSys.log('Damage taken: ' + change, 'yellow')
+    \tMSys.log('Damage taken: ' + change, MSys.color.warning)
     } else if (change < 0) {
-        MSys.log('Damage healed: ' + Math.abs(change), '#6bdaee')
+        MSys.log('Damage healed: ' + Math.abs(change), MSys.color.heal)
     }
     
     MSys.health = args.gmcp_args.hp
     MSys.maxHealth = args.gmcp_args.maxhp
+
+    // Track XP changes
+    var change = args.gmcp_args.xp - MSys.xp;
+   
+    if (change > 0) {
+    \tMSys.notice('XP gained: ' + change, MSys.color.xp)
+    } else if (change < 0) {
+        MSys.notice('XP lost: ' + Math.abs(change), MSys.color.warning)
+    }
+
+    MSys.level = args.gmcp_args.charstats[0].substring(7)
+    MSys.xp = args.gmcp_args.xp
 }
 
 /* -------------------------------------------- ITEMS IN ROOM ----------------------------------- */
@@ -420,7 +441,7 @@ MSys.hypertension = false
 MSys.ambush = false
 MSys.backhand = false
 
-var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
+//var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
 //a.play()
 
 var autoList = ['You', 'Chronoxi Starwraith', 'Feraluna Starwraith', 'Mee', 'Casimar', 'Albion', 'Mykel']
@@ -458,7 +479,7 @@ if (MSys.damageThisFight > 0 && MSys.ttk > 0){
 }
 
 if (MSys.damageThisFight > 0 || MSys.ttk > 0){
-    MSys.alert(slainMessage, 'lightgreen', 'darkblue')
+    MSys.notice(slainMessage, 'lightgreen', 'darkblue')
 }
 
 MSys.ttk = 0
@@ -839,14 +860,9 @@ MSys.huntingAttack()
     var now = new Date()
     MSys.ttk = now.getTime()
 }
-MSys.damageThisFight += parseInt(args[1])"
-                        },
-                        {
-                            "action": "highlight",
-                            "highlight": "match",
-                            "highlight_backref": "1",
-                            "highlight_fg": "#ff0000",
-                            "highlight_bg": "#000000"
+MSys.damageThisFight += parseInt(args[1])
+
+colorize_current_line(0, args['input'].length, MSys.color.info, 'black')"
                         }
                     ],
                     "items": []
@@ -948,5 +964,5 @@ send_command('crt Target: ' + args[1])"
             "actions": []
         }
     ],
-    "description": "Exported reflexes: MSysCore"
+    "description": "MSysCore v1.4"
 }
