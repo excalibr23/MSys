@@ -35,6 +35,8 @@ MSys.warmth = false
 MSys.balancing = false
 MSys.firewreathe = false
 MSys.huntingAttack = function() {
+    if (!MSys.systemEnabled) { return }
+    
     //Fury
     var command = 'combo '
 
