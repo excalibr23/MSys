@@ -46,6 +46,7 @@ MSys = {
     xpGains: [],
     avgXpGain: 0,
     showXP: get_variable('showXP'),
+    showNotices: get_variable('showNotices'),
     interrupt: false,
     color: {
         notice: 'gold',
@@ -604,15 +605,7 @@ MSys.breakThreshold = args[1]"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (get_variable('useHeal')) {
-\tset_variable('useHeal', false)
-    MSys.useHeal = false
-    MSys.notice('Heal off', MSys.color.config)
-} else {
-\tset_variable('useHeal', true)
-    MSys.useHeal = true
-    MSys.notice('Heal on', MSys.color.config)
-}"
+                            "script": "MSys.useHeal = MSys.toggle('useHeal', 'Heal');"
                         }
                     ],
                     "text": "hheal",
@@ -630,15 +623,7 @@ MSys.breakThreshold = args[1]"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (get_variable('showXP')) {
-\tset_variable('showXP', false)
-    MSys.showXP = false
-    MSys.notice('Show XP off', MSys.color.config)
-} else {
-\tset_variable('showXP', true)
-    MSys.showXP = true
-    MSys.notice('Show XP on', MSys.color.config)
-}"
+                            "script": "MSys.showXP = MSys.useHeal = MSys.toggle('showXP', 'Show XP');"
                         }
                     ],
                     "text": "hxp",
@@ -774,7 +759,13 @@ if (MSys.showXP) {
     }
 }
 
-MSys.alert(slainParts.join(' | '), MSys.color.fightSummary, MSys.color.fightSummarybg)
+var msg = slainParts.join(' | ');
+
+if (MSys.showNotices) {
+    MSys.notice(msg, MSys.color.fightSummary, MSys.color.fightSummarybg);
+} else {
+    MSys.alert(msg, MSys.color.fightSummary, MSys.color.fightSummarybg);
+}
 
 MSys.ttk = 0
 MSys.damageThisFight = 0
@@ -1060,5 +1051,5 @@ send_command('crt Target: ' + args[1])"
             "actions": []
         }
     ],
-    "description": "Exported reflexes: MSysCore"
+    "description": "Starwraith Core Implant v1.4"
 }
