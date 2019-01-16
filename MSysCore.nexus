@@ -333,7 +333,9 @@ MSys.notice(\"Current settings:\", MSys.color.config)
 var settings = ''
 settings += 'Priority: ' + (get_variable('matchList')==true ? \"List\" : \"Room\") + '\\n'
 settings += 'Break: ' + (get_variable('break')==true ? \"Will break after kill\" : \"Will continue after kill\") + '\\n'
+settings += 'Show XP Gains/Loses: ' + get_variable('showXP') + '\\n'
 settings += 'Heal: ' + get_variable('useHeal') + '\\n'
+
 
 MSys.log(settings, MSys.color.config)
 "
@@ -1051,5 +1053,5 @@ send_command('crt Target: ' + args[1])"
             "actions": []
         }
     ],
-    "description": "Starwraith Core Implant v1.4"
+    "description": "Exported reflexes: MSysCore"
 }
