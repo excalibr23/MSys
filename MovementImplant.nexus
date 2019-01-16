@@ -15,6 +15,7 @@ client.package_enable('numpad movement', false);
 
 // Starwraith Movement Implant
 SMI = {
+    version: 1.3,
     noticecolor: 'gold',
     packagename: 'starwraith movement implant',
     disableGroup: function(name) {
@@ -34,7 +35,7 @@ SMI = {
         client.display_help_window(helptext);
 \t},
     loaded: function() {
-\t\tSMI.notice(\"Starwraith Movement Implant v1.3 Loaded. Enter movehelp for more information.\\n\");
+\t\tSMI.notice(\"Starwraith Movement Implant v\" + SMI.version + \" Loaded. Enter movehelp for more information.\\n\");
     }
 }
 
@@ -60,7 +61,7 @@ helptext += \"  Finally, to manually switch movement control:\\n\"
 helptext += \"  Ctrl+0=Disable, Ctrl+1=Land movement, Ctrl+2=Ship movement.\\n\\n\"
 helptext += \"  NOTE: Some shortcuts don't work on certain clients!\\n\"
 
-SMI.helpbox(\"Starwraith Movement Implant v1.3\",helptext);
+SMI.helpbox(\"Starwraith Movement Implant v\" + SMI.version,helptext);
 "
         },
         {
@@ -962,7 +963,7 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     "actions": [
                         {
                             "action": "command",
-                            "command": "CORMPIERCER MAP",
+                            "command": "COSMPIERCER MAP",
                             "prefix_suffix": true
                         }
                     ],
