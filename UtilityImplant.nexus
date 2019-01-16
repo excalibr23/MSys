@@ -59,81 +59,26 @@ SUI.loaded();",
             "actions": []
         },
         {
-            "type": "group",
-            "name": "Travel",
+            "type": "alias",
+            "name": "",
             "enabled": true,
-            "id": 9,
-            "items": [
+            "id": 5,
+            "matching": "exact",
+            "whole_words": true,
+            "case_sensitive": false,
+            "prefix_suffix": true,
+            "actions": [
                 {
-                    "type": "trigger",
-                    "name": "Station Transfer List",
-                    "enabled": true,
-                    "id": 5,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "You can board a transport craft here, check STATION TRANSFER LIST.",
-                    "actions": [
-                        {
-                            "action": "command",
-                            "command": "STATION TRANSFER LIST"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Key PTP",
-                    "enabled": true,
-                    "id": 6,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "There is a personal teleporter here. KEY PTP to activate it.",
-                    "actions": [
-                        {
-                            "action": "command",
-                            "command": "Key PTP"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Takeoff List",
-                    "enabled": true,
-                    "id": 7,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "You can board a transport craft here, check TAKEOFF LIST.",
-                    "actions": [
-                        {
-                            "action": "command",
-                            "command": "Takeoff List"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Gatewarp Destinations",
-                    "enabled": true,
-                    "id": 8,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "There is a voidgate here. GATEWARP DESTINATIONS to start your travel across the cosmos.",
-                    "actions": [
-                        {
-                            "action": "command",
-                            "command": "Gatewarp Destinations"
-                        }
-                    ],
-                    "items": []
+                    "action": "script",
+                    "script": "var title = \"Starwraith Utility Implant Help\"
+var message = \"  Current Functionatily:\\n\"
+message += \"  - Will autosell junk\"
+
+SUI.helpbox(title, message)"
                 }
             ],
-            "actions": []
+            "text": "UTILITYHELP",
+            "items": []
         }
     ]
 }
