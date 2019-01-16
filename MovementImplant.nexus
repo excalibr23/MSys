@@ -1,7 +1,7 @@
 {
-    "name": "starwraith movement implant",
+    "name": "MovementImplant",
     "enabled": true,
-    "description": "v1.4. Use numpad to fly your ship and walk around. See MOVEHELP for more info.",
+    "description": "Exported reflexes: MovementImplant",
     "type": "group",
     "id": 1,
     "items": [
@@ -38,11 +38,12 @@ SMI = {
         client.display_help_window(helptext);
 \t},
     loaded: function() {
-\t\tSMI.notice(\"Starwraith Movement Implant v\" + SMI.version + \" Loaded. Enter movehelp for more information.\\n\");
+\t\tSMI.notice(\"Starwraith Movement Implant v\" + SMI.version + \" Loaded. Enter MOVEHELP for more information.\\n\");
     }
 }
 
-SMI.loaded();"
+SMI.loaded();",
+            "items": []
         },
         {
             "type": "function",
@@ -55,17 +56,28 @@ helptext += \"  will also do useful things like automatically showing Takeoff Li
 helptext += \"  When moving around on land:\\n\\n\"
 helptext += \"  7=northwest, 8=north, 9=northeast, etc.\\n\"
 helptext += \"  Alt+7=glance northwest, Alt+8=glance north, etc.\\n\"
-helptext += \"  '/' for in, '*' for out, '-' for up, '+' for down.\\n\"
+helptext += \"  '-' for up, '+' for down.\\n\"
 helptext += \"  The 5 key looks at the room you're in.\\n\\n\"
 helptext += \"  Ship movement is triggered by embarking or disembarking. Some keys change:\\n\\n\"
 helptext += \"  '/'=halt, '*'=slow, '-'=cruise, '+'=full speed, '0'=starchart, '.'=fire cannon.\\n\"
 helptext += \"  The 5 key sends out a ship beacon.\\n\\n\"
 helptext += \"  To manually switch movement control:\\n\"
 helptext += \"  Ctrl+0=Disable, Ctrl+1=Land movement, Ctrl+2=Ship movement.\\n\\n\"
+helptext += \"  Helpful Aliases:\\n\"
+helptext += \"  sb: Ship Beacon\\n\"
+helptext += \"  il: Incusion List\\n\"
+helptext += \"  im: Incusion Map\\n\"
+helptext += \"  sc (place): Starchart place\\n\"
+helptext += \"  cr (dirction): Cargo Recover direction\\n\"
+helptext += \"  cp: Cosmpiecer List\\n\"
+helptext += \"  cpm: Cosmpiecer Map\\n\"
+helptext += \"  cpl: Cosmpiercer Liberate\\n\"
+helptext += \"  dock: Ship Dock\\n\\n\"
 helptext += \"  NOTE: Some shortcuts don't work on certain clients!\\n\"
 
 SMI.helpbox(\"Starwraith Movement Implant v\" + SMI.version, helptext);
-"
+",
+            "items": []
         },
         {
             "type": "group",
@@ -81,7 +93,8 @@ SMI.helpbox(\"Starwraith Movement Implant v\" + SMI.version, helptext);
                     "code": "SMI.disableGroup(\"Keybinds_MoveWalk\");
 SMI.disableGroup(\"Glance\");
 SMI.enableGroup(\"Keybinds_MoveShip\");
-SMI.notice(\"Setting Ship Numpad Movement Bindings\", SMI.noticecolor)"
+SMI.notice(\"Setting Ship Numpad Movement Bindings\", SMI.noticecolor)",
+                    "items": []
                 },
                 {
                     "type": "function",
@@ -91,7 +104,8 @@ SMI.notice(\"Setting Ship Numpad Movement Bindings\", SMI.noticecolor)"
                     "code": "SMI.disableGroup(\"Keybinds_MoveShip\");
 SMI.enableGroup(\"Keybinds_MoveWalk\");
 SMI.enableGroup(\"Glance\");
-SMI.notice(\"Setting Land Numpad Movement Bindings\", SMI.noticecolor)"
+SMI.notice(\"Setting Land Numpad Movement Bindings\", SMI.noticecolor)",
+                    "items": []
                 },
                 {
                     "type": "function",
@@ -101,7 +115,8 @@ SMI.notice(\"Setting Land Numpad Movement Bindings\", SMI.noticecolor)"
                     "code": "SMI.disableGroup(\"Keybinds_MoveWalk\");
 SMI.disableGroup(\"Glance\");
 SMI.disableGroup(\"Keybinds_MoveShip\");
-SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to reenable.\", SMI.noticecolor)"
+SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to reenable.\", SMI.noticecolor)",
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -117,7 +132,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": true,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -150,7 +166,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": true,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 }
             ],
             "actions": []
@@ -175,7 +192,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "action": "function",
                             "fn": "onShip"
                         }
-                    ]
+                    ],
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -191,7 +209,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -207,7 +226,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -223,7 +243,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -238,7 +259,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -254,7 +276,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -270,7 +293,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -285,7 +309,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -300,7 +325,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -315,7 +341,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -325,12 +352,14 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     "key": "109",
                     "actions": [
                         {
-                            "command": "up"
+                            "command": "up",
+                            "action": "command"
                         }
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -346,7 +375,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 }
             ],
             "actions": []
@@ -371,7 +401,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "action": "function",
                             "fn": "onLand"
                         }
-                    ]
+                    ],
+                    "items": []
                 },
                 {
                     "type": "trigger",
@@ -387,7 +418,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "action": "function",
                             "fn": "onLand"
                         }
-                    ]
+                    ],
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -403,7 +435,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -419,7 +452,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -435,7 +469,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -451,7 +486,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -467,7 +503,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -483,7 +520,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -499,7 +537,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -515,7 +554,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -531,7 +571,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -547,7 +588,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -563,7 +605,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -579,7 +622,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -595,7 +639,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -611,7 +656,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -627,7 +673,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": false,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 }
             ],
             "actions": []
@@ -652,7 +699,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": true,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -668,7 +716,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": true,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -684,7 +733,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": true,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -700,7 +750,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": true,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -716,7 +767,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": true,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -732,7 +784,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": true,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -748,7 +801,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": true,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 },
                 {
                     "type": "keybind",
@@ -764,7 +818,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                     ],
                     "key_alt": true,
                     "key_ctrl": false,
-                    "key_shift": false
+                    "key_shift": false,
+                    "items": []
                 }
             ],
             "actions": []
@@ -789,7 +844,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "action": "command",
                             "command": "TAKEOFF LIST"
                         }
-                    ]
+                    ],
+                    "items": []
                 },
                 {
                     "type": "trigger",
@@ -805,7 +861,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "action": "command",
                             "command": "EXIT LIFT"
                         }
-                    ]
+                    ],
+                    "items": []
                 },
                 {
                     "type": "trigger",
@@ -821,7 +878,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "action": "command",
                             "command": "STATION TRANSFER LIST"
                         }
-                    ]
+                    ],
+                    "items": []
                 },
                 {
                     "type": "trigger",
@@ -837,7 +895,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "action": "command",
                             "command": "GATEWARP DESTINATIONS"
                         }
-                    ]
+                    ],
+                    "items": []
                 },
                 {
                     "type": "trigger",
@@ -853,7 +912,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "action": "command",
                             "command": "KEY PTP"
                         }
-                    ]
+                    ],
+                    "items": []
                 }
             ],
             "actions": []
@@ -880,7 +940,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "prefix_suffix": true
                         }
                     ],
-                    "text": "sb"
+                    "text": "sb",
+                    "items": []
                 },
                 {
                     "type": "alias",
@@ -898,7 +959,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "prefix_suffix": true
                         }
                     ],
-                    "text": "il"
+                    "text": "il",
+                    "items": []
                 },
                 {
                     "type": "alias",
@@ -916,7 +978,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "prefix_suffix": true
                         }
                     ],
-                    "text": "im"
+                    "text": "im",
+                    "items": []
                 },
                 {
                     "type": "alias",
@@ -934,7 +997,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "prefix_suffix": true
                         }
                     ],
-                    "text": "sc <place>"
+                    "text": "sc <place>",
+                    "items": []
                 },
                 {
                     "type": "alias",
@@ -952,7 +1016,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "prefix_suffix": true
                         }
                     ],
-                    "text": "cr <dir>"
+                    "text": "cr <dir>",
+                    "items": []
                 },
                 {
                     "type": "alias",
@@ -970,7 +1035,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "prefix_suffix": true
                         }
                     ],
-                    "text": "cpm"
+                    "text": "cpm",
+                    "items": []
                 },
                 {
                     "type": "alias",
@@ -988,7 +1054,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "prefix_suffix": true
                         }
                     ],
-                    "text": "cpl"
+                    "text": "cpl",
+                    "items": []
                 },
                 {
                     "type": "alias",
@@ -1006,7 +1073,8 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "prefix_suffix": true
                         }
                     ],
-                    "text": "cp"
+                    "text": "cp",
+                    "items": []
                 },
                 {
                     "type": "alias",
@@ -1024,10 +1092,29 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                             "prefix_suffix": true
                         }
                     ],
-                    "text": "dock"
+                    "text": "dock",
+                    "items": []
                 }
             ],
             "actions": []
+        },
+        {
+            "type": "alias",
+            "name": "MOVEHELP",
+            "enabled": true,
+            "id": 72,
+            "matching": "exact",
+            "whole_words": true,
+            "case_sensitive": true,
+            "prefix_suffix": true,
+            "actions": [
+                {
+                    "action": "function",
+                    "fn": "movehelp"
+                }
+            ],
+            "text": "MOVEHELP",
+            "items": []
         }
     ]
 }
