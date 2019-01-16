@@ -1,7 +1,7 @@
 {
     "name": "starwraith movement implant",
     "enabled": true,
-    "description": "v1.3. Use numpad to fly your ship and walk around. See MOVEHELP for more info.",
+    "description": "v1.4. Use numpad to fly your ship and walk around. See MOVEHELP for more info.",
     "type": "group",
     "id": 1,
     "items": [
@@ -15,9 +15,12 @@ client.package_enable('numpad movement', false);
 
 // Starwraith Movement Implant
 SMI = {
-    version: 1.3,
-    noticecolor: 'gold',
+    version: 1.4,
+    shortname: 'SMI',
     packagename: 'starwraith movement implant',
+    color: {
+        notice: 'gold'
+    },
     disableGroup: function(name) {
         var group = reflex_find_by_name('group', name, false, false, SMI.packagename)
         reflex_disable(group)
@@ -27,7 +30,7 @@ SMI = {
         reflex_enable(group)
     },
     notice: function(text) {
-        display_notice(\"[SMI] \" + text, SMI.noticecolor);
+        display_notice(\"[\" + SMI.shortname + \"] \" + text, SMI.color.notice);
     },
     helpbox: function(title,text) {
         var helptext = \"<div class=\\\"mono\\\"><span style=\\\"color: #ffffff; \\\"><span style=\\\"background-color: #0000a0 \\\">\" + title + \"</span></span></div>\";
@@ -57,11 +60,11 @@ helptext += \"  The 5 key looks at the room you're in.\\n\\n\"
 helptext += \"  Ship movement is triggered by embarking or disembarking. Some keys change:\\n\\n\"
 helptext += \"  '/'=halt, '*'=slow, '-'=cruise, '+'=full speed, '0'=starchart, '.'=fire cannon.\\n\"
 helptext += \"  The 5 key sends out a ship beacon.\\n\\n\"
-helptext += \"  Finally, to manually switch movement control:\\n\"
+helptext += \"  To manually switch movement control:\\n\"
 helptext += \"  Ctrl+0=Disable, Ctrl+1=Land movement, Ctrl+2=Ship movement.\\n\\n\"
 helptext += \"  NOTE: Some shortcuts don't work on certain clients!\\n\"
 
-SMI.helpbox(\"Starwraith Movement Implant v\" + SMI.version,helptext);
+SMI.helpbox(\"Starwraith Movement Implant v\" + SMI.version, helptext);
 "
         },
         {
@@ -768,7 +771,7 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
         },
         {
             "type": "group",
-            "name": "Utility",
+            "name": "Travel",
             "enabled": true,
             "id": 54,
             "items": [
@@ -863,7 +866,7 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
             "items": [
                 {
                     "type": "alias",
-                    "name": "Ship Beacon - sb",
+                    "name": "sb - Ship Beacon",
                     "enabled": true,
                     "id": 63,
                     "matching": "exact",
@@ -881,7 +884,7 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                 },
                 {
                     "type": "alias",
-                    "name": "Incursion List - il",
+                    "name": "il - Incursion List",
                     "enabled": true,
                     "id": 64,
                     "matching": "exact",
@@ -899,7 +902,7 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                 },
                 {
                     "type": "alias",
-                    "name": "Incursion Map - im",
+                    "name": "im - Incursion Map",
                     "enabled": true,
                     "id": 65,
                     "matching": "exact",
@@ -917,7 +920,7 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                 },
                 {
                     "type": "alias",
-                    "name": "Starchart - sc <place>",
+                    "name": "sc <place> - Starchart",
                     "enabled": true,
                     "id": 66,
                     "matching": "begins",
@@ -935,7 +938,7 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                 },
                 {
                     "type": "alias",
-                    "name": "Cargo Recover - cr <dir>",
+                    "name": "cr <dir> - Cargo Recover",
                     "enabled": true,
                     "id": 67,
                     "matching": "exact",
@@ -953,7 +956,7 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                 },
                 {
                     "type": "alias",
-                    "name": "Cosmpiercer map - cpm",
+                    "name": "cpm - Cosmpiercer map",
                     "enabled": true,
                     "id": 68,
                     "matching": "exact",
@@ -971,7 +974,7 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                 },
                 {
                     "type": "alias",
-                    "name": "Cosmpiecer Liberate - cpl",
+                    "name": "cpl - Cosmpiecer Liberate",
                     "enabled": true,
                     "id": 69,
                     "matching": "exact",
@@ -989,7 +992,7 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                 },
                 {
                     "type": "alias",
-                    "name": "Cosmpiercer list - cp",
+                    "name": "cp - Cosmpiercer list",
                     "enabled": true,
                     "id": 70,
                     "matching": "begins",
@@ -1004,6 +1007,24 @@ SMI.notice(\"Disabling Numpad Movement Bindings. Ctrl+1=Land or Ctrl+2=Ship to r
                         }
                     ],
                     "text": "cp"
+                },
+                {
+                    "type": "alias",
+                    "name": "dock - Ship Dock",
+                    "enabled": true,
+                    "id": 71,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "SHIP DOCK",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "dock"
                 }
             ],
             "actions": []
