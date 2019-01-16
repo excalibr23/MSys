@@ -30,6 +30,10 @@ MSys.fever = false
 MSys.useFever = get_variable('useFever')
 MSys.hypertension = false
 MSys.infernoCharging = false
+MSys.harden = false
+MSys.warmth = false
+MSys.balancing = false
+MSys.firewreathe = false
 MSys.huntingAttack = function() {
     //Fury
     var command = 'combo '
@@ -45,6 +49,10 @@ MSys.huntingAttack = function() {
     }else if (!MSys.bladeshape && get_variable('kithbladeshape') !== undefined && get_variable('kithbladeshape') !== '') {
         send_command(get_variable('kithbladeshape'))
         return;
+    }else if (!MSys.harden)      { command = 'kith harden'
+\t}else if (!MSys.warmth)      { command = 'kith warmth'
+\t}else if (!MSys.balancing)   { command = 'kith balancing'
+\t}else if (!MSys.firewreathe) { command = 'kith firewreathe'
     }else if (get_variable('tar') == '' || MSys.offenseEnabled == false) {
         return;
     }else if (!MSys.fever && MSys.useFever) {
@@ -149,7 +157,9 @@ MSys.huntingAttack = function() {
         }
     }
 
-    command += get_variable('tar')
+    if (command[command.length - 1] == ' ') {
+    \tcommand += get_variable('tar')
+    }
     send_command(command)
 }
 
@@ -181,7 +191,9 @@ if (args.gmcp_method == \"Char.Vitals\") {
 
 //Add items when items enter
 if (args.gmcp_method == \"Char.Items.Add\") {
-    if (MSys.infernoCharging && itemJoining.attrib === 'm') {
+    let itemJoining = args.gmcp_args['item']
+    
+    if (MSys.infernoCharging && itemJoining.attrib == 'm') {
     \tsend_command('asdf')
         MSys.infernoCharging = false
         MSys.alert('mob entered - inferno cancelled', 'white', 'red')
@@ -600,6 +612,74 @@ MSys.huntingAttack()"
                                 }
                             ],
                             "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Harden On",
+                            "enabled": true,
+                            "id": 147,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You focus on hardening your skin with kith energy.$|^Your internals are already hardened.$|^That requires the Harden ability in the Fulmination skill, which you haven't learned.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.harden = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Warmth On",
+                            "enabled": true,
+                            "id": 148,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You focus on warming up your skin with kith energy.$|^You're already protected from being frozen.$|^That requires the Warmth ability in the Fulmination skill, which you haven't learned.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.warmth = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Balancing On",
+                            "enabled": true,
+                            "id": 149,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You focus on your kith to prevent falling.$|^You're already balancing.$|^That requires the Balancing ability in the Fulmination skill, which you haven't learned.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.balancing = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Fireweathe On",
+                            "enabled": true,
+                            "id": 150,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You form a wreathe of kith-induced fire around yourself.$|^You are already wreathed in fire.$|^That requires the Firewreathe ability in the Fulmination skill, which you haven't learned.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.firewreathe = true
+MSys.huntingAttack()"
+                                }
+                            ]
                         }
                     ],
                     "actions": []
@@ -607,7 +687,7 @@ MSys.huntingAttack()"
                 {
                     "type": "alias",
                     "name": "Awaken Fury",
-                    "enabled": true,
+                    "enabled": false,
                     "id": 143,
                     "matching": "exact",
                     "whole_words": true,
