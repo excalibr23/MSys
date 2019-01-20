@@ -1,6 +1,6 @@
 {
     "type": "group",
-    "name": "MSysCore",
+    "name": "msyscore",
     "enabled": true,
     "id": 1,
     "items": [
@@ -357,8 +357,8 @@ MSys.log(settings, MSys.color.config)
                             "action": "script",
                             "script": "let newSave = get_variable('killList')
 set_variable('killListBackup', newSave)
-MSys.notice('Hunt List Saved', MSys.color.config)
-"
+client.gmcp_save_system(true)
+MSys.notice('Hunt List Saved\\nSaved settings to server', MSys.color.config)"
                         }
                     ],
                     "text": "hsave",
@@ -970,7 +970,7 @@ MSys.huntingAttack()"
 }
 MSys.damageThisFight += parseInt(args[1])
 
-colorize_current_line(0, args['input'].length, MSys.color.info, 'black')"
+//colorize_current_line(0, args['input'].length, MSys.color.info, 'black')"
                         }
                     ],
                     "items": []
