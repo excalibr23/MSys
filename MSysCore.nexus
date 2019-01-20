@@ -54,11 +54,11 @@ MSys = {
         warning: 'red',
         target: 'orange',
         heal: '#6bdaee',
-        xp: 'white',
-        xpbg: 'darkblue',
+        xp: 'gold',
+        xpbg: 'black',
         config: 'white',
-        fightSummary: 'white',
-        fightSummarybg: 'darkblue',
+        fightSummary: 'gold',
+        fightSummarybg: 'black',
     },
 //Character    
     attack: get_variable('huntingAttack') + ' ',
@@ -764,11 +764,7 @@ if (MSys.showXP) {
 
 var msg = slainParts.join(' | ');
 
-if (MSys.showNotices) {
-    MSys.notice(msg, MSys.color.fightSummary, MSys.color.fightSummarybg);
-} else {
-    MSys.alert(msg, MSys.color.fightSummary, MSys.color.fightSummarybg);
-}
+MSys.notice(msg, MSys.color.fightSummary, MSys.color.fightSummarybg)
 
 MSys.ttk = 0
 MSys.damageThisFight = 0
@@ -888,7 +884,7 @@ MSys.huntingAttack()"
                                     "action": "script",
                                     "script": "MSys.interrupt = true
 
-MSys.alert('Interrupting super', 'white', 'blue')
+MSys.notice('Interrupting super', 'white', 'darkblue')
 MSys.huntingAttack()
 "
                                 }
@@ -899,10 +895,10 @@ MSys.huntingAttack()
                             "type": "trigger",
                             "name": "Super - Interrupted",
                             "enabled": true,
-                            "id": 170,
+                            "id": 172,
                             "matching": "regexp",
                             "whole_words": false,
-                            "case_sensitive": false,
+                            "case_sensitive": true,
                             "text": "loses .* concentration.$",
                             "actions": [
                                 {
@@ -1067,6 +1063,27 @@ send_command('st ' + args[1])
                         }
                     ],
                     "actions": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Under Attack",
+                    "enabled": true,
+                    "id": 171,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": true,
+                    "text": "^An? (.*) moves in to attack you.$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.alert('Being attacked by: ' + args[1], 'Red')
+if (get_variable('tar') == '') {
+    MSys.notice('Attempting counterattack')
+    set_variable('tar', args[1])
+}
+MSys.huntingAttack()"
+                        }
+                    ]
                 }
             ],
             "actions": []
