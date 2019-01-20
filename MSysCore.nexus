@@ -191,6 +191,13 @@ if (args.gmcp_method == \"Char.Vitals\") {
     
     MSys.health = args.gmcp_args.hp
     MSys.maxHealth = args.gmcp_args.maxhp
+    
+    if (!MSys.offenseEnabled && (MSys.health / MSys.maxHealth) * 100 > get_variable('breakResume')) {
+        MSys.notice('Re-engaging after break')
+        MSys.offenseEnabled = true
+        MSys.findTarget()
+        MSys.huntingAttack()
+    }
 
     // Check class
     if (!MSys.class || MSys.class != args.gmcp_args.class) {
@@ -577,7 +584,7 @@ for (i=0; i<list.length; i++) {
                 },
                 {
                     "type": "alias",
-                    "name": "hbreakthreshold <n> - Enable/Disable Break Threshold",
+                    "name": "hbreakresume <n> - Enable/Disable Break Resume",
                     "enabled": true,
                     "id": 169,
                     "matching": "regexp",
@@ -587,11 +594,19 @@ for (i=0; i<list.length; i++) {
                     "actions": [
                         {
                             "action": "script",
-                            "script": "set_variable('breakThreshold', args[1])
-MSys.breakThreshold = args[1]"
+                            "script": "if (args[1] == '') {
+    MSys.notice('Unset resume')
+    delete_variable('breakResume')
+} else if (args[1] > 100 || args[1] < 1) {
+    MSys.notice('Usage: hbreakresume <n> with n between 1 and 100')
+} else {
+\tset_variable('breakResume', args[1])
+\tMSys.breakResume = args[1]
+    MSys.notice('Will resume combat when health reaches ' + args[1] + ' percent')
+}"
                         }
                     ],
-                    "text": "^hbreakthreshold ([0-9]*)$",
+                    "text": "^hbreakresume ?([0-9]*)$",
                     "items": []
                 },
                 {
