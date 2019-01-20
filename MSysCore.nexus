@@ -174,7 +174,7 @@ MSys.loaded(\"Starwraith Core Implant v\" + MSys.coreVersion + \" Loaded.\");",
             "code": "// Place any code here you'd like to run when a GMCP message is received
 // - The GMCP message is received as \"args.gmcp_method\" and \"args.gmcp_args\"
 
-GMCP[args.gmcp_method] = args.gmcp_args
+//GMCP[args.gmcp_method] = args.gmcp_args
 
 /* ------------------------------------------ CHARACTER STUFF ----------------------------------- */
 
@@ -184,7 +184,7 @@ if (args.gmcp_method == \"Char.Vitals\") {
     var change = MSys.health - args.gmcp_args.hp;
    
     if (change > 0) {
-    \tMSys.log('Damage taken: ' + change, MSys.color.warning)
+    \tMSys.log('Damage taken: ' + change, MSys.color.info)
     } else if (change < 0) {
         MSys.log('Damage healed: ' + Math.abs(change), MSys.color.heal)
     }
@@ -335,7 +335,6 @@ settings += 'Priority: ' + (get_variable('matchList')==true ? \"List\" : \"Room\
 settings += 'Break: ' + (get_variable('break')==true ? \"Will break after kill\" : \"Will continue after kill\") + '\\n'
 settings += 'Show XP Gains/Loses: ' + get_variable('showXP') + '\\n'
 settings += 'Heal: ' + get_variable('useHeal') + '\\n'
-
 
 MSys.log(settings, MSys.color.config)
 "
@@ -597,7 +596,7 @@ MSys.breakThreshold = args[1]"
                 },
                 {
                     "type": "alias",
-                    "name": "hheal - Heal Toggle",
+                    "name": "Heal Toggle - hheal",
                     "enabled": true,
                     "id": 81,
                     "matching": "exact",
@@ -708,6 +707,7 @@ MSys.fever = false
 MSys.hypertension = false
 MSys.ambush = false
 MSys.backhand = false
+MSys.magnotronActivated = false
 
 //var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
 //a.play()
@@ -726,6 +726,7 @@ if (MSys.systemEnabled === true && onList) {
 \tMSys.findTarget()
 
     if (MSys.class == 'Engineer' && get_variable('useQPCBoost')) {
+        send_command('clearqueue')
         send_command('qpcboost')
     }
 
@@ -887,12 +888,30 @@ MSys.huntingAttack()"
                                     "action": "script",
                                     "script": "MSys.interrupt = true
 
-MSys.alert('interrupting super', 'white', 'blue')
+MSys.alert('Interrupting super', 'white', 'blue')
 MSys.huntingAttack()
 "
                                 }
                             ],
                             "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Super - Interrupted",
+                            "enabled": true,
+                            "id": 170,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "loses .* concentration.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.interrupt = false
+MSys.log('Attack interrupted', 'white')
+MSys.huntingAttack()"
+                                }
+                            ]
                         }
                     ],
                     "actions": []
@@ -1040,7 +1059,7 @@ send_command('crash ' + args[1])"
                                     "script": "MSys.target = args[1]
 set_variable('tar', args[1])
 send_command('st ' + args[1])
-send_command('crt Target: ' + args[1])"
+//send_command('crt Target: ' + args[1])"
                                 }
                             ],
                             "text": "tt (.+)",
@@ -1053,5 +1072,5 @@ send_command('crt Target: ' + args[1])"
             "actions": []
         }
     ],
-    "description": "Exported reflexes: MSysCore"
+    "description": "MSysCore v1.4"
 }
