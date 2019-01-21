@@ -46,12 +46,13 @@
     },
 
 //Character
-    class: '',
-    health: 0,
+    class:     '',
+    health:    0,
     maxHealth: 0,
-    useHeal: get_variable('useHeal'),
+    healthPct: 0,
+    useHeal:   get_variable('useHeal'),
     healReady: true,
-    xpGains: [],
+    xpGains:   [],
     avgXpGain: 0,
 
 //Functions
@@ -651,6 +652,23 @@ for (i=0; i<list.length; i++) {
                 },
                 {
                     "type": "alias",
+                    "name": "hescapeaggro - Enable/Disable Flee on Aggro",
+                    "enabled": true,
+                    "id": 177,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.useEscapeAggro = MSys.toggle('useEscapeAggro', 'Attempt to flee on aggro');"
+                        }
+                    ],
+                    "text": "hescapeaggro"
+                },
+                {
+                    "type": "alias",
                     "name": "hheal - Heal Toggle",
                     "enabled": true,
                     "id": 81,
@@ -943,7 +961,7 @@ MSys.interrupt = false"
                             "action": "script",
                             "script": "MSys.alert('Being attacked by: ' + args[1], 'Red')
 //set_variable('tar', args[1])
-if (MSys.health < MSys.maxHealth) {
+if (MSys.health < MSys.maxHealth && useEscapeAggro) {
     MSys.escapeFromCombat()
 } else {
     MSys.notice('Initating counterattack')
