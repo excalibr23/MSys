@@ -1,7 +1,7 @@
 {
     "name": "starwraith trading implant",
     "enabled": true,
-    "description": "v0.4",
+    "description": "v0.5",
     "type": "group",
     "id": 1,
     "items": [
@@ -14,7 +14,7 @@
 
 // Starwraith Trading Implant
 STI = {
-    version: 0.4,
+    version: 0.5,
     shortname: 'STI',
     packagename: 'starwraith trading implant',
     content: \"\",
@@ -213,28 +213,10 @@ STI.content = \"\";"
         },
         {
             "type": "group",
-            "name": "Shortcuts",
+            "name": "Market",
             "enabled": true,
             "id": 9,
             "items": [
-                {
-                    "type": "alias",
-                    "name": "cca - Cargo Contents All",
-                    "enabled": true,
-                    "id": 11,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": false,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "command",
-                            "command": "CARGO CONTENTS ALL",
-                            "prefix_suffix": true
-                        }
-                    ],
-                    "text": "cca"
-                },
                 {
                     "type": "alias",
                     "name": "mol <filter> - Market Order List",
@@ -324,6 +306,69 @@ STI.content = \"\";"
                         }
                     ],
                     "text": "mfb <n> <cargo> <max>"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Cargo",
+            "enabled": true,
+            "id": 19,
+            "items": [
+                {
+                    "type": "alias",
+                    "name": "cca - Cargo Contents All",
+                    "enabled": true,
+                    "id": 11,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "CARGO CONTENTS ALL",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "cca"
+                },
+                {
+                    "type": "alias",
+                    "name": "cl <qty> <cargo> - Cargo load",
+                    "enabled": true,
+                    "id": 20,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "CARGO LOAD @qty @cargo",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "cl <qty> <cargo>"
+                },
+                {
+                    "type": "alias",
+                    "name": "cs <qty> <cargo> - Cargo store",
+                    "enabled": true,
+                    "id": 21,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "CARGO STORE @qty @cargo",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "cs <qty> <cargo>"
                 }
             ],
             "actions": []
