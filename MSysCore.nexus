@@ -9,64 +9,51 @@
             "name": "onLoad",
             "enabled": true,
             "id": 2,
-            "code": "// Place any code here you'd like to autorun when the system is loaded
-// Changelog
-// 20190109--------: Add interrupt support for fury
-// 20190109--------: Cancel inferno if mob enters, fix inferno casting, add some QOL station transfer triggers
-// 20190106T0128EST: Added 'wakeup' command to onLoad to run personal defense ability setups
-// 20190106T0128EST: Modified hunting attack for Fury to exit if target is missing, but after suffuse and bladeshape buffs
-// 20190106T0128EST: Removed suffuse from queue attack trigger
-// 20190106T0128EST: Added queue attack to \"Heal Used\" trigger if auto is set to ensure attack occurs after variables being set
-// 20190106T0128EST: Added queue attack after \"Heal Ready\" to provide heal outside of combat
-// 20190106T0153EST: Removed empty target check from slain trigger to avoid incidentally disabled reflexes resulting in combat script being stuck
-// 20190106T0631EST: Changed launch banner, inverted colors, changed to Mindsim combat implant, and manually padded dashes
-// 20190106T0631EST: Modified heal ready highlight
-// 20190107T0550EST: Added reflexOn logic to healing triggers
-// 20190107T----EST: Added engineer configurations
-// 20190107T----EST: Set up engineer burrowbot functions
-// 20190107T----EST: Added utility scripts to build and deploy turrets
-// 20190107T----EST: Yes I know using waits suck, blow me. It's not an active combat feature
-// 20190107T----EST: Added engineer repeat attacks
-// 20190107T----EST: Incorporated recurring airdrops to fully refill parts
-// 20190109T1708EST: Rebranded as Starwraith Combat Package
-
-MSys = {
+            "code": "MSys = {
 //System Variables
-    coreVersion: 1.4,
-    shortname: 'CORE',
-    goal: 'hunt2',
-    matchList: get_variable('matchList'),
-    systemEnabled: true,
-    offenseEnabled: false,
-    break: get_variable('break'),
-    itemsInRoom: [],
+    coreVersion:     1.4,
+    shortname:       'CORE',
+    goal:            'hunt2',
+    systemEnabled:   true,
+    offenseEnabled:  true,
+
+    //Configurations
+    attack:          get_variable('huntingAttack') + ' ',
+    break:           get_variable('break'),
+    breakResume:     get_variable('breakResume'),
+    escapeThreshold: get_variable('escapeThreshold'),
+    matchList:       get_variable('matchList'),
+    showNotices:     get_variable('showNotices'),
+    showXP:          get_variable('showXP'),
+
+    itemsInRoom:     [],
     damageThisFight: 0,
-    ttk: 0,
-    targetHealth: 0,
-    xpGains: [],
-    avgXpGain: 0,
-    showXP: get_variable('showXP'),
-    showNotices: get_variable('showNotices'),
-    interrupt: false,
+    ttk:             0,
+    targetHealth:    0,
+    interrupt:       false,
+    escaping:        false,
     color: {
-        notice: 'gold',
-        info: 'yellow',
+        notice:  'gold',
+        info:    'yellow',
         warning: 'red',
-        target: 'orange',
-        heal: '#6bdaee',
-        xp: 'gold',
-        xpbg: 'black',
-        config: 'white',
-        fightSummary: 'gold',
+        target:  'orange',
+        heal:    '#6bdaee',
+        xp:      'gold',
+        xpbg:    'black',
+        config:  'white',
+        fightSummary:   'gold',
         fightSummarybg: 'black',
     },
-//Character    
-    attack: get_variable('huntingAttack') + ' ',
+
+//Character
     class: '',
     health: 0,
     maxHealth: 0,
     useHeal: get_variable('useHeal'),
     healReady: true,
+    xpGains: [],
+    avgXpGain: 0,
+
 //Functions
     log: function (x, fgcolor, bgcolor) {
         let type = typeof x
@@ -91,7 +78,7 @@ MSys = {
     alert: function (text, fgcolor, bgcolor) {
         text = text.toUpperCase()
         let fullText = '-'.repeat(text.length+1) + '-------\\n--  '+ text + '  --\\n-------' + '-'.repeat(text.length+1)
-        
+
         display_notice(fullText, fgcolor, bgcolor)
     },
     debugMessage: function (text) {
@@ -104,7 +91,7 @@ MSys = {
     },
     loaded: function(text) {
         //Send implant to browser log for debugging
-\t\tconsole.log(MSys)
+        console.log(MSys)
 
         MSys.notice(text + \"\\n\")
     },
@@ -114,23 +101,45 @@ MSys = {
         client.display_help_window(helptext);
     },
     toggle: function (variable, name) {
-\t\tif (get_variable(variable)) {
-    \t\tset_variable(variable, false)
-\t\t    MSys.notice(name + ' Disabled', MSys.color.config)
+        if (get_variable(variable)) {
+            set_variable(variable, false)
+            MSys.notice(name + ' Disabled', MSys.color.config)
             return false;
-\t\t} else {
-    \t\tset_variable(variable, true)
-    \t\tMSys.useSerrate = true
-    \t\tMSys.notice(name + ' Enabled', MSys.color.config)
+        } else {
+            set_variable(variable, true)
+            MSys.useSerrate = true
+            MSys.notice(name + ' Enabled', MSys.color.config)
             return true;
-\t\t}    
+        }
+    },
+    stateReset: function() {
+        // Reset all combat variables
+        MSys.freeze = false
+        MSys.frenzy = false
+        MSys.negation = false
+        MSys.delaySwarm = false
+        MSys.fever = false
+        MSys.hypertension = false
+        MSys.ambush = false
+        MSys.backhand = false
+        MSys.magnotronActivated = false
+        MSys.escaping = false
+        MSys.interrupt = false
     },
 // Hunting
+    escapeFromCombat: function() {
+        if (!MSys.systemEnabled) {return}
+        MSys.alert('Attempting to escape from combat', 'gold')
+        MSys.offenseEnabled = false
+        MSys.escaping = true
+        send_command('clearqueue')
+        send_command(MSys.flightCommand == undefined ? 'fly' : MSys.flightCommand)
+    },
     findTarget: function() {
         var itemList = MSys.itemsInRoom
         var killList = get_variable('killList')
         var targetFound = false
-        
+
         //Match room order
         if (!MSys.matchList) {
             for (i=0; i<itemList.length; i++) {
@@ -191,14 +200,19 @@ if (args.gmcp_method == \"Char.Vitals\") {
     
     MSys.health = args.gmcp_args.hp
     MSys.maxHealth = args.gmcp_args.maxhp
+    MSys.healthPct = MSys.health / MSys.maxHealth * 100
     
-    if (!MSys.offenseEnabled && (MSys.health / MSys.maxHealth) * 100 > get_variable('breakResume')) {
-        MSys.notice('Re-engaging after break')
+    if (!MSys.offenseEnabled && MSys.healthPct > get_variable('breakResume')) {
+        MSys.notice('Re-enabling aggression after break')
         MSys.offenseEnabled = true
         MSys.findTarget()
         MSys.huntingAttack()
     }
 
+    if (MSys.healthPct < get_variable('escapeThreshold') && !MSys.escaping) {
+        MSys.escapeFromCombat()
+\t}
+    
     // Check class
     if (!MSys.class || MSys.class != args.gmcp_args.class) {
         MSys.class = args.gmcp_args.class
@@ -611,6 +625,32 @@ for (i=0; i<list.length; i++) {
                 },
                 {
                     "type": "alias",
+                    "name": "hescape <n> - Enable/Disable Auto-escape",
+                    "enabled": true,
+                    "id": 176,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (args[1] == '') {
+    MSys.notice('Unset auto escape')
+    delete_variable('escapeThreshold')
+} else if (args[1] > 100 || args[1] < 1) {
+    MSys.notice('Usage: hescape <n> with n between 1 and 100')
+} else {
+\tset_variable('escapeThreshold', args[1])
+\tMSys.escapeThreshold = args[1]
+    MSys.notice('Will attempt to escape combat when health is below ' + args[1] + ' percent')
+}"
+                        }
+                    ],
+                    "text": "^hescape ?([0-9]*)$"
+                },
+                {
+                    "type": "alias",
                     "name": "hheal - Heal Toggle",
                     "enabled": true,
                     "id": 81,
@@ -676,7 +716,7 @@ for (i=0; i<list.length; i++) {
                 {
                     "type": "alias",
                     "name": "hattack - Change Auto Attack",
-                    "enabled": false,
+                    "enabled": true,
                     "id": 26,
                     "matching": "regexp",
                     "whole_words": true,
@@ -698,10 +738,119 @@ MSys.notice('Attack set to: ' + args[1], 'white', 'black')"
         },
         {
             "type": "group",
-            "name": "Auto Hunt",
+            "name": "Combat",
             "enabled": true,
             "id": 8,
             "items": [
+                {
+                    "type": "group",
+                    "name": "Escaping",
+                    "enabled": true,
+                    "id": 173,
+                    "items": [
+                        {
+                            "type": "trigger",
+                            "name": "Flying",
+                            "enabled": true,
+                            "id": 174,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^Reaching the mid elevation",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.escaping = false"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Cannot Fly Indoors",
+                            "enabled": true,
+                            "id": 175,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^Flying indoors would be a very bad idea.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "// if escaping and cannot fly crash out"
+                                }
+                            ]
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Interrupts",
+                    "enabled": true,
+                    "id": 147,
+                    "items": [
+                        {
+                            "type": "trigger",
+                            "name": "Super - Interrupt",
+                            "enabled": true,
+                            "id": 148,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "^Throwing back its grizzled head, a sly cania lets out a high-pitched, wavering howl.$|^A sluggish atzaparaki shakes off some of its torpor and draws in a deep breath, its sides beginning to swell alarmingly.$|^Light begins to focus deep within the body of a salt-crusted quartz creeper, growing to an almost painful radiance.$|^Staggering backwards, shoulder joint grinding, a crystal-clawed rock giant draws back one of its massive, stony limbs, preparing to swing it.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (!MSys.escaping) {
+    MSys.interrupt = true
+    MSys.notice('Interrupting super', 'white', 'darkblue')
+    MSys.huntingAttack()
+} else {
+\tMSys.notice('Incoming super, prioritizing escape!', 'pink', 'darkblue')
+}"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Super - Interrupted",
+                            "enabled": true,
+                            "id": 172,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "loses .* concentration.$|^A crane-armed carrybot swings its arm",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.interrupt = false
+MSys.notice('Attack interrupted', 'white', 'darkblue')
+MSys.huntingAttack()"
+                                }
+                            ]
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Crash - AUTO OFF",
+                    "enabled": true,
+                    "id": 18,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "^You prepare to crash out of the room.*$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.systemEnabled = false
+display_notice('AUTO OFF', 'white', 'black')"
+                        }
+                    ],
+                    "items": []
+                },
                 {
                     "type": "trigger",
                     "name": "Slain",
@@ -714,15 +863,7 @@ MSys.notice('Attack set to: ' + args[1], 'white', 'black')"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.freeze = false
-MSys.frenzy = false
-MSys.negation = false
-MSys.delaySwarm = false
-MSys.fever = false
-MSys.hypertension = false
-MSys.ambush = false
-MSys.backhand = false
-MSys.magnotronActivated = false
+                            "script": "MSys.stateReset()
 
 //var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
 //a.play()
@@ -790,20 +931,195 @@ MSys.interrupt = false"
                 },
                 {
                     "type": "trigger",
-                    "name": "Crash - AUTO OFF",
+                    "name": "Under Attack",
                     "enabled": true,
-                    "id": 18,
+                    "id": 171,
                     "matching": "regexp",
-                    "whole_words": true,
+                    "whole_words": false,
                     "case_sensitive": true,
-                    "text": "^You prepare to crash out of the room.*$",
+                    "text": "^(.*) moves in to attack you.$",
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.systemEnabled = false
-display_notice('AUTO OFF', 'white', 'black')"
+                            "script": "MSys.alert('Being attacked by: ' + args[1], 'Red')
+//set_variable('tar', args[1])
+if (MSys.health < MSys.maxHealth) {
+    MSys.escapeFromCombat()
+} else {
+    MSys.notice('Initating counterattack')
+    MSys.findTarget()
+    MSys.offenseEnabled = true
+    MSys.huntingAttack()
+}"
+                        }
+                    ]
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Generic",
+            "enabled": true,
+            "id": 4,
+            "items": [
+                {
+                    "type": "trigger",
+                    "name": "Add Damage Per Kill",
+                    "enabled": true,
+                    "id": 57,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "Damage Dealt: (.+) .+",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (MSys.ttk == 0) {
+    var now = new Date()
+    MSys.ttk = now.getTime()
+}
+MSys.damageThisFight += parseInt(args[1])
+
+//colorize_current_line(0, args['input'].length, MSys.color.info, 'black')"
                         }
                     ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Hide Queue",
+                    "enabled": false,
+                    "id": 7,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "text": "^\\[Queue\\]: You will attempt to do.*$|^Your swarm is already focused upon a multistrike.*$",
+                    "actions": [
+                        {
+                            "action": "gag"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Not following",
+                    "enabled": true,
+                    "id": 87,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "(.+) is no longer following you.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.log(args[1] + ' Stopped Following!', 'darkred')"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Left battle",
+                    "enabled": true,
+                    "id": 6,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You are no longer in the throes of battle.",
+                    "actions": [
+                        {
+                            "action": "highlight",
+                            "highlight": "match",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#9488f6",
+                            "highlight_bg": "#000000"
+                        },
+                        {
+                            "action": "script",
+                            "script": "MSys.stateReset()"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Crash + Direction - c<dir>",
+                    "enabled": true,
+                    "id": 33,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "send_command('cq')
+send_command('crash ' + args[1])"
+                        }
+                    ],
+                    "text": "c(nw|ne|se|sw|n|s|e|w|u|d|in|out)",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Javascript - js",
+                    "enabled": true,
+                    "id": 31,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.log(eval(args[1]))"
+                        }
+                    ],
+                    "text": "^js (.+)$",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Kill",
+                    "enabled": true,
+                    "id": 120,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('debug') == true) {MSys.log('I am attacking ' + get_variable('tar'), 'white')}
+MSys.systemEnabled = true
+MSys.offenseEnabled = true
+MSys.huntingAttack()"
+                        }
+                    ],
+                    "text": "k",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Target call - tt <name>",
+                    "enabled": false,
+                    "id": 67,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.target = args[1]
+set_variable('tar', args[1])
+send_command('st ' + args[1])
+//send_command('crt Target: ' + args[1])"
+                        }
+                    ],
+                    "text": "tt (.+)",
                     "items": []
                 },
                 {
@@ -848,257 +1164,6 @@ MSys.huntingAttack()"
                     "key_ctrl": false,
                     "key_shift": false,
                     "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Kill",
-                    "enabled": true,
-                    "id": 120,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "if (get_variable('debug') == true) {MSys.log('I am attacking ' + get_variable('tar'), 'white')}
-MSys.systemEnabled = true
-MSys.offenseEnabled = true
-MSys.huntingAttack()"
-                        }
-                    ],
-                    "text": "k",
-                    "items": []
-                }
-            ],
-            "actions": []
-        },
-        {
-            "type": "group",
-            "name": "Generic",
-            "enabled": true,
-            "id": 4,
-            "items": [
-                {
-                    "type": "group",
-                    "name": "Interrupts",
-                    "enabled": true,
-                    "id": 147,
-                    "items": [
-                        {
-                            "type": "trigger",
-                            "name": "Super - Interrupt",
-                            "enabled": true,
-                            "id": 148,
-                            "matching": "regexp",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "text": "^Throwing back its grizzled head, a sly cania lets out a high-pitched, wavering howl.$|^A sluggish atzaparaki shakes off some of its torpor and draws in a deep breath, its sides beginning to swell alarmingly.$|^Light begins to focus deep within the body of a salt-crusted quartz creeper, growing to an almost painful radiance.$|^Staggering backwards, shoulder joint grinding, a crystal-clawed rock giant draws back one of its massive, stony limbs, preparing to swing it.$",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.interrupt = true
-
-MSys.notice('Interrupting super', 'white', 'darkblue')
-MSys.huntingAttack()
-"
-                                }
-                            ],
-                            "items": []
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Super - Interrupted",
-                            "enabled": true,
-                            "id": 172,
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": true,
-                            "text": "loses .* concentration.$",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.interrupt = false
-MSys.log('Attack interrupted', 'white', 'darkblue')
-MSys.huntingAttack()"
-                                }
-                            ]
-                        }
-                    ],
-                    "actions": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Left battle",
-                    "enabled": true,
-                    "id": 6,
-                    "matching": "exact",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "You are no longer in the throes of battle.",
-                    "actions": [
-                        {
-                            "action": "highlight",
-                            "highlight": "match",
-                            "highlight_backref": "1",
-                            "highlight_fg": "#9488f6",
-                            "highlight_bg": "#000000"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Hide Queue",
-                    "enabled": false,
-                    "id": 7,
-                    "matching": "regexp",
-                    "whole_words": false,
-                    "case_sensitive": false,
-                    "text": "^\\[Queue\\]: You will attempt to do.*$|^Your swarm is already focused upon a multistrike.*$",
-                    "actions": [
-                        {
-                            "action": "gag"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Add Damage Per Kill",
-                    "enabled": true,
-                    "id": 57,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "Damage Dealt: (.+) .+",
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "if (MSys.ttk == 0) {
-    var now = new Date()
-    MSys.ttk = now.getTime()
-}
-MSys.damageThisFight += parseInt(args[1])
-
-//colorize_current_line(0, args['input'].length, MSys.color.info, 'black')"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Not following",
-                    "enabled": true,
-                    "id": 87,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "(.+) is no longer following you.",
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "MSys.log(args[1] + ' Stopped Following!', 'darkred')"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Crash + Direction - c<dir>",
-                    "enabled": true,
-                    "id": 33,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "send_command('cq')
-send_command('crash ' + args[1])"
-                        }
-                    ],
-                    "text": "c(nw|ne|se|sw|n|s|e|w|u|d|in|out)",
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Javascript - js",
-                    "enabled": true,
-                    "id": 31,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "MSys.log(eval(args[1]))"
-                        }
-                    ],
-                    "text": "^js (.+)$",
-                    "items": []
-                }
-            ],
-            "actions": []
-        },
-        {
-            "type": "group",
-            "name": "Combat",
-            "enabled": true,
-            "id": 64,
-            "items": [
-                {
-                    "type": "group",
-                    "name": "Chat",
-                    "enabled": true,
-                    "id": 65,
-                    "items": [
-                        {
-                            "type": "alias",
-                            "name": "Target call - tt <name>",
-                            "enabled": false,
-                            "id": 67,
-                            "matching": "regexp",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.target = args[1]
-set_variable('tar', args[1])
-send_command('st ' + args[1])
-//send_command('crt Target: ' + args[1])"
-                                }
-                            ],
-                            "text": "tt (.+)",
-                            "items": []
-                        }
-                    ],
-                    "actions": []
-                },
-                {
-                    "type": "trigger",
-                    "name": "Under Attack",
-                    "enabled": true,
-                    "id": 171,
-                    "matching": "regexp",
-                    "whole_words": false,
-                    "case_sensitive": true,
-                    "text": "^An? (.*) moves in to attack you.$",
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "MSys.alert('Being attacked by: ' + args[1], 'Red')
-if (get_variable('tar') == '') {
-    MSys.notice('Attempting counterattack')
-    set_variable('tar', args[1])
-}
-MSys.huntingAttack()"
-                        }
-                    ]
                 }
             ],
             "actions": []
