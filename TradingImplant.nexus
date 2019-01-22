@@ -60,12 +60,48 @@ STI = {
         return input;
     },
     locations: {
+        // Stations
+        \"Atheni Station\": \"Atheni,RS,55,50,98,112\",
+        \"Bakal Station\": \"Tycho,RA,53,36,146,182\",
+        // Barbella
+        // Barrak
+        // Benu
         \"The Celestine Crossings\": \"Glisal,,,,98,112\",
+        // Danica
+        \"Elonova Station\": \"Elonova,RA,44,38,97,118\",
+        // Eta Zeniah
+        // Faleon
+        // Frixion
+        // Gallen
+        // Gunurash
         \"Iota Station\": \"Iota,CS,38,38,49,120\",
-        \"Usum Usutti\": \"Iota,CS,38,38,38,104\",
+        // Inkke
+        // Ixodon
+        // Izaren
+        // Khayrat
+        // Kholod
+        // Lekknis
+        // Maqbahassum
+        // Nocturne
+        // Norpisa
         \"Omni Station\": \"Aleph,CA,40,40,125,125\",
-        \"The Starlily\": \"Orpheon,CS,44,39,,\",
-        \"The Starlily\": \"Orpheon,CS,44,39,,\",
+        // Paskal
+        // Pylos 
+        // Rensu
+        // Renshi
+        // Reynolds
+        // Ry'nari
+        // Seanan
+        // SGA-Solace
+        \"The Starlily\": \"Orpheon,CS,44,39,49,120\",
+        // Tethan
+        // Uycheon
+        // Valdorn
+
+       \t// Planets
+        \"Usum Usutti\": \"Iota,CS,38,38,38,104\",
+        
+        // Visited
         \"CS-4136-Rilvania\":\",CS,41,36,138,90\",
         \"CS-4136-Thorasia\":\",CS,41,36,18,121\",
         \"CS-4137-Clilon\":\",CS,41,37,178,146\",
