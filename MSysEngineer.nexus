@@ -21,6 +21,7 @@ MSys.repeat = true
 MSys.turretUnpowered = false
 MSys.repeatAvailable = true
 MSys.magnotronActivated = false
+MSys.flightCommand = 'operate hoverboard'
 MSys.huntingAttack = function() {
     if (!MSys.systemEnabled) {return}
     var command = ''    
@@ -29,6 +30,9 @@ MSys.huntingAttack = function() {
     if (MSys.health / MSys.maxHealth < .8 && MSys.healReady && MSys.useHeal) {
         MSys.debugMessage('Activating stimjector')
         send_command('operate stimjector')
+        
+    } else if (MSys.escaping) {
+        return
 
     } else if (get_variable('tar') == '' || MSys.offenseEnabled == false) {
         return;
@@ -640,26 +644,6 @@ send_command('bot airdrop')
                         }
                     ],
                     "items": []
-                },
-                {
-                    "type": "keybind",
-                    "name": "",
-                    "enabled": true,
-                    "id": 159,
-                    "key": 110,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "send_command('bot claw ' + get_variable('tar'))
-if (get_variable('debug') == true) {MSys.log('I am attacking ' + get_variable('tar'), 'white')}
-MSys.systemEnabled = true
-MSys.offenseEnabled = true
-MSys.huntingAttack()"
-                        }
-                    ],
-                    "key_alt": false,
-                    "key_ctrl": false,
-                    "key_shift": false
                 }
             ],
             "actions": []
