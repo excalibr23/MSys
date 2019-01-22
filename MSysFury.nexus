@@ -34,6 +34,7 @@ MSys.harden = false
 MSys.warmth = false
 MSys.balancing = false
 MSys.firewreathe = false
+MSys.flightCommand = 'KITH FLIGHT'
 MSys.huntingAttack = function() {
     if (!MSys.systemEnabled) { return }
     
