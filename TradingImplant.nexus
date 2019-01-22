@@ -59,17 +59,55 @@ STI = {
         } 
         return input;
     },
+    locations: {
+        \"The Celestine Crossings\": \"Glisal,,,,98,112\",
+        \"Iota Station\": \"Iota,CS,38,38,49,120\",
+        \"Usum Usutti\": \"Iota,CS,38,38,38,104\",
+        \"Omni Station\": \"Aleph,CA,40,40,125,125\",
+        \"The Starlily\": \"Orpheon,CS,44,39,,\",
+        \"The Starlily\": \"Orpheon,CS,44,39,,\",
+        \"CS-4136-Rilvania\":\",CS,41,36,138,90\",
+        \"CS-4136-Thorasia\":\",CS,41,36,18,121\",
+        \"CS-4137-Clilon\":\",CS,41,37,178,146\",
+        \"CS-4239-Jesria\":\",CS,42,39,126,234\",
+        \"CS-4239-Zenagus\":\",CS,42,39,107,129\",
+        \"CS-4338-Thonelbel\":\",CS,43,38,113,158\",
+        \"CS-4435-Pertos\":\",CS,44,35,93,128\",
+        \"CS-4536-Blabgus\":\",CS,45,36,130,137\",
+        \"CS-4536-Japeltede\":\",CS,45,36,195,54\",
+        \"CS-4536-Kapilax\":\",CS,45,36,156,86\",
+        \"CS-4536-Limrad\":\",CS,45,36,118,40\",
+        \"CS-4536-Quzar\":\",CS,45,36,30,8\",
+        \"CS-4639-Zintos\":\",CS,46,39,62,234\",
+        \"CS-4640-Katenuium\":\",CS,46,40,62,234\",
+        \"CS-4640-Partica\":\",CS,46,40,48,156\",
+        \"CS-4640-Sizoria\":\",CS,46,40,151,106\",
+\t},
     parse_order_line: function(input) {
         var id     = STI.escape(input.substring(0,6).trim());
         var cargo  = STI.escape(input.substring(6,22).trim());
         var qtytot = input.substring(22,38).split(\"/\");
         var qty    = STI.escape(qtytot[0].trim());
         var tot    = STI.escape(qtytot[1].trim());
-        var dest   = STI.escape(input.substring(38,62).trim());
+        var dest_name = input.substring(38,62).trim();
+        var dest   = STI.escape(dest_name);
         var price  = STI.escape(input.substring(62,72).trim());
         var escrow = STI.escape(input.substring(72).trim());
+\t\t
+        var line = id + \",\" + cargo  + \",\" + qty + \",\" + tot + \",\" + dest + \",\" + price  + \",\" + escrow
         
-        return id + \",\" + cargo  + \",\" + qty + \",\" + tot + \",\" + dest + \",\" + price  + \",\" + escrow;
+        if (STI.locations[dest_name] != undefined) {
+            line += \",\" + STI.locations[dest_name];
+        } else {
+            var loc = dest.match(/([CR][AS])-(\\d{2})(\\d{2})-.*/);
+
+            if (loc != null)
+            {
+                line += \",,\" + loc[1] + \",\" + loc[2] + \",\" + loc[3]
+            }
+\t\t}
+        
+        return line;
 \t},
     encode: function(input) {
         return input.replace(/[\\u00A0-\\u9999<>\\&]/gim, function(i) {
@@ -141,7 +179,7 @@ STI.content = \"\";"
                             "action": "script",
                             "script": "switch (STI.state) {
     case STI.STATE_HEADER: // Parse the headers
-        var values = args.input.replace(\"Quantity\",\"Quantity   Total\").split(/ {2,}/).join(\",\");
+        var values = args.input.replace(\"Quantity\",\"Quantity   Total\").split(/ {2,}/).concat([\"Z,Q,X,Y,x,y\"]).join(\",\");
         STI.content += values + '\\n';
         
         STI.state = STI.STATE_DIVIDER;
@@ -270,6 +308,42 @@ STI.content = \"\";"
                         }
                     ],
                     "text": "mof <id>"
+                },
+                {
+                    "type": "alias",
+                    "name": "moa <qty> <cargo> <dest> <price> - Market Order Ask",
+                    "enabled": true,
+                    "id": 23,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "MARKET ORDER ASK @qty @cargo AT @dest FOR @price",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "moa <qty> <cargo> <dest> <price>"
+                },
+                {
+                    "type": "alias",
+                    "name": "moc <id> - Market Order Cancel",
+                    "enabled": true,
+                    "id": 22,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "MARKET ORDER CANCEL @id",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "moc <id>"
                 },
                 {
                     "type": "alias",
@@ -420,11 +494,11 @@ STI.content = \"\";"
             "actions": [
                 {
                     "action": "command",
-                    "command": "SHIP WEAPON FIRE CANNON <tar>",
+                    "command": "SHIP WEAPON FIRE CANNON @target",
                     "prefix_suffix": true
                 }
             ],
-            "text": "fire "
+            "text": "fc <target>"
         }
     ]
 }
