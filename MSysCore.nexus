@@ -22,6 +22,7 @@
     break:           get_variable('break'),
     breakResume:     get_variable('breakResume'),
     escapeThreshold: get_variable('escapeThreshold'),
+    useEscapeAggro:  get_variable('useEscapeAggro'),
     matchList:       get_variable('matchList'),
     showNotices:     get_variable('showNotices'),
     showXP:          get_variable('showXP'),
@@ -116,8 +117,6 @@
     stateReset: function() {
         // Reset all combat variables
         MSys.freeze = false
-        MSys.frenzy = false
-        MSys.negation = false
         MSys.delaySwarm = false
         MSys.fever = false
         MSys.hypertension = false
@@ -583,15 +582,7 @@ for (i=0; i<list.length; i++) {
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (get_variable('break')) {
-    MSys.break = false
-    set_variable('break', false)
-    MSys.notice('Will continue after kill.', MSys.color.config)
-} else {
-\tMSys.break = true
-    set_variable('break', true)
-    MSys.notice('Will break after kill.', MSys.color.config)
-}"
+                            "script": "MSys.break = MSys.toggle('break', 'Stopping after kill');"
                         }
                     ],
                     "text": "hbreak",
@@ -882,6 +873,10 @@ display_notice('AUTO OFF', 'white', 'black')"
                         {
                             "action": "script",
                             "script": "MSys.stateReset()
+//Abilities below reset on slain, but not while walking
+MSys.frenzy       = false
+MSys.negation     = false
+MSys.sootheNeeded = true
 
 //var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
 //a.play()
@@ -904,9 +899,8 @@ if (MSys.systemEnabled === true && onList) {
         send_command('qpcboost')
     }
 
-    if (MSys.break) {
-\t\tMSys.offenseEnabled = false
-    }
+
+    if (MSys.break) {MSys.offenseEnabled = false}
     
     MSys.huntingAttack()
 }
@@ -961,7 +955,7 @@ MSys.interrupt = false"
                             "action": "script",
                             "script": "MSys.alert('Being attacked by: ' + args[1], 'Red')
 //set_variable('tar', args[1])
-if (MSys.health < MSys.maxHealth && useEscapeAggro) {
+if (MSys.health < MSys.maxHealth && MSys.useEscapeAggro) {
     MSys.escapeFromCombat()
 } else {
     MSys.notice('Initating counterattack')
