@@ -39,11 +39,13 @@
         warning: 'red',
         target:  'orange',
         heal:    '#6bdaee',
-        xp:      'gold',
-        xpbg:    'black',
+        xp:      get_variable('color.xp') ? get_variable('color.xp') : 'gold',
+        xpbg:    get_variable('color.xpbg') ? get_variable('color.xpbg') : 'black',
         config:  'white',
-        fightSummary:   'gold',
-        fightSummarybg: 'black',
+        slay:    get_variable('color.slay') ? get_variable('color.slay') : 'gold',
+        slaybg:  get_variable('color.slaybg') ? get_variable('color.slaybg') : 'black',
+        damage:  get_variable('color.damage') ? get_variable('color.damage') : 'yellow',
+        dealt:   get_variable('color.dealt') ? get_variable('color.dealt') : 'red',
     },
 
 //Character
@@ -194,7 +196,7 @@ if (args.gmcp_method == \"Char.Vitals\") {
     var change = MSys.health - args.gmcp_args.hp;
    
     if (change > 0) {
-    \tMSys.log('Damage taken: ' + change, MSys.color.info)
+    \tMSys.log('Damage taken: ' + change, MSys.color.damage)
     } else if (change < 0) {
         MSys.log('Damage healed: ' + Math.abs(change), MSys.color.heal)
     }
@@ -950,7 +952,7 @@ if (MSys.showXP) {
 
 var msg = slainParts.join(' | ');
 
-MSys.notice(msg, MSys.color.fightSummary, MSys.color.fightSummarybg)
+MSys.notice(msg, MSys.color.slay, MSys.color.slaybg)
 
 MSys.ttk = 0
 MSys.damageThisFight = 0
@@ -1027,7 +1029,7 @@ if (MSys.health < MSys.maxHealth && MSys.useEscapeAggro) {
 }
 MSys.damageThisFight += parseInt(args[1])
 
-//colorize_current_line(0, args['input'].length, MSys.color.info, 'black')"
+colorize_current_line(0, args['input'].length, MSys.color.dealt, 'black')"
                         }
                     ],
                     "items": []
