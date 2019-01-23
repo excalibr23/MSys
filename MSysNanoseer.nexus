@@ -34,23 +34,25 @@ MSys.useProtection      = get_variable('useProtection')
 MSys.useRush            = get_variable('useRush')
 MSys.useSoothe          = get_variable('useSoothe')
 MSys.useSpeedup         = get_variable('useSpeedup')
+MSys.useSuffocate       = get_variable('useSuffocate')
 
 //Active Abilities
-MSys.empyreal        = ''
-MSys.delaySwarm      = false
-MSys.freeze          = false
-MSys.frenzy          = false
-MSys.mark            = false
-MSys.miniaturization = false
-MSys.multistrike     = false
-MSys.negation        = false
-MSys.pointZero       = false
-MSys.protection      = false
-MSys.rush            = false
-MSys.soothing        = false
-MSys.sootheNeeded    = false
-MSys.speedup         = false
-MSys.speedupAvailable= true
+MSys.empyreal         = ''
+MSys.delaySwarm       = false
+MSys.freeze           = false
+MSys.frenzy           = false
+MSys.mark             = false
+MSys.miniaturization  = false
+MSys.multistrike      = false
+MSys.negation         = false
+MSys.pointZero        = false
+MSys.protection       = false
+MSys.rush             = false
+MSys.soothing         = false
+MSys.sootheNeeded     = false
+MSys.speedup          = false
+MSys.speedupAvailable = true
+MSys.suffocation      = false
 
 MSys.huntingAttack = function() {
     if (!this.systemEnabled || MSys.escaping) {return}
@@ -148,6 +150,7 @@ MSys.huntingAttack = function() {
         send_command('void pointzero')
         return
 
+        //Attacks
     } else if (!this.delaySwarm && this.useDelay) {
         this.debugMessage('Delay Attack')
         command =  'delay '
@@ -162,12 +165,22 @@ MSys.huntingAttack = function() {
         this.debugMessage('Freeze')
         command = 'freeze '
 
+    } else if (!this.suffocation && this.useSuffocate) {
+        this.debugMessage('Cast Suffocate')
+        command = 'void suffocate '
+
+    } else if (this.suffocation && this.useSuffocate) {
+        this.debugMessage('Suffocate active, no action required')
+        return
+
     } else {
         this.debugMessage('Default Attack')
         command = this.attack + ' '
     }
 
-    command += get_variable('tar')
+    if (command[command.length - 1] == ' ') {command += get_variable('tar')}
+    
+    this.debugMessage('Attempting command: ' + command)
     send_command(command)
 }
 
@@ -249,6 +262,7 @@ abilities += 'Use Protection: '      + get_variable('useProtection') + '\\n'
 abilities += 'Use Rush: '            + get_variable('useRush') + '\\n'
 abilities += 'Use Soothe: '          + get_variable('useSoothe') + '\\n'
 abilities += 'Use Speedup: '         + get_variable('useSpeedup') + '\\n'
+abilities += 'Use Suffocate: '       + get_variable('useSuffocate') + '\\n'
 MSys.log(abilities, 'white')
 
 var debugMessages = ''
@@ -261,9 +275,10 @@ debugMessages += 'Point Zero Status: '      + MSys.pointZero + '\\n'
 debugMessages += 'Protection Status: '      + MSys.protection + '\\n'
 debugMessages += 'Rush Status: '            + MSys.rush + '\\n'
 debugMessages += 'Soothing Status: '        + MSys.soothing + '\\n'
-debugMessages += 'Soothing Needed Status: ' + MSys.soothingNeeded + '\\n'
+debugMessages += 'Soothe Needed Status: '   + MSys.sootheNeeded + '\\n'
 debugMessages += 'Speedup Available: '      + MSys.speedupAvailable + '\\n'
 debugMessages += 'Speedup Status: '         + MSys.speedup + '\\n'
+debugMessages += 'Suffocation Status: '     + MSys.suffocation + '\\n'
 MSys.debugMessage(debugMessages)"
                                 }
                             ],
@@ -489,6 +504,23 @@ MSys.debugMessage(debugMessages)"
                                 }
                             ],
                             "text": "hspeedup"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Suffocate",
+                            "enabled": true,
+                            "id": 184,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useSuffocate = MSys.toggle('useSuffocate', 'Suffocate');"
+                                }
+                            ],
+                            "text": "hsuffocate"
                         }
                     ],
                     "actions": []
@@ -654,9 +686,10 @@ send_command('delay ' + command[args[1]])"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.speedup   = false
-MSys.pointZero = false
-MSys.mark      = false"
+                                    "script": "MSys.speedup     = false
+MSys.pointZero   = false
+MSys.mark        = false
+MSys.suffocation = false"
                                 }
                             ]
                         },
@@ -1060,6 +1093,40 @@ MSys.huntingAttack()"
 MSys.huntingAttack()"
                                 }
                             ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Suffocation Active",
+                            "enabled": true,
+                            "id": 185,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^Lifting your arm and flexing your gauntleted fist.*squeezing the life from its throat.$|^A sense of power and control rushes through you.*funneling away its air supply.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.suffocation = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Suffocation Inactive",
+                            "enabled": true,
+                            "id": 186,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^You are unable to continue your suffocation attempt.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.suffocation = false
+MSys.huntingAttack()"
+                                }
+                            ]
                         }
                     ],
                     "actions": []
@@ -1116,6 +1183,34 @@ MSys.sootheNeeded = true"
                         }
                     ],
                     "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "You Died",
+                    "enabled": true,
+                    "id": 187,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": true,
+                    "text": "^You collapse to the ground, killed by",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.delaySwarm       = false
+MSys.freeze           = false
+MSys.frenzy           = false
+MSys.miniaturization  = false
+MSys.multistrike      = false
+MSys.negation         = false
+MSys.pointZero        = false
+MSys.protection       = false
+MSys.rush             = false
+MSys.soothing         = false
+MSys.sootheNeeded     = false
+MSys.speedup          = false
+MSys.suffocation      = false"
+                        }
+                    ]
                 }
             ],
             "actions": []

@@ -116,15 +116,16 @@
     },
     stateReset: function() {
         // Reset all combat variables
-        MSys.freeze = false
-        MSys.delaySwarm = false
-        MSys.fever = false
-        MSys.hypertension = false
-        MSys.ambush = false
-        MSys.backhand = false
+        MSys.ambush             = false
+        MSys.backhand           = false
+        MSys.delaySwarm         = false
+        MSys.escaping           = false
+        MSys.fever              = false
+        MSys.freeze             = false
+        MSys.hypertension       = false
+        MSys.interrupt          = false
         MSys.magnotronActivated = false
-        MSys.escaping = false
-        MSys.interrupt = false
+        MSys.suffocation        = false
     },
 // Hunting
     escapeFromCombat: function() {
@@ -202,7 +203,7 @@ if (args.gmcp_method == \"Char.Vitals\") {
     MSys.maxHealth = args.gmcp_args.maxhp
     MSys.healthPct = MSys.health / MSys.maxHealth * 100
     
-    if (!MSys.offenseEnabled && MSys.healthPct > get_variable('breakResume')) {
+    if (!MSys.offenseEnabled && MSys.healthPct >= get_variable('breakResume')) {
         MSys.notice('Re-enabling aggression after break')
         MSys.offenseEnabled = true
         MSys.findTarget()
@@ -363,6 +364,23 @@ MSys.log(settings, MSys.color.config)
                     ],
                     "text": "hsetup",
                     "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "hdebug- Enable/Disable Debug Messages",
+                    "enabled": true,
+                    "id": 179,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.debug = MSys.toggle('debug', 'Debug messaging');"
+                        }
+                    ],
+                    "text": "hdebug"
                 },
                 {
                     "type": "alias",
@@ -963,6 +981,22 @@ if (MSys.health < MSys.maxHealth && MSys.useEscapeAggro) {
     MSys.offenseEnabled = true
     MSys.huntingAttack()
 }"
+                        }
+                    ]
+                },
+                {
+                    "type": "trigger",
+                    "name": "You Died",
+                    "enabled": true,
+                    "id": 178,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": true,
+                    "text": "^You collapse to the ground, killed by",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.stateReset()"
                         }
                     ]
                 }
