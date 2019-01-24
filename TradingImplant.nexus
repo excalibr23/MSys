@@ -1,7 +1,7 @@
 {
     "name": "starwraith trading implant",
     "enabled": true,
-    "description": "v0.2",
+    "description": "v0.5",
     "type": "group",
     "id": 1,
     "items": [
@@ -14,14 +14,18 @@
 
 // Starwraith Trading Implant
 STI = {
+    version: 0.5,
+    shortname: 'STI',
+    packagename: 'starwraith trading implant',
+    content: \"\",
+    noticecolor: 'gold',
+    // Parsing states
+    state: 0,
     STATE_START: 0,
     STATE_HEADER: 1,
     STATE_DIVIDER: 2,
     STATE_CONTENT: 3,
-    state: 0,
-    content: \"\",
-    noticecolor: 'gold',
-    packagename: 'starwraith trading implant',
+    // Functions
     disableGroup: function(name) {
         var group = reflex_find_by_name('group', name, false, false, STI.packagename)
         reflex_disable(group)
@@ -39,7 +43,7 @@ STI = {
         reflex_enable(group)
     },
     notice: function(text) {
-        display_notice(\"[STI] \" + text, STI.noticecolor);
+        display_notice(\"[\" + STI.shortname + \"] \" + text, STI.noticecolor);
     },
     helpbox: function(title,text) {
         var helptext = \"<div class=\\\"mono\\\"><span style=\\\"color: #ffffff; \\\"><span style=\\\"background-color: #0000a0 \\\">\" + title + \"</span></span></div>\";
@@ -47,17 +51,117 @@ STI = {
         client.display_help_window(helptext);
 \t},
     loaded: function() {
-\t\tSTI.notice(\"Starwraith Trading Implant v0.2 Loaded. See tradinghelp for more information.\\n\");
+\t\tSTI.notice(\"Starwraith Trading Implant v\" + STI.version + \" Loaded. Use GETORDERS to download market orders.\\n\");// See TRADINGHELP for more information.\\n\");
     },
-    parse_order_line: function(input) {
-        var id     = input.substring(0,6).trim();
-        var cargo  = input.substring(6,22).trim();
-        var qty    = input.substring(22,38).trim();
-        var dest   = input.substring(38,62).trim();
-        var price  = input.substring(62,72).trim();
-        var escrow = input.substring(72).trim();
+    escape: function(input) {
+        if(input.indexOf(\" \")!=-1) {
+            return \"\\\"\" + input.replace(\"\\\"\",\"\\\\\\\"\") + \"\\\"\";
+        } 
+        return input;
+    },
+    locations: {
+        // Stations
+        \"Atheni Station\": \"Atheni,RS,55,50,98,112\",
+        \"Bakal Station\": \"Tycho,RA,53,36,146,182\",
+        // Barbella
+        // Barrak
+        // Benu
+        \"The Celestine Crossings\": \"Glisal,,,,98,112\",
+        // Danica
+        \"Elonova Station\": \"Elonova,RA,44,38,97,118\",
+        // Eta Zeniah
+        // Faleon
+        // Frixion
+        // Gallen
+        // Gunurash
+        \"Iota Station\": \"Iota,CS,38,38,49,120\",
+        // Inkke
+        // Ixodon
+        // Izaren
+        // Khayrat
+        // Kholod
+        // Lekknis
+        // Maqbahassum
+        // Nocturne
+        // Norpisa
+        \"Omni Station\": \"Aleph,CA,40,40,125,125\",
+        // Paskal
+        // Pylos 
+        // Rensu
+        // Renshi
+        // Reynolds
+        // Ry'nari
+        // Seanan
+        // SGA-Solace
+        \"The Starlily\": \"Orpheon,CS,44,39,49,120\",
+        // Tethan
+        // Uycheon
+        // Valdorn
+
+       \t// Planets
+        \"Usum Usutti\": \"Iota,CS,38,38,38,104\",
         
-        return id + \";\" + cargo  + \";\" + qty + \";\" + dest + \";\" + price  + \";\" + escrow;
+        // Visited
+        \"CS-4136-Rilvania\":\",CS,41,36,138,90\",
+        \"CS-4136-Thorasia\":\",CS,41,36,18,121\",
+        \"CS-4137-Clilon\":\",CS,41,37,178,146\",
+        \"CS-4239-Jesria\":\",CS,42,39,126,234\",
+        \"CS-4239-Zenagus\":\",CS,42,39,107,129\",
+        \"CS-4338-Thonelbel\":\",CS,43,38,113,158\",
+        \"CS-4435-Pertos\":\",CS,44,35,93,128\",
+        \"CS-4536-Blabgus\":\",CS,45,36,130,137\",
+        \"CS-4536-Japeltede\":\",CS,45,36,195,54\",
+        \"CS-4536-Kapilax\":\",CS,45,36,156,86\",
+        \"CS-4536-Limrad\":\",CS,45,36,118,40\",
+        \"CS-4536-Quzar\":\",CS,45,36,30,8\",
+        \"CS-4639-Zintos\":\",CS,46,39,62,234\",
+        \"CS-4640-Katenuium\":\",CS,46,40,62,234\",
+        \"CS-4640-Partica\":\",CS,46,40,48,156\",
+        \"CS-4640-Sizoria\":\",CS,46,40,151,106\",
+\t},
+    parse_order_line: function(input) {
+        var id     = STI.escape(input.substring(0,6).trim());
+        var cargo  = STI.escape(input.substring(6,22).trim());
+        var qtytot = input.substring(22,38).split(\"/\");
+        var qty    = STI.escape(qtytot[0].trim());
+        var tot    = STI.escape(qtytot[1].trim());
+        var dest_name = input.substring(38,62).trim();
+        var dest   = STI.escape(dest_name);
+        var price  = STI.escape(input.substring(62,72).trim());
+        var escrow = STI.escape(input.substring(72).trim());
+\t\t
+        var line = id + \",\" + cargo  + \",\" + qty + \",\" + tot + \",\" + dest + \",\" + price  + \",\" + escrow
+        
+        if (STI.locations[dest_name] != undefined) {
+            line += \",\" + STI.locations[dest_name];
+        } else {
+            var loc = dest.match(/([CR][AS])-(\\d{2})(\\d{2})-.*/);
+
+            if (loc != null)
+            {
+                line += \",,\" + loc[1] + \",\" + loc[2] + \",\" + loc[3]
+            }
+\t\t}
+        
+        return line;
+\t},
+    encode: function(input) {
+        return input.replace(/[\\u00A0-\\u9999<>\\&]/gim, function(i) {
+            return '&#'+i.charCodeAt(0)+';';
+\t\t});
+    },
+    download: function(filename, text) {
+  \t\tvar element = document.createElement('a');
+
+    \telement.setAttribute('href', 'data:text/octet-stream,' + encodeURIComponent(text));
+  \t\telement.setAttribute('download', filename);
+
+  \t\telement.style.display = 'none';
+  \t\tdocument.body.appendChild(element);
+
+  \t\telement.click();
+    
+  \t\tdocument.body.removeChild(element);
 \t}
 }
 
@@ -65,7 +169,7 @@ STI.loaded();"
         },
         {
             "type": "group",
-            "name": "Parsing",
+            "name": "Market Orders",
             "enabled": true,
             "id": 3,
             "items": [
@@ -80,11 +184,7 @@ STI.loaded();"
                     "text": "-------------------------------&lt; Market orders &gt;-------------------------------",
                     "actions": [
                         {
-                            "action": "highlight",
-                            "highlight": "match",
-                            "highlight_backref": "1",
-                            "highlight_fg": "#ffff00",
-                            "highlight_bg": "#000000"
+                            "action": "gag"
                         },
                         {
                             "action": "script",
@@ -115,7 +215,7 @@ STI.content = \"\";"
                             "action": "script",
                             "script": "switch (STI.state) {
     case STI.STATE_HEADER: // Parse the headers
-        var values = args.input.split(/ {2,}/).join(\";\");
+        var values = args.input.replace(\"Quantity\",\"Quantity   Total\").split(/ {2,}/).concat([\"Z,Q,X,Y,x,y\"]).join(\",\");
         STI.content += values + '\\n';
         
         STI.state = STI.STATE_DIVIDER;
@@ -128,22 +228,17 @@ STI.content = \"\";"
     case STI.STATE_CONTENT:
         if (args.input.startsWith(\"Type MORE to continue reading.\")) {
             send_command('MORE');
-            /*
-            STI.state = STI.STATE_START;
-            STI.disable('Order Lines','trigger'); // Stop capturing
-            console.log('CONTENT:');
-            console.log(STI.content); 
-            */
-            
-        } else if (args.input.length < 72) {
+        } else if (args.input.length < 72 || args.input.startsWith(\"[ Speed:\") ) {
             // Ignore
         } else if (args.input == \"-------------------------------------------------------------------------------\") {
             STI.state = STI.STATE_START;
             STI.disable('Order Lines','trigger'); // Stop capturing
+
+            // Create a file to download
+            STI.download(\"market_orders.csv\", STI.content);
             
-            // Do something with the content
-            console.log('CONTENT:');
-            console.log(STI.content); 
+            STI.notice(\"Done.\");
+            
         } else {
             // Parse the content
             STI.content += STI.parse_order_line(args.input) + '\\n';
@@ -152,11 +247,294 @@ STI.content = \"\";"
         
   default:
 }"
+                        },
+                        {
+                            "action": "disable",
+                            "type": "trigger",
+                            "name": "Start Market Orders"
+                        }
+                    ]
+                },
+                {
+                    "type": "alias",
+                    "name": "getorders - Get Market Orders",
+                    "enabled": true,
+                    "id": 8,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "STI.notice(\"Getting market orders...\");"
+                        },
+                        {
+                            "action": "enable",
+                            "type": "trigger",
+                            "name": "Start Market Orders"
+                        },
+                        {
+                            "action": "command",
+                            "command": "MARKET ORDER LIST",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "getorders"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Market",
+            "enabled": true,
+            "id": 9,
+            "items": [
+                {
+                    "type": "alias",
+                    "name": "mol <filter> - Market Order List",
+                    "enabled": true,
+                    "id": 10,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "MARKET ORDER LIST @filter",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "mol <filter>"
+                },
+                {
+                    "type": "alias",
+                    "name": "mot <id> <amt> - Market Order Take",
+                    "enabled": true,
+                    "id": 12,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "MARKET ORDER TAKE @id @amt",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "mot <id> <amt>"
+                },
+                {
+                    "type": "alias",
+                    "name": "mof <id> - Market Order Fulfill",
+                    "enabled": true,
+                    "id": 13,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "MARKET ORDER @id FULFILL",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "mof <id>"
+                },
+                {
+                    "type": "alias",
+                    "name": "moa <qty> <cargo> <dest> <price> - Market Order Ask",
+                    "enabled": true,
+                    "id": 23,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "MARKET ORDER ASK @qty @cargo AT @dest FOR @price",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "moa <qty> <cargo> <dest> <price>"
+                },
+                {
+                    "type": "alias",
+                    "name": "moc <id> - Market Order Cancel",
+                    "enabled": true,
+                    "id": 22,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "MARKET ORDER CANCEL @id",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "moc <id>"
+                },
+                {
+                    "type": "alias",
+                    "name": "mfl <filter> - Market Offer List",
+                    "enabled": true,
+                    "id": 14,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "MARKET OFFER LIST @filter",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "mfl <filter>"
+                },
+                {
+                    "type": "alias",
+                    "name": "mfb <n> <cargo> <max> - Market Offer Buy",
+                    "enabled": true,
+                    "id": 15,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "MARKET BUY @n @cargo @max",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "mfb <n> <cargo> <max>"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Cargo",
+            "enabled": true,
+            "id": 19,
+            "items": [
+                {
+                    "type": "alias",
+                    "name": "cca - Cargo Contents All",
+                    "enabled": true,
+                    "id": 11,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "CARGO CONTENTS ALL",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "cca"
+                },
+                {
+                    "type": "alias",
+                    "name": "cl <qty> <cargo> - Cargo load",
+                    "enabled": true,
+                    "id": 20,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "CARGO LOAD @qty @cargo",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "cl <qty> <cargo>"
+                },
+                {
+                    "type": "alias",
+                    "name": "cs <qty> <cargo> - Cargo store",
+                    "enabled": true,
+                    "id": 21,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "CARGO STORE @qty @cargo",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "cs <qty> <cargo>"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "type": "group",
+            "name": "Harvesting",
+            "enabled": true,
+            "id": 16,
+            "items": [
+                {
+                    "type": "trigger",
+                    "name": "",
+                    "enabled": true,
+                    "id": 17,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "The ship collects the surrounding <gas> into its scoops, bringing the collected total to <total>.",
+                    "actions": [
+                        {
+                            "action": "highlight",
+                            "highlight": "match",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#ffff00",
+                            "highlight_bg": "#000000"
+                        },
+                        {
+                            "action": "highlight",
+                            "highlight": "backref",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#00f4ff",
+                            "highlight_bg": "#000000"
                         }
                     ]
                 }
             ],
             "actions": []
+        },
+        {
+            "type": "alias",
+            "name": "fc <tar> - Fire cannon",
+            "enabled": true,
+            "id": 18,
+            "matching": "begins",
+            "whole_words": true,
+            "case_sensitive": true,
+            "prefix_suffix": true,
+            "actions": [
+                {
+                    "action": "command",
+                    "command": "SHIP WEAPON FIRE CANNON @target",
+                    "prefix_suffix": true
+                }
+            ],
+            "text": "fc <target>"
         }
     ]
 }
