@@ -27,7 +27,43 @@
     showNotices:     get_variable('showNotices'),
     showXP:          get_variable('showXP'),
 
+    // Room
     itemsInRoom:     [],
+    room: {id: 0},
+    
+    // Hunting
+    path: [{id: 1219, next:\"E\"},
+           {id: 1217, next:\"E\"},
+           {id: 1216, next:\"N\"},
+           {id: 1214, next:\"SE\"},
+           {id: 1213, next:\"SE\"},
+           {id: 1215, next:\"W\"},
+           {id: 1218, next:\"S\"}, 
+           {id: 1236, next:\"S\"}, 
+           {id: 1235, next:\"E\"},
+           {id: 1234, next:\"SW\"},
+           {id: 1233, next:\"SW\"},
+           {id: 1232, next:\"N\"},
+           {id: 1231, next:\"W\"}, 
+           {id: 1230, next:\"W\"}, 
+           {id: 1227, next:\"NW\"}, 
+           {id: 1225, next:\"N\"}, 
+           {id: 1224, next:\"N\"}, 
+           {id: 1221, next:\"NE\"}, 
+           {id: 1219, next:\"E\"}, 
+           {id: 1217, next:\"S\"},
+           {id: 1239, next:\"S\"},
+           {id: 1238, next:\"N\"},
+           {id: 1239, next:\"E\"},
+           {id: 4776, next:\"S\"},
+           {id: 1237, next:\"S\"},
+           {id: 4775, next:\"W\"},
+           {id: 1240, next:\"W\"},
+           {id: 4774, next:\"N\"},
+           {id: 1241, next:\"N\"},
+           {id: 4773, next:\"E\"},
+           {id: 1239, next:\"N\"}],
+    
     damageThisFight: 0,
     ttk:             0,
     targetHealth:    0,
@@ -171,7 +207,28 @@
         if (!targetFound) {
             //MSys.notice('No Target Found', MSys.color.target, 'black')
             set_variable('tar', '')
+        } else {
+            MSys.walking = false;
         }
+        
+        MSys.walk();
+    },
+    walk: function() {
+        if (MSys.walking) {
+            if (!MSys.pathIndex || !MSys.path[MSys.pathIndex] || MSys.room.id != MSys.path[MSys.pathIndex].id) {
+                MSys.pathIndex = MSys.path.findIndex((x) => x.id == MSys.room.id)
+                MSys.notice(\"Room found:\" + MSys.pathIndex);
+            }
+        
+            if (MSys.pathIndex >= MSys.path.length) {
+                MSys.pathIndex = 0;
+            }
+            
+            setTimeout(function(){
+    \t        send_command(MSys.path[MSys.pathIndex].next);
+\t            MSys.pathIndex += 1;
+\t\t\t}, 500);
+        }            
     }
 }
 
@@ -283,6 +340,11 @@ if (args.gmcp_method == \"Room.Players\") {
 
 /* --------------------------------------------- HELPERS --------------------------------- */
 if (args.gmcp_method == \"Room.Info\") {
+    if (args.gmcp_args.num) {
+        //MSys.notice(\"Room number:\" + args.gmcp_args.num)
+        MSys.room.id = args.gmcp_args.num;
+    }
+
     if (MSys.systemEnabled === true) {
         MSys.findTarget()
     }
@@ -1215,6 +1277,14 @@ MSys.huntingAttack()"
                 }
             ],
             "actions": []
+        },
+        {
+            "type": "function",
+            "name": "startwalk",
+            "enabled": true,
+            "id": 181,
+            "code": "MSys.walking = true
+send_command(\"LOOK\")"
         }
     ],
     "description": "MSysCore v1.4"
