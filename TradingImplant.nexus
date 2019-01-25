@@ -1,7 +1,7 @@
 {
     "name": "starwraith trading implant",
     "enabled": true,
-    "description": "v0.5",
+    "description": "v0.6",
     "type": "group",
     "id": 1,
     "items": [
@@ -14,7 +14,7 @@
 
 // Starwraith Trading Implant
 STI = {
-    version: 0.5,
+    version: 0.6,
     shortname: 'STI',
     packagename: 'starwraith trading implant',
     content: \"\",
@@ -63,40 +63,40 @@ STI = {
         // Stations
         \"Atheni Station\": \"Atheni,RS,55,50,98,112\",
         \"Bakal Station\": \"Tycho,RA,53,36,146,182\",
-        // Barbella
-        // Barrak
-        // Benu
-        \"The Celestine Crossings\": \"Glisal,,,,98,112\",
-        // Danica
+        \"Barbella Station\": \"Barbella,CS,51,39,201,201\",
+        \"Barrak Station\": \"Barrak,CA,37,36,180,46\",
+        \"Benu Station\": \"Benu,CA,35,36,76,180\",
+        \"The Celestine Crossings\": \"Glisal,CA,33,35,98,112\",
+        \"Danica Transit Station\": \"Danica,CS,42,38,170,170\",
         \"Elonova Station\": \"Elonova,RA,44,38,97,118\",
-        // Eta Zeniah
-        // Faleon
-        // Frixion
-        // Gallen
-        // Gunurash
+        \"Eta Zeniah Station\": \"Eta Zeniah,RS,47,47,132,178\",
+        \"Faleon Station\": \"Faleon,CA,35,33,52,210\",
+        \"Frixion Station\": \"Frixion,CS,42,36,74,130\",
+        \"Gallen Station\": \"Gallen,RS,42,48,97,108\",
+        \"Gunurash Station\": \"Gunurash,RA,33,41,86,99\",
         \"Iota Station\": \"Iota,CS,38,38,49,120\",
-        // Inkke
-        // Ixodon
-        // Izaren
-        // Khayrat
-        // Kholod
-        // Lekknis
-        // Maqbahassum
-        // Nocturne
-        // Norpisa
+        \"Inkke Station\": \"Inkke,RA,35,46,120,174\",
+        \"The Ixodon Industries S\": \"Hiza,RS,79,54,110,140\",
+        \"Izaren Station\": \"Izaren,RS,50,45,109,160\",
+        \"Khayrat Station\": \"Vai,CS,56,38,150,130\",
+        \"Kholod Station\": \"Kholod,RS,79,49,199,99\",
+        // \"Lekknis
+        // \"Maqbahassum
+        \"Nocturne Station\": \"Nocturne,RA,31,55,66,66\",
+        \"Norpisa Station\": \"Norpisa,CA,40,37,104,137\",
         \"Omni Station\": \"Aleph,CA,40,40,125,125\",
-        // Paskal
-        // Pylos 
-        // Rensu
-        // Renshi
-        // Reynolds
-        // Ry'nari
-        // Seanan
-        // SGA-Solace
+        \"Paskal Station\": \"Paskal,RS,41,50,135,194\",
+        \"Pylos Station\": \"Pylos,RA,31,49,175,110\",
+        \"Rensu Station\": \"Rensu,RS,80,46,120,189\",
+        \"Renshi Station\": \"Octavia,RA,33,43,14,117\",
+        \"Reynolds Spaceport\": \"Scatterhome-RS,CA,36,40,164,174\",
+        // \"Ry'nari
+        \"Seanan Station\": \"Seanan,RA,30,41,200,145\",
+        \"SGA-Solace\": \"Scatterhome-CA,CA,35,39,57,189\",
         \"The Starlily\": \"Orpheon,CS,44,39,49,120\",
-        // Tethan
-        // Uycheon
-        // Valdorn
+        \"Tethan Station\": \"Tethan,RA,37,41,198,42\",
+        \"Uycheon Station\": \"Uycheon,CA,36,34,49,30\",
+        \"Valdorn Station\": \"Valdorn,CS,40,38,205,90\",
 
        \t// Planets
         \"Usum Usutti\": \"Iota,CS,38,38,38,104\",
@@ -519,22 +519,70 @@ STI.content = \"\";"
             "actions": []
         },
         {
-            "type": "alias",
-            "name": "fc <tar> - Fire cannon",
+            "type": "group",
+            "name": "Ship Combat",
             "enabled": true,
-            "id": 18,
-            "matching": "begins",
-            "whole_words": true,
-            "case_sensitive": true,
-            "prefix_suffix": true,
-            "actions": [
+            "id": 24,
+            "items": [
                 {
-                    "action": "command",
-                    "command": "SHIP WEAPON FIRE CANNON @target",
-                    "prefix_suffix": true
+                    "type": "alias",
+                    "name": "fc <target> - Fire cannon",
+                    "enabled": true,
+                    "id": 18,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "SHIP WEAPON FIRE CANNON @target",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "fc <target>"
+                },
+                {
+                    "type": "alias",
+                    "name": "sl <target> - Ship lock target",
+                    "enabled": true,
+                    "id": 25,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "variable",
+                            "varname": "shiptarget",
+                            "valtype": "variable",
+                            "value": "target",
+                            "op": "set"
+                        }
+                    ],
+                    "text": "sl <target>"
+                },
+                {
+                    "type": "trigger",
+                    "name": "",
+                    "enabled": true,
+                    "id": 26,
+                    "matching": "substring",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "is once again ready for use.",
+                    "actions": [
+                        {
+                            "action": "highlight",
+                            "highlight": "line",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#ff00ff",
+                            "highlight_bg": "#000000"
+                        }
+                    ]
                 }
             ],
-            "text": "fc <target>"
+            "actions": []
         }
     ]
 }
