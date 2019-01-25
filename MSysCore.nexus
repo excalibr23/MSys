@@ -339,7 +339,7 @@ if (args.gmcp_method == \"Room.Players\") {
     MSys.playersInRoom = args.gmcp_args
 }
 
-/* --------------------------------------------- HELPERS --------------------------------- */
+/* --------------------------------------------- ROOM INFO --------------------------------- */
 if (args.gmcp_method == \"Room.Info\") {
     if (args.gmcp_args.num) {
         //MSys.notice(\"Room number:\" + args.gmcp_args.num)
@@ -350,6 +350,8 @@ if (args.gmcp_method == \"Room.Info\") {
         MSys.findTarget()
     }
 }
+
+/* --------------------------------------------- Target --------------------------------- */
 
 if (args.gmcp_method == \"IRE.Target.Info\") {
 \tMSys.targetHealth = args.gmcp_args['hpperc'].slice(0, -1)
@@ -1091,7 +1093,7 @@ if (MSys.health < MSys.maxHealth && MSys.useEscapeAggro) {
                 },
                 {
                     "type": "trigger",
-                    "name": "Recover balance",
+                    "name": "Recover balance, start hunting",
                     "enabled": true,
                     "id": 182,
                     "matching": "substring",
@@ -1326,8 +1328,10 @@ MSys.huntingAttack()"
             "name": "startwalk",
             "enabled": true,
             "id": 181,
-            "code": "MSys.walking = true
-send_command(\"LOOK\")"
+            "code": "if (!(MSys.health / MSys.maxHealth < .8 && MSys.healReady && MSys.useHeal)) { // If we're not going to heal...
+\tMSys.walking = true
+\tsend_command(\"LOOK\")
+}"
         }
     ],
     "description": "MSysCore v1.5"
