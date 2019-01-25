@@ -11,7 +11,7 @@
             "id": 2,
             "code": "MSys = {
 //System Variables
-    coreVersion:     1.4,
+    coreVersion:     1.5,
     shortname:       'CORE',
     goal:            'hunt2',
     systemEnabled:   true,
@@ -26,6 +26,7 @@
     matchList:       get_variable('matchList'),
     showNotices:     get_variable('showNotices'),
     showXP:          get_variable('showXP'),
+    hunt:            get_variable('hunt'),
 
     // Room
     itemsInRoom:     [],
@@ -389,9 +390,16 @@ commands += 'hup/down <name> - Move an item up or down on the priority list\\n\\
 commands += 'hlist - toggle between using room and list priority\\n'
 commands += 'hbreak - enable/disable break after kill\\n'
 commands += 'hxp - show XP information after kill\\n'
-//commands += 'hbreakthreshold <number> - enable/disable break threshold\\n' // Still used? -Oga
 commands += 'hheal - enable/disable heal\\n'
 commands += 'h - manual heal command\\n'
+
+commands += 'hbreakresume <number> - set/disable break/resume threshold\\n'
+commands += 'hescape <number> - set/disable auto escape threshold\\n'
+commands += 'hescapeaggre <number> - enable/disable flee on aggro\\n'
+
+commands += 'hhunt - enable/disable automatic hunting\\n'
+
+
 //commands += 'hattack <attackName> - Change the primary attack that will be auto used.\\n' // Still used? -Oga
 
 MSys.log(commands, MSys.color.config)
@@ -823,6 +831,23 @@ MSys.notice('Attack set to: ' + args[1], 'white', 'black')"
                     ],
                     "text": "hattack (.+)",
                     "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "hhunt - Toggle automatic hunting mode",
+                    "enabled": true,
+                    "id": 183,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.hunt = MSys.toggle('hunt', 'Automatic Hunt Mode');"
+                        }
+                    ],
+                    "text": "hhunt"
                 }
             ],
             "actions": []
@@ -1063,6 +1088,24 @@ if (MSys.health < MSys.maxHealth && MSys.useEscapeAggro) {
                             "script": "MSys.stateReset()"
                         }
                     ]
+                },
+                {
+                    "type": "trigger",
+                    "name": "Recover balance",
+                    "enabled": true,
+                    "id": 182,
+                    "matching": "substring",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You have recovered your balance.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (MSys.systemEnabled && MSys.hunt && !MSys.walking && MSys.pathIndex != -1 && get_variable('tar')=='') {
+\tsend_command(\"startwalk\")
+}"
+                        }
+                    ]
                 }
             ],
             "actions": []
@@ -1287,5 +1330,5 @@ MSys.huntingAttack()"
 send_command(\"LOOK\")"
         }
     ],
-    "description": "MSysCore v1.4"
+    "description": "MSysCore v1.5"
 }
