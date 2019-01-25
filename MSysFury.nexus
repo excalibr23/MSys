@@ -100,7 +100,7 @@ MSys.huntingAttack = function() {
                 command += 'strike '
             }
         }
-    }else if (MSys.goal == 'hunt2' && MSys.first_name != 'Oga') {
+    }else if (MSys.goal == 'hunt2') {
         //Battleflow attack
         if (MSys.stance == 'Symmetry') {
             command += 'swiftcut '
@@ -128,7 +128,7 @@ MSys.huntingAttack = function() {
                 command += 'strike '
             }
         }
-    }else if (MSys.first_name == 'Oga') {
+    }else if (MSys.goal == 'hunt3') {
         var next = ''
         command = 'combo '
 
