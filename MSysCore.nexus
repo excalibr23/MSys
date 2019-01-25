@@ -215,7 +215,7 @@
         MSys.walk();
     },
     walk: function() {
-        if (MSys.walking) {
+        if (MSys.hunt && MSys.walking) {
             if (!MSys.pathIndex || !MSys.path[MSys.pathIndex] || MSys.room.id != MSys.path[MSys.pathIndex].id) {
                 MSys.pathIndex = MSys.path.findIndex((x) => x.id == MSys.room.id)
                 MSys.notice(\"Room found:\" + MSys.pathIndex);
