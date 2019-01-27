@@ -168,6 +168,18 @@ STI = {
 STI.loaded();"
         },
         {
+            "type": "function",
+            "name": "onGMCP",
+            "enabled": true,
+            "id": 27,
+            "code": "/* --------------------------------------------- ZONE --------------------------------- */
+if (args.gmcp_method == \"Room.Info\" && args.gmcp_args[\"environment\"]==\"bridge\" ) {
+    MSys.zone = args.gmcp_args['area'].split(\"(\")[0].trim();
+}
+",
+            "items": []
+        },
+        {
             "type": "group",
             "name": "Market Orders",
             "enabled": true,
@@ -512,6 +524,40 @@ STI.content = \"\";"
                             "highlight_backref": "1",
                             "highlight_fg": "#00f4ff",
                             "highlight_bg": "#000000"
+                        }
+                    ]
+                },
+                {
+                    "type": "trigger",
+                    "name": "Beacon - Asteroid",
+                    "enabled": true,
+                    "id": 30,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "text": "(\\d*) *(\\d*) *(\\d*) *(north|northeast|east|southeast|south|southwest|west) *a mineable asteroid",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (args[3]!=1) {
+\tdisplay_notice(\"Asteroid: \" + MSys.zone + \" \" + args[1] + \" \" + args[2], \"white\");
+}"
+                        }
+                    ]
+                },
+                {
+                    "type": "trigger",
+                    "name": "Beacon - Gas",
+                    "enabled": true,
+                    "id": 31,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "text": "(\\d*) *(\\d*) *(\\d*) *(north|northeast|east|southeast|south|southwest|west) *a cloud of harvestable gas",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "display_notice(\"Gas: \" + MSys.zone + \" \" + args[1] + \" \" + args[2], \"white\");"
                         }
                     ]
                 }
