@@ -1,6 +1,6 @@
 {
     "type": "group",
-    "name": "msyscore",
+    "name": "MSysCore",
     "enabled": true,
     "id": 1,
     "items": [
@@ -194,17 +194,17 @@ if (args.gmcp_method == \"Char.Vitals\") {
 
     // Track health changes
     var change = MSys.health - args.gmcp_args.hp;
-   
+
     if (change > 0) {
     \tMSys.log('Damage taken: ' + change, MSys.color.damage)
     } else if (change < 0) {
         MSys.log('Damage healed: ' + Math.abs(change), MSys.color.heal)
     }
-    
+
     MSys.health = args.gmcp_args.hp
     MSys.maxHealth = args.gmcp_args.maxhp
     MSys.healthPct = MSys.health / MSys.maxHealth * 100
-    
+
     if (!MSys.offenseEnabled && MSys.healthPct >= get_variable('breakResume')) {
         MSys.notice('Re-enabling aggression after break')
         MSys.offenseEnabled = true
@@ -215,26 +215,26 @@ if (args.gmcp_method == \"Char.Vitals\") {
     if (MSys.healthPct < get_variable('escapeThreshold') && !MSys.escaping) {
         MSys.escapeFromCombat()
 \t}
-    
+
     // Check class
     if (!MSys.class || MSys.class != args.gmcp_args.class) {
         MSys.class = args.gmcp_args.class
     }
-    
+
     // Track XP changes
     var change = args.gmcp_args.xp - MSys.xp;
-   
+
     if (change > 0 && MSys.showXP) {
     \tMSys.log('XP gained: ' + change, MSys.color.xp, MSys.color.xpbg)
 
         var now = new Date()
-        
+
         // Add new value
         MSys.xpGains.push({xp: change, time: now})
 
         // Remove old values
         MSys.xpGains = MSys.xpGains.filter((t) => now - t.time < 1000*60) // 1 minute
-        
+
         // Caclulate average
         MSys.avgXpGain = MSys.xpGains.reduce((acc, add) => acc + add.xp, 0)
 
@@ -258,19 +258,19 @@ if (args.gmcp_method == \"Char.Items.List\") {
 //Remove items when items leave
 if (args.gmcp_method == \"Char.Items.Remove\") {
     let itemLeaving = args.gmcp_args['item']
-    
+
     //Find index of item
     MSys.itemsInRoom = MSys.itemsInRoom.filter(item => item.id !== itemLeaving.id);
-    
+
 }
 
 //Add items when items enter
 if (args.gmcp_method == \"Char.Items.Add\") {
     let itemJoining = args.gmcp_args['item']
-    
+
     //Find index of item
     MSys.itemsInRoom.push(itemJoining);
-    
+
     if (MSys.systemEnabled === true && !get_variable('tar')) {
         MSys.findTarget()
     }
@@ -826,7 +826,7 @@ MSys.notice('Attack set to: ' + args[1], 'white', 'black')"
                             "matching": "regexp",
                             "whole_words": true,
                             "case_sensitive": true,
-                            "text": "^Throwing back its grizzled head, a sly cania lets out a high-pitched, wavering howl.$|^A sluggish atzaparaki shakes off some of its torpor and draws in a deep breath, its sides beginning to swell alarmingly.$|^Light begins to focus deep within the body of a salt-crusted quartz creeper, growing to an almost painful radiance.$|^Staggering backwards, shoulder joint grinding, a crystal-clawed rock giant draws back one of its massive, stony limbs, preparing to swing it.$",
+                            "text": "^Throwing back its grizzled head.*cania lets out a high-pitched, wavering howl.$|^.*atzaparaki shakes off some of its torpor and draws in a deep breath, its sides beginning to swell alarmingly.$|^Light begins to focus deep within the body of a salt-crusted quartz creeper, growing to an almost painful radiance.$|^Staggering backwards, shoulder joint grinding.*draws back one of its massive, stony limbs, preparing to swing it.$",
                             "actions": [
                                 {
                                     "action": "script",
@@ -921,7 +921,7 @@ if (MSys.systemEnabled === true && onList) {
 
 
     if (MSys.break) {MSys.offenseEnabled = false}
-    
+
     MSys.huntingAttack()
 }
 
