@@ -25,6 +25,7 @@ MSys.rage = 0
 MSys.maxRage = 0
 MSys.unstoppable = false
 MSys.unstoppableReady = false
+MSys.bleeding = false
 MSys.berserk = false
 MSys.useBerserk = get_variable('useBerserk')
 MSys.fever = false
@@ -106,7 +107,11 @@ MSys.huntingAttack = function() {
         if (MSys.stance == 'Symmetry') {
             command += 'gutrend '
         } else if (MSys.stance == 'Flare') {
-            command += 'wound '
+            if (MSys.bleeding) {
+            \tcommand += 'sear '
+            } else {
+            \tcommand += 'wound '
+            }
         } else if (MSys.stance == 'Eruption') {
             command += 'rupture '
         }
@@ -123,7 +128,11 @@ MSys.huntingAttack = function() {
                 command += 'flyinglash '
             }
         } else if (MSys.stance == 'Flare') {
-            command += 'deepstrike '
+            if (MSys.bleeding) {
+            \tcommand += 'strike '
+            } else {
+            \tcommand += 'deepstrike '
+            }
         } else if (MSys.stance == 'Eruption') {
             command += 'flyinglash '
         }
@@ -164,9 +173,17 @@ MSys.huntingAttack = function() {
     }
     send_command(command)
 }
+MSys.stateReset = function() {
+    // Reset all combat variables
+    MSys.escaping           = false
+    MSys.fever              = false
+    MSys.hypertension       = false
+    MSys.interrupt          = false
+    MSys.bleeding           = false
+}
 
 MSys.loaded(\"Starwraith Fury Combat Implant v\" + MSys.SFCIversion + \" Loaded. See HFURY and HSETUP for config options. Good hunting, and good death.\");
-send_command('wakeup')",
+//send_command('wakeup')",
             "items": []
         },
         {
@@ -543,6 +560,42 @@ if (MSys.systemEnabled) {
                                 }
                             ],
                             "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Bleeding On",
+                            "enabled": true,
+                            "id": 153,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": ".* hums and sparks ominously as you cut .* multiple times, the blade flashing brightly as wounds open all over .* body.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.bleeding = true"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Bleeding Off",
+                            "enabled": true,
+                            "id": 154,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": ".* has cured the effects of Bleeding.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.bleeding = false
+
+if (MSys.systemEnabled) {
+\tMSys.huntingAttack()
+}"
+                                }
+                            ]
                         },
                         {
                             "type": "trigger",
