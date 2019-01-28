@@ -24,6 +24,7 @@ MSys.bladeshape = false
 MSys.rage = 0
 MSys.maxRage = 0
 MSys.unstoppable = false
+MSys.unstoppableReady = false
 MSys.berserk = false
 MSys.useBerserk = get_variable('useBerserk')
 MSys.fever = false
@@ -80,7 +81,7 @@ MSys.huntingAttack = function() {
         if (MSys.unstoppable) {
             command += 'slice '
         } else if (MSys.stance == 'Symmetry') {
-            if (MSys.rage / MSys.maxRage > .13 && !MSys.berserk && MSys.useBerserk) {
+            if (MSys.rage / MSys.maxRage > .10 && !MSys.berserk && MSys.useBerserk) {
                 command += 'berserk '
             } else {
                 command += 'flyinglash '
@@ -103,7 +104,7 @@ MSys.huntingAttack = function() {
     }else if (MSys.goal == 'hunt2') {
         //Battleflow attack
         if (MSys.stance == 'Symmetry') {
-            command += 'swiftcut '
+            command += 'gutrend '
         } else if (MSys.stance == 'Flare') {
             command += 'wound '
         } else if (MSys.stance == 'Eruption') {
@@ -111,22 +112,20 @@ MSys.huntingAttack = function() {
         }
 
         //Rage Attack
-        if (MSys.unstoppable) {
+        if (MSys.unstoppableReady) {
+            command += 'unstoppable '
+        } else if (MSys.unstoppable) {
             command += 'slice '
         } else if (MSys.stance == 'Symmetry') {
-            if (MSys.rage / MSys.maxRage > .13 && !MSys.berserk && MSys.useBerserk) {
+            if (MSys.rage / MSys.maxRage >= .05 && !MSys.berserk && MSys.useBerserk) {
                 command += 'berserk '
             } else {
                 command += 'flyinglash '
             }
         } else if (MSys.stance == 'Flare') {
-            command += 'rend '
+            command += 'deepstrike '
         } else if (MSys.stance == 'Eruption') {
-            if (MSys.rage / MSys.maxRage > .73  && MSys.unstoppable == false) {
-                command += 'unstoppable '
-            } else {
-                command += 'strike '
-            }
+            command += 'flyinglash '
         }
     }else if (MSys.goal == 'hunt3') {
         var next = ''
@@ -456,6 +455,7 @@ MSys.interrupt = false"
                                 {
                                     "action": "script",
                                     "script": "MSys.unstoppable = true
+MSys.unstoppableReady = false
 MSys.log('YES UNSTOPPABLE', MSys.color.info)
 
 if (MSys.systemEnabled) {
@@ -486,6 +486,46 @@ if (MSys.systemEnabled) {
                                 }
                             ],
                             "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Unstoppable Ready",
+                            "enabled": true,
+                            "id": 151,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "Rage flows through you - you are now able to activate the Unstoppable stance!",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.unstoppableReady = true
+
+if (MSys.systemEnabled) {
+\tMSys.huntingAttack()
+}"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Unstoppable Not Ready",
+                            "enabled": true,
+                            "id": 152,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You haven't used enough rage attacks to become unstoppable!",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.unstoppableReady = false
+
+if (MSys.systemEnabled) {
+\tMSys.huntingAttack()
+}"
+                                }
+                            ]
                         },
                         {
                             "type": "trigger",
