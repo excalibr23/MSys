@@ -65,42 +65,32 @@ MSys.huntingAttack = function() {
     }else if (MSys.goal == 'hunt1') {
         //Battleflow attack
         if (MSys.stance == 'Symmetry') {
-            command += 'swiftcut '
+            command += 'gutrend '
         } else if (MSys.stance == 'Flare') {
             command += 'wound '
         } else if (MSys.stance == 'Eruption') {
             if (MSys.hypertension) {
-                command += 'bloodburn '
+                command += 'bloodsinge '
             } else {
                 command += 'hypertension '
             }
-        } else if (MSys.stance == 'Ember') {
-            command += 'legspike '
         }
 
         //Rage Attack
-        if (MSys.unstoppable) {
+        if (MSys.unstoppableReady) {
+            command += 'unstoppable '
+        } else if (MSys.unstoppable) {
             command += 'slice '
         } else if (MSys.stance == 'Symmetry') {
-            if (MSys.rage / MSys.maxRage > .10 && !MSys.berserk && MSys.useBerserk) {
+            if (MSys.rage / MSys.maxRage > .05 && !MSys.berserk && MSys.useBerserk) {
                 command += 'berserk '
             } else {
                 command += 'flyinglash '
             }
         } else if (MSys.stance == 'Flare') {
-            command += 'rend '
+            command += 'deepstrike '
         } else if (MSys.stance == 'Eruption') {
-            if (MSys.health / MSys.maxHealth < .7) {
-                command += 'resistant '
-            } else {
-                command += 'upperlash '
-            }
-        } else if (MSys.stance == 'Ember') {
-            if (MSys.rage / MSys.maxRage > .73  && MSys.unstoppable == false) {
-                command += 'unstoppable '
-            } else {
-                command += 'strike '
-            }
+            command += 'flyinglash '
         }
     }else if (MSys.goal == 'hunt2') {
         //Battleflow attack
