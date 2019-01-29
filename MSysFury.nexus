@@ -23,20 +23,29 @@ MSys.stance = ''
 MSys.bladeshape = false
 MSys.rage = 0
 MSys.maxRage = 0
+MSys.flightCommand = 'KITH FLIGHT'
+
+// Config
+MSys.useBerserk = get_variable('useBerserk')
+MSys.useFever = get_variable('useFever')
+
+// Status
 MSys.unstoppable = false
 MSys.unstoppableReady = false
-MSys.bleeding = false
 MSys.berserk = false
-MSys.useBerserk = get_variable('useBerserk')
 MSys.fever = false
-MSys.useFever = get_variable('useFever')
 MSys.hypertension = false
 MSys.infernoCharging = false
 MSys.harden = false
 MSys.warmth = false
 MSys.balancing = false
 MSys.firewreathe = false
-MSys.flightCommand = 'KITH FLIGHT'
+MSys.resistant = false
+MSys.judgement = false
+
+// Target status
+MSys.bleeding = false
+
 MSys.huntingAttack = function() {
     if (!MSys.systemEnabled) { return }
     
@@ -128,33 +137,38 @@ MSys.huntingAttack = function() {
         }
     }else if (MSys.goal == 'hunt3') {
         var next = ''
-        command = 'combo '
+        command = 'COMBO '
 
         //Battleflow attack
         if (MSys.stance == 'Symmetry') {
-            command += 'gutrend '
+            command += 'SWIFTCUT '
             next = 'Ember'
         } else if (MSys.stance == 'Ember') {
-            command += 'legspike '
+            command += 'LEGSPIKE '
             next = 'Symmetry'
         } else if (MSys.stance == 'Flare') {
-            command += 'sear '
+            command += 'SEAR '
             next = 'Symmetry'
         }
 
         //Rage Attack
         if (MSys.unstoppable) {
-            command += 'slice '
+             if (!MSys.judgement) {
+            \tcommand += 'JUDGEMENT '
+                 MSys.judgement = true;
+             } else {
+            \tcommand += 'SLICE '
+             }
         } else if (next == 'Symmetry') {
-            if (MSys.rage / MSys.maxRage > .8  && MSys.unstoppable == false) {
-                command += 'unstoppable '
+            if (MSys.unstoppableReady && MSys.unstoppable == false) {
+                command += 'UNSTOPPABLE '
             } else {
-                command += 'deflect '
+                command += 'DEFLECT '
             }
         } else if (next == 'Ember') {
-            command += 'resistant '
+            command += 'RESISTANT '
         } else if (next == 'Flare') {
-            command += 'reel '
+            command += 'REEL '
         }
     }
 
@@ -764,6 +778,72 @@ MSys.huntingAttack()"
                                     "action": "script",
                                     "script": "MSys.firewreathe = true
 MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Resistant On",
+                            "enabled": true,
+                            "id": 155,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You focus your rage to become more resistant to damage.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.resistant = true"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Resistant Off",
+                            "enabled": true,
+                            "id": 156,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You are less resistant.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.resistant = false"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Judgement On",
+                            "enabled": true,
+                            "id": 157,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "The crystalline stillness of implacable judgement descends across your soul as you use your rage to clarify and measure each target you strike with a merciless exploitation of any weakness, precise and deadly.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.judgement = true
+"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Judgement Off",
+                            "enabled": true,
+                            "id": 158,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "The opportunity to judge your foe has passed.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.judgement = false
+"
                                 }
                             ]
                         }
