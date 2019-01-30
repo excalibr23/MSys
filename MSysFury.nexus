@@ -24,10 +24,17 @@ MSys.bladeshape = false
 MSys.rage = 0
 MSys.maxRage = 0
 MSys.flightCommand = 'KITH FLIGHT'
+//MSys.goal = \"hunt4\"
 
 // Config
 MSys.useBerserk = get_variable('useBerserk')
 MSys.useFever = get_variable('useFever')
+
+// Buffs
+MSys.harden = false
+MSys.warmth = false
+MSys.balancing = false
+MSys.firewreathe = false
 
 // Status
 MSys.unstoppable = false
@@ -36,15 +43,12 @@ MSys.berserk = false
 MSys.fever = false
 MSys.hypertension = false
 MSys.infernoCharging = false
-MSys.harden = false
-MSys.warmth = false
-MSys.balancing = false
-MSys.firewreathe = false
 MSys.resistant = false
 MSys.judgement = false
 
 // Target status
 MSys.bleeding = false
+MSys.prone = false
 
 MSys.huntingAttack = function() {
     if (!MSys.systemEnabled) { return }
@@ -152,23 +156,53 @@ MSys.huntingAttack = function() {
         }
 
         //Rage Attack
-        if (MSys.unstoppable) {
-             if (!MSys.judgement) {
-            \tcommand += 'JUDGEMENT '
-                 MSys.judgement = true;
-             } else {
-            \tcommand += 'SLICE '
-             }
+        if (MSys.unstoppableReady && MSys.unstoppable == false) {
+            command += 'UNSTOPPABLE '
+        } else if (MSys.unstoppable && !MSys.judgement) {
+            command += 'JUDGEMENT '
+            MSys.judgement = true;
+        } else if (MSys.unstoppable) {
+          \tcommand += 'SLICE '
         } else if (next == 'Symmetry') {
-            if (MSys.unstoppableReady && MSys.unstoppable == false) {
-                command += 'UNSTOPPABLE '
-            } else {
-                command += 'DEFLECT '
-            }
+            command += 'DEFLECT '
         } else if (next == 'Ember') {
             command += 'RESISTANT '
         } else if (next == 'Flare') {
             command += 'REEL '
+        }
+    } else if (MSys.goal == 'hunt4') {
+        var next = ''
+        command = 'COMBO '
+
+        //Battleflow attack
+        if (MSys.stance == 'Symmetry') {
+            command += 'SWIFTCUT '
+            next = 'Ember'
+        } else if (MSys.stance == 'Ember') {
+            command += 'SWEEP '
+            next = 'Spark'
+        } else if (MSys.stance == 'Spark') {
+            command += 'HEW '
+            next = 'Ember'
+        }
+
+        //Rage Attack
+        if (MSys.unstoppableReady && MSys.unstoppable == false) {
+            command += 'UNSTOPPABLE '
+        } else if (MSys.unstoppable && !MSys.judgement) {
+           \tcommand += 'JUDGEMENT '
+            MSys.judgement = true;
+        } else if (next == 'Symmetry') {
+            command += 'DEFLECT '
+        } else if (next == 'Ember') {
+            command += 'RESISTANT '
+        } else if (next == 'Spark') {
+            if (MSys.rage / MSys.maxRage >= .12) {
+            \tcommand += 'GRAPPLE '
+            \tMSys.systemEnabled = false;
+            } else {
+            \tcommand += 'TOPPLE '
+            }
         }
     }
 
@@ -567,42 +601,6 @@ if (MSys.systemEnabled) {
                         },
                         {
                             "type": "trigger",
-                            "name": "Bleeding On",
-                            "enabled": true,
-                            "id": 153,
-                            "matching": "regexp",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "text": ".* hums and sparks ominously as you cut .* multiple times, the blade flashing brightly as wounds open all over .* body.",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.bleeding = true"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Bleeding Off",
-                            "enabled": true,
-                            "id": 154,
-                            "matching": "regexp",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "text": ".* has cured the effects of Bleeding.",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.bleeding = false
-
-if (MSys.systemEnabled) {
-\tMSys.huntingAttack()
-}"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "trigger",
                             "name": "Heal Ready",
                             "enabled": true,
                             "id": 77,
@@ -844,6 +842,100 @@ MSys.huntingAttack()"
                                     "action": "script",
                                     "script": "MSys.judgement = false
 "
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Grapple Off",
+                            "enabled": true,
+                            "id": 159,
+                            "matching": "begins",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You lose your grip on",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.systemEnabled = true;
+MSys.huntingAttack();"
+                                }
+                            ]
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Target Status",
+                    "enabled": true,
+                    "id": 160,
+                    "items": [
+                        {
+                            "type": "trigger",
+                            "name": "Bleeding On",
+                            "enabled": true,
+                            "id": 153,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": ".* hums and sparks ominously as you cut .* multiple times, the blade flashing brightly as wounds open all over .* body.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.bleeding = true"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Bleeding Off",
+                            "enabled": true,
+                            "id": 154,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": ".* has cured the effects of Bleeding.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.bleeding = false
+
+if (MSys.systemEnabled) {
+\tMSys.huntingAttack()
+}"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Prone On",
+                            "enabled": true,
+                            "id": 161,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": ".* falls to the ground!",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.prone = true"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Prone Off",
+                            "enabled": true,
+                            "id": 162,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": ".* has cured the effects of Prone.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.prone = false"
                                 }
                             ]
                         }
