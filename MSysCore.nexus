@@ -129,6 +129,8 @@
         MSys.magnotronActivated = false
         MSys.suffocation        = false
     },
+    buffReset: function() { // Reset all buffs
+    },
 // Hunting
     escapeFromCombat: function() {
         if (!MSys.systemEnabled) {return}
@@ -977,7 +979,7 @@ MSys.interrupt = false"
 //set_variable('tar', args[1])
 if (MSys.health < MSys.maxHealth && MSys.useEscapeAggro) {
     MSys.escapeFromCombat()
-} else {
+} else if (MSys.systemEnabled) {
     MSys.notice('Initating counterattack')
     MSys.findTarget()
     MSys.offenseEnabled = true
@@ -998,7 +1000,8 @@ if (MSys.health < MSys.maxHealth && MSys.useEscapeAggro) {
                     "actions": [
                         {
                             "action": "script",
-                            "script": "MSys.stateReset()"
+                            "script": "MSys.stateReset()
+MSys.buffReset()"
                         }
                     ]
                 }
@@ -1182,6 +1185,7 @@ send_command('st ' + args[1])
                             "script": "if (get_variable('debug') == true) {MSys.log('I am attacking ' + get_variable('tar'), 'white')}
 MSys.systemEnabled = true
 MSys.offenseEnabled = true
+MSys.grappling = false
 MSys.huntingAttack()"
                         }
                     ],

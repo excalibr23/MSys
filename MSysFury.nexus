@@ -31,23 +31,36 @@ MSys.useBerserk = get_variable('useBerserk')
 MSys.useFever = get_variable('useFever')
 
 // Buffs
-MSys.harden = false
-MSys.warmth = false
-MSys.balancing = false
-MSys.firewreathe = false
+MSys.buffReset = function () {
+\tMSys.harden = false
+\tMSys.warmth = false
+\tMSys.balancing = false
+\tMSys.firewreathe = false
+}
+MSys.buffReset()
+
+MSys.stateReset = function() {
+    // Reset all combat variables
+    MSys.escaping      = false
+    MSys.fever         = false
+    MSys.hypertension  = false
+    MSys.interrupt     = false
+    MSys.bleeding      = false
+    MSys.prone         = false
+    MSys.grappling     = false
+}
+MSys.stateReset()
 
 // Status
 MSys.unstoppable = false
 MSys.unstoppableReady = false
 MSys.berserk = false
-MSys.fever = false
-MSys.hypertension = false
 MSys.infernoCharging = false
 MSys.resistant = false
 MSys.judgement = false
-MSys.grappling = false
 
 // Target status
+MSys.hypertension = false
 MSys.bleeding = false
 MSys.prone = false
 
@@ -211,16 +224,6 @@ MSys.huntingAttack = function() {
     \tcommand += get_variable('tar')
     }
     send_command(command)
-}
-MSys.stateReset = function() {
-    // Reset all combat variables
-    MSys.escaping      = false
-    MSys.fever         = false
-    MSys.hypertension  = false
-    MSys.interrupt     = false
-    MSys.bleeding      = false
-    MSys.prone         = false
-    MSys.grappling     = false
 }
 
 MSys.loaded(\"Starwraith Fury Combat Implant v\" + MSys.SFCIversion + \" Loaded. See HFURY and HSETUP for config options. Good hunting, and good death.\");
