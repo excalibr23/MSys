@@ -1004,6 +1004,22 @@ if (MSys.health < MSys.maxHealth && MSys.useEscapeAggro) {
 MSys.buffReset()"
                         }
                     ]
+                },
+                {
+                    "type": "trigger",
+                    "name": "Landing",
+                    "enabled": true,
+                    "id": 180,
+                    "matching": "substring",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You descend to the ground, steadying yourself upon the solid surface.",
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "LOOK"
+                        }
+                    ]
                 }
             ],
             "actions": []
