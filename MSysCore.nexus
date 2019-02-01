@@ -1,6 +1,6 @@
 {
     "type": "group",
-    "name": "msyscore",
+    "name": "MSysCore",
     "enabled": true,
     "id": 1,
     "items": [
@@ -9,62 +9,55 @@
             "name": "onLoad",
             "enabled": true,
             "id": 2,
-            "code": "// Place any code here you'd like to autorun when the system is loaded
-// Changelog
-// 20190109--------: Add interrupt support for fury
-// 20190109--------: Cancel inferno if mob enters, fix inferno casting, add some QOL station transfer triggers
-// 20190106T0128EST: Added 'wakeup' command to onLoad to run personal defense ability setups
-// 20190106T0128EST: Modified hunting attack for Fury to exit if target is missing, but after suffuse and bladeshape buffs
-// 20190106T0128EST: Removed suffuse from queue attack trigger
-// 20190106T0128EST: Added queue attack to \"Heal Used\" trigger if auto is set to ensure attack occurs after variables being set
-// 20190106T0128EST: Added queue attack after \"Heal Ready\" to provide heal outside of combat
-// 20190106T0153EST: Removed empty target check from slain trigger to avoid incidentally disabled reflexes resulting in combat script being stuck
-// 20190106T0631EST: Changed launch banner, inverted colors, changed to Mindsim combat implant, and manually padded dashes
-// 20190106T0631EST: Modified heal ready highlight
-// 20190107T0550EST: Added reflexOn logic to healing triggers
-// 20190107T----EST: Added engineer configurations
-// 20190107T----EST: Set up engineer burrowbot functions
-// 20190107T----EST: Added utility scripts to build and deploy turrets
-// 20190107T----EST: Yes I know using waits suck, blow me. It's not an active combat feature
-// 20190107T----EST: Added engineer repeat attacks
-// 20190107T----EST: Incorporated recurring airdrops to fully refill parts
-// 20190109T1708EST: Rebranded as Starwraith Combat Package
-
-MSys = {
+            "code": "MSys = {
 //System Variables
-    coreVersion: 1.4,
-    shortname: 'CORE',
-    goal: 'hunt2',
-    matchList: get_variable('matchList'),
-    systemEnabled: true,
-    offenseEnabled: false,
-    break: get_variable('break'),
-    itemsInRoom: [],
+    coreVersion:     1.4,
+    shortname:       'CORE',
+    goal:            'hunt2',
+    systemEnabled:   true,
+    offenseEnabled:  true,
+
+    //Configurations
+    attack:          get_variable('huntingAttack') + ' ',
+    break:           get_variable('break'),
+    breakResume:     get_variable('breakResume'),
+    escapeThreshold: get_variable('escapeThreshold'),
+    useEscapeAggro:  get_variable('useEscapeAggro'),
+    matchList:       get_variable('matchList'),
+    showNotices:     get_variable('showNotices'),
+    showXP:          get_variable('showXP'),
+
+    itemsInRoom:     [],
     damageThisFight: 0,
-    ttk: 0,
-    targetHealth: 0,
-    xpGains: [],
-    avgXpGain: 0,
-    interrupt: false,
+    ttk:             0,
+    targetHealth:    0,
+    interrupt:       false,
+    escaping:        false,
     color: {
-        notice: 'gold',
-        info: 'yellow',
+        notice:  'gold',
+        info:    'yellow',
         warning: 'red',
-        target: 'orange',
-        heal: '#6bdaee',
-        xp: 'white',
-        xpbg: 'darkblue',
-        config: 'white',
-        fightSummary: 'white',
-        fightSummarybg: 'darkblue',
+        target:  'orange',
+        heal:    '#6bdaee',
+        xp:      get_variable('color.xp') ? get_variable('color.xp') : 'gold',
+        xpbg:    get_variable('color.xpbg') ? get_variable('color.xpbg') : 'black',
+        config:  'white',
+        slay:    get_variable('color.slay') ? get_variable('color.slay') : 'gold',
+        slaybg:  get_variable('color.slaybg') ? get_variable('color.slaybg') : 'black',
+        damage:  get_variable('color.damage') ? get_variable('color.damage') : 'yellow',
+        dealt:   get_variable('color.dealt') ? get_variable('color.dealt') : 'red',
     },
-//Character    
-    attack: get_variable('huntingAttack') + ' ',
-    class: '',
-    health: 0,
+
+//Character
+    class:     '',
+    health:    0,
     maxHealth: 0,
-    useHeal: get_variable('useHeal'),
+    healthPct: 0,
+    useHeal:   get_variable('useHeal'),
     healReady: true,
+    xpGains:   [],
+    avgXpGain: 0,
+
 //Functions
     log: function (x, fgcolor, bgcolor) {
         let type = typeof x
@@ -89,7 +82,7 @@ MSys = {
     alert: function (text, fgcolor, bgcolor) {
         text = text.toUpperCase()
         let fullText = '-'.repeat(text.length+1) + '-------\\n--  '+ text + '  --\\n-------' + '-'.repeat(text.length+1)
-        
+
         display_notice(fullText, fgcolor, bgcolor)
     },
     debugMessage: function (text) {
@@ -102,7 +95,7 @@ MSys = {
     },
     loaded: function(text) {
         //Send implant to browser log for debugging
-\t\tconsole.log(MSys)
+        console.log(MSys)
 
         MSys.notice(text + \"\\n\")
     },
@@ -112,23 +105,46 @@ MSys = {
         client.display_help_window(helptext);
     },
     toggle: function (variable, name) {
-\t\tif (get_variable(variable)) {
-    \t\tset_variable(variable, false)
-\t\t    MSys.notice(name + ' Disabled', MSys.color.config)
+        if (get_variable(variable)) {
+            set_variable(variable, false)
+            MSys.notice(name + ' Disabled', MSys.color.config)
             return false;
-\t\t} else {
-    \t\tset_variable(variable, true)
-    \t\tMSys.useSerrate = true
-    \t\tMSys.notice(name + ' Enabled', MSys.color.config)
+        } else {
+            set_variable(variable, true)
+            MSys.useSerrate = true
+            MSys.notice(name + ' Enabled', MSys.color.config)
             return true;
-\t\t}    
+        }
+    },
+    stateReset: function() {
+        // Reset all combat variables
+        MSys.ambush             = false
+        MSys.backhand           = false
+        MSys.delaySwarm         = false
+        MSys.escaping           = false
+        MSys.fever              = false
+        MSys.freeze             = false
+        MSys.hypertension       = false
+        MSys.interrupt          = false
+        MSys.magnotronActivated = false
+        MSys.suffocation        = false
+    },
+    buffReset: function() { // Reset all buffs
     },
 // Hunting
+    escapeFromCombat: function() {
+        if (!MSys.systemEnabled) {return}
+        MSys.alert('Attempting to escape from combat', 'gold')
+        MSys.offenseEnabled = false
+        MSys.escaping = true
+        send_command('clearqueue')
+        send_command(MSys.flightCommand == undefined ? 'fly' : MSys.flightCommand)
+    },
     findTarget: function() {
         var itemList = MSys.itemsInRoom
         var killList = get_variable('killList')
         var targetFound = false
-        
+
         //Match room order
         if (!MSys.matchList) {
             for (i=0; i<itemList.length; i++) {
@@ -172,7 +188,7 @@ MSys.loaded(\"Starwraith Core Implant v\" + MSys.coreVersion + \" Loaded.\");",
             "code": "// Place any code here you'd like to run when a GMCP message is received
 // - The GMCP message is received as \"args.gmcp_method\" and \"args.gmcp_args\"
 
-GMCP[args.gmcp_method] = args.gmcp_args
+//GMCP[args.gmcp_method] = args.gmcp_args
 
 /* ------------------------------------------ CHARACTER STUFF ----------------------------------- */
 
@@ -180,39 +196,51 @@ if (args.gmcp_method == \"Char.Vitals\") {
 
     // Track health changes
     var change = MSys.health - args.gmcp_args.hp;
-   
+
     if (change > 0) {
-    \tMSys.log('Damage taken: ' + change, MSys.color.warning)
+    \tMSys.log('Damage taken: ' + change, MSys.color.damage)
     } else if (change < 0) {
         MSys.log('Damage healed: ' + Math.abs(change), MSys.color.heal)
     }
-    
+
     MSys.health = args.gmcp_args.hp
     MSys.maxHealth = args.gmcp_args.maxhp
+    MSys.healthPct = MSys.health / MSys.maxHealth * 100
+
+    if (!MSys.offenseEnabled && MSys.healthPct >= get_variable('breakResume')) {
+        MSys.notice('Re-enabling aggression after break')
+        MSys.offenseEnabled = true
+        MSys.findTarget()
+        MSys.huntingAttack()
+    }
+
+    if (MSys.healthPct < get_variable('escapeThreshold') && !MSys.escaping) {
+        MSys.escapeFromCombat()
+\t}
 
     // Check class
     if (!MSys.class || MSys.class != args.gmcp_args.class) {
         MSys.class = args.gmcp_args.class
     }
-    
+
     // Track XP changes
     var change = args.gmcp_args.xp - MSys.xp;
-   
-    if (change > 0) {
+
+    if (change > 0 && MSys.showXP) {
     \tMSys.log('XP gained: ' + change, MSys.color.xp, MSys.color.xpbg)
 
         var now = new Date()
-        
+
         // Add new value
         MSys.xpGains.push({xp: change, time: now})
 
         // Remove old values
         MSys.xpGains = MSys.xpGains.filter((t) => now - t.time < 1000*60) // 1 minute
-        
+
         // Caclulate average
         MSys.avgXpGain = MSys.xpGains.reduce((acc, add) => acc + add.xp, 0)
 
-    } else if (change < 0) {
+    } else if (change < 0 && MSys.showXP) {
         MSys.log('XP lost: ' + Math.abs(change), MSys.color.warning)
     }
 
@@ -232,19 +260,19 @@ if (args.gmcp_method == \"Char.Items.List\") {
 //Remove items when items leave
 if (args.gmcp_method == \"Char.Items.Remove\") {
     let itemLeaving = args.gmcp_args['item']
-    
+
     //Find index of item
     MSys.itemsInRoom = MSys.itemsInRoom.filter(item => item.id !== itemLeaving.id);
-    
+
 }
 
 //Add items when items enter
 if (args.gmcp_method == \"Char.Items.Add\") {
     let itemJoining = args.gmcp_args['item']
-    
+
     //Find index of item
     MSys.itemsInRoom.push(itemJoining);
-    
+
     if (MSys.systemEnabled === true && !get_variable('tar')) {
         MSys.findTarget()
     }
@@ -300,6 +328,7 @@ commands += 'hup/down <name> - Move an item up or down on the priority list\\n\\
 
 commands += 'hlist - toggle between using room and list priority\\n'
 commands += 'hbreak - enable/disable break after kill\\n'
+commands += 'hxp - show XP information after kill\\n'
 //commands += 'hbreakthreshold <number> - enable/disable break threshold\\n' // Still used? -Oga
 commands += 'hheal - enable/disable heal\\n'
 commands += 'h - manual heal command\\n'
@@ -314,6 +343,7 @@ if (get_variable('killList')       == undefined) {set_variable('killList', ['roc
 if (get_variable('debug')          == undefined) {set_variable('debug', false)}
 if (get_variable('matchList')      == undefined) {set_variable('matchList', true)}
 if (get_variable('break')          == undefined) {set_variable('break', true)}
+if (get_variable('showXP')         == undefined) {set_variable('showXP', true)}
 if (get_variable('useHeal')        == undefined) {set_variable('useHeal', true)}
 if (get_variable('useFreeze')      == undefined) {set_variable('useFreeze', false)}
 if (get_variable('useMultistrike') == undefined) {set_variable('useMultistrike', false)}
@@ -329,6 +359,7 @@ MSys.notice(\"Current settings:\", MSys.color.config)
 var settings = ''
 settings += 'Priority: ' + (get_variable('matchList')==true ? \"List\" : \"Room\") + '\\n'
 settings += 'Break: ' + (get_variable('break')==true ? \"Will break after kill\" : \"Will continue after kill\") + '\\n'
+settings += 'Show XP Gains/Loses: ' + get_variable('showXP') + '\\n'
 settings += 'Heal: ' + get_variable('useHeal') + '\\n'
 
 MSys.log(settings, MSys.color.config)
@@ -337,6 +368,23 @@ MSys.log(settings, MSys.color.config)
                     ],
                     "text": "hsetup",
                     "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "hdebug- Enable/Disable Debug Messages",
+                    "enabled": true,
+                    "id": 179,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.debug = MSys.toggle('debug', 'Debug messaging');"
+                        }
+                    ],
+                    "text": "hdebug"
                 },
                 {
                     "type": "alias",
@@ -352,8 +400,8 @@ MSys.log(settings, MSys.color.config)
                             "action": "script",
                             "script": "let newSave = get_variable('killList')
 set_variable('killListBackup', newSave)
-MSys.notice('Hunt List Saved', MSys.color.config)
-"
+client.gmcp_save_system(true)
+MSys.notice('Hunt List Saved\\nSaved settings to server', MSys.color.config)"
                         }
                     ],
                     "text": "hsave",
@@ -556,15 +604,7 @@ for (i=0; i<list.length; i++) {
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (get_variable('break')) {
-    MSys.break = false
-    set_variable('break', false)
-    MSys.notice('Will continue after kill.', MSys.color.config)
-} else {
-\tMSys.break = true
-    set_variable('break', true)
-    MSys.notice('Will break after kill.', MSys.color.config)
-}"
+                            "script": "MSys.break = MSys.toggle('break', 'Stopping after kill');"
                         }
                     ],
                     "text": "hbreak",
@@ -572,7 +612,7 @@ for (i=0; i<list.length; i++) {
                 },
                 {
                     "type": "alias",
-                    "name": "hbreakthreshold <n> - Enable/Disable Break Threshold",
+                    "name": "hbreakresume <n> - Enable/Disable Break Resume",
                     "enabled": true,
                     "id": 169,
                     "matching": "regexp",
@@ -582,16 +622,67 @@ for (i=0; i<list.length; i++) {
                     "actions": [
                         {
                             "action": "script",
-                            "script": "set_variable('breakThreshold', args[1])
-MSys.breakThreshold = args[1]"
+                            "script": "if (args[1] == '') {
+    MSys.notice('Unset resume')
+    delete_variable('breakResume')
+} else if (args[1] > 100 || args[1] < 1) {
+    MSys.notice('Usage: hbreakresume <n> with n between 1 and 100')
+} else {
+\tset_variable('breakResume', args[1])
+\tMSys.breakResume = args[1]
+    MSys.notice('Will resume combat when health reaches ' + args[1] + ' percent')
+}"
                         }
                     ],
-                    "text": "^hbreakthreshold ([0-9]*)$",
+                    "text": "^hbreakresume ?([0-9]*)$",
                     "items": []
                 },
                 {
                     "type": "alias",
-                    "name": "Heal Toggle - hheal",
+                    "name": "hescape <n> - Enable/Disable Auto-escape",
+                    "enabled": true,
+                    "id": 176,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (args[1] == '') {
+    MSys.notice('Unset auto escape')
+    delete_variable('escapeThreshold')
+} else if (args[1] > 100 || args[1] < 1) {
+    MSys.notice('Usage: hescape <n> with n between 1 and 100')
+} else {
+\tset_variable('escapeThreshold', args[1])
+\tMSys.escapeThreshold = args[1]
+    MSys.notice('Will attempt to escape combat when health is below ' + args[1] + ' percent')
+}"
+                        }
+                    ],
+                    "text": "^hescape ?([0-9]*)$"
+                },
+                {
+                    "type": "alias",
+                    "name": "hescapeaggro - Enable/Disable Flee on Aggro",
+                    "enabled": true,
+                    "id": 177,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.useEscapeAggro = MSys.toggle('useEscapeAggro', 'Attempt to flee on aggro');"
+                        }
+                    ],
+                    "text": "hescapeaggro"
+                },
+                {
+                    "type": "alias",
+                    "name": "hheal - Heal Toggle",
                     "enabled": true,
                     "id": 81,
                     "matching": "exact",
@@ -601,15 +692,7 @@ MSys.breakThreshold = args[1]"
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (get_variable('useHeal')) {
-\tset_variable('useHeal', false)
-    MSys.useHeal = false
-    MSys.notice('Heal off', MSys.color.config)
-} else {
-\tset_variable('useHeal', true)
-    MSys.useHeal = true
-    MSys.notice('Heal on', MSys.color.config)
-}"
+                            "script": "MSys.useHeal = MSys.toggle('useHeal', 'Heal');"
                         }
                     ],
                     "text": "hheal",
@@ -617,7 +700,25 @@ MSys.breakThreshold = args[1]"
                 },
                 {
                     "type": "alias",
-                    "name": "Heal - h",
+                    "name": "hxp - XP Toggle",
+                    "enabled": true,
+                    "id": 170,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.showXP = MSys.useHeal = MSys.toggle('showXP', 'Show XP');"
+                        }
+                    ],
+                    "text": "hxp",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "h - Heal",
                     "enabled": true,
                     "id": 115,
                     "matching": "exact",
@@ -668,89 +769,100 @@ MSys.notice('Attack set to: ' + args[1], 'white', 'black')"
         },
         {
             "type": "group",
-            "name": "Auto Hunt",
+            "name": "Combat",
             "enabled": true,
             "id": 8,
             "items": [
                 {
-                    "type": "trigger",
-                    "name": "Slain",
+                    "type": "group",
+                    "name": "Escaping",
                     "enabled": true,
-                    "id": 5,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "^(You) have slain a.*$|^.*has been slain by (.+)\\.$",
-                    "actions": [
+                    "id": 173,
+                    "items": [
                         {
-                            "action": "script",
-                            "script": "MSys.freeze = false
-MSys.frenzy = false
-MSys.negation = false
-MSys.delaySwarm = false
-MSys.fever = false
-MSys.hypertension = false
-MSys.ambush = false
-MSys.backhand = false
-
-//var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
-//a.play()
-
-var autoList = ['You', 'Chronoxi Starwraith', 'Feraluna Starwraith', 'Mee', 'Casimar', 'Albion', 'Mykel']
-var onList = ''
-
-if (args[1]) {
-\tonList = autoList.includes(args[1])
-} else {
-\tonList = autoList.includes(args[2])
-}
-
-if (MSys.systemEnabled === true && onList) {
-    MSys.targetHealth = 0
-\tMSys.findTarget()
-
-    if (MSys.class == 'Engineer' && get_variable('useQPCBoost')) {
-        send_command('qpcboost')
-    }
-
-    if (MSys.break) {
-\t\tMSys.offenseEnabled = false
-    }
-    
-    MSys.huntingAttack()
-}
-
-var slainParts = []
-var now = new Date()
-
-if (MSys.damageThisFight > 0) {
-    slainParts.push(MSys.damageThisFight + ' damage done this fight.');
-}
-
-if (MSys.ttk > 0){
-    slainParts.push('TTK: ' + (now.getTime() - MSys.ttk)/1000 + 's')
-}
-
-if (MSys.damageThisFight > 0 && MSys.ttk > 0) {
-    slainParts.push('DPS: ' + Math.round(MSys.damageThisFight / ((now.getTime() - MSys.ttk)/1000)))
-}
-
-slainParts.push('XP left: ' + Math.round(MSys.xpLeft));
-
-if (MSys.avgXpGain > 0) {
-    slainParts.push('XP/min: ' + Math.round(MSys.avgXpGain))
-    
-    slainParts.push('Min left:' + Math.round(MSys.xpLeft/MSys.avgXpGain));
-}
-
-MSys.notice(slainParts.join(' | '), MSys.color.fightSummary, MSys.color.fightSummarybg)
-
-MSys.ttk = 0
-MSys.damageThisFight = 0
-MSys.interrupt = false"
+                            "type": "trigger",
+                            "name": "Flying",
+                            "enabled": true,
+                            "id": 174,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^Reaching the mid elevation",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.escaping = false"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Cannot Fly Indoors",
+                            "enabled": true,
+                            "id": 175,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^Flying indoors would be a very bad idea.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "// if escaping and cannot fly crash out"
+                                }
+                            ]
                         }
                     ],
-                    "items": []
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Interrupts",
+                    "enabled": true,
+                    "id": 147,
+                    "items": [
+                        {
+                            "type": "trigger",
+                            "name": "Super - Interrupt",
+                            "enabled": true,
+                            "id": 148,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "^Throwing back its grizzled head.*cania lets out a high-pitched, wavering howl.$|^.*atzaparaki shakes off some of its torpor and draws in a deep breath, its sides beginning to swell alarmingly.$|^Light begins to focus deep within the body of a salt-crusted quartz creeper, growing to an almost painful radiance.$|^Staggering backwards, shoulder joint grinding.*draws back one of its massive, stony limbs, preparing to swing it.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (!MSys.escaping) {
+    MSys.interrupt = true
+    MSys.notice('Interrupting super', 'white', 'darkblue')
+    MSys.huntingAttack()
+} else {
+\tMSys.notice('Incoming super, prioritizing escape!', 'pink', 'darkblue')
+}"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Super - Interrupted",
+                            "enabled": true,
+                            "id": 172,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "loses .* concentration.$|^A crane-armed carrybot swings its arm",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.interrupt = false
+MSys.notice('Attack interrupted', 'white', 'darkblue')
+MSys.huntingAttack()"
+                                }
+                            ]
+                        }
+                    ],
+                    "actions": []
                 },
                 {
                     "type": "trigger",
@@ -771,68 +883,143 @@ display_notice('AUTO OFF', 'white', 'black')"
                     "items": []
                 },
                 {
-                    "type": "keybind",
-                    "name": "",
+                    "type": "trigger",
+                    "name": "Slain",
                     "enabled": true,
-                    "id": 10,
-                    "key": 96,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "if (get_variable('debug') == true) {MSys.log('I am attacking ' + get_variable('tar'), 'white')}
-MSys.systemEnabled = true
-MSys.offenseEnabled = true
-MSys.huntingAttack()"
-                        }
-                    ],
-                    "key_alt": false,
-                    "key_ctrl": false,
-                    "key_shift": false,
-                    "items": []
-                },
-                {
-                    "type": "keybind",
-                    "name": "",
-                    "enabled": true,
-                    "id": 32,
-                    "key": 111,
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "if (MSys.systemEnabled === true) {
-  MSys.systemEnabled = false
-  display_notice(\"Combat implant disabled\", 'white', 'black')
-} else {
-  MSys.systemEnabled = true
-  display_notice(\"Combat implant enabled\", 'white', 'black')
-}"
-                        }
-                    ],
-                    "key_alt": false,
-                    "key_ctrl": false,
-                    "key_shift": false,
-                    "items": []
-                },
-                {
-                    "type": "alias",
-                    "name": "Kill",
-                    "enabled": true,
-                    "id": 120,
-                    "matching": "exact",
+                    "id": 5,
+                    "matching": "regexp",
                     "whole_words": true,
                     "case_sensitive": true,
-                    "prefix_suffix": true,
+                    "text": "^(You) have slain a.*$|^.*has been slain by (.+)\\.$",
                     "actions": [
                         {
                             "action": "script",
-                            "script": "if (get_variable('debug') == true) {MSys.log('I am attacking ' + get_variable('tar'), 'white')}
-MSys.systemEnabled = true
-MSys.offenseEnabled = true
-MSys.huntingAttack()"
+                            "script": "MSys.stateReset()
+//Abilities below reset on slain, but not while walking
+MSys.frenzy       = false
+MSys.negation     = false
+MSys.sootheNeeded = true
+
+//var a = new Audio('https://freesound.org/people/adcbicycle/sounds/13934/download/13934__adcbicycle__6.wav')
+//a.play()
+
+var autoList = ['You', 'Chronoxi Starwraith', 'Feraluna Starwraith', 'Mee', 'Casimar', 'Albion', 'Mykel']
+var onList = ''
+
+if (args[1]) {
+\tonList = autoList.includes(args[1])
+} else {
+\tonList = autoList.includes(args[2])
+}
+
+if (MSys.systemEnabled === true && onList) {
+    MSys.targetHealth = 0
+\tMSys.findTarget()
+
+    if (MSys.class == 'Engineer' && get_variable('useQPCBoost')) {
+        send_command('clearqueue')
+        send_command('qpcboost')
+    }
+
+
+    if (MSys.break) {MSys.offenseEnabled = false}
+
+    MSys.huntingAttack()
+}
+
+var slainParts = []
+var now = new Date()
+
+if (MSys.damageThisFight > 0) {
+    slainParts.push(MSys.damageThisFight + ' damage done this fight.');
+}
+
+if (MSys.ttk > 0){
+    slainParts.push('TTK: ' + (now.getTime() - MSys.ttk)/1000 + 's')
+}
+
+if (MSys.damageThisFight > 0 && MSys.ttk > 0) {
+    slainParts.push('DPS: ' + Math.round(MSys.damageThisFight / ((now.getTime() - MSys.ttk)/1000)))
+}
+
+if (MSys.showXP) {
+    slainParts.push('XP left: ' + Math.round(MSys.xpLeft));
+
+    if (MSys.avgXpGain > 0) {
+        slainParts.push('XP/min: ' + Math.round(MSys.avgXpGain))
+
+        slainParts.push('Min left:' + Math.round(MSys.xpLeft/MSys.avgXpGain));
+    }
+}
+
+var msg = slainParts.join(' | ');
+
+MSys.notice(msg, MSys.color.slay, MSys.color.slaybg)
+
+MSys.ttk = 0
+MSys.damageThisFight = 0
+MSys.interrupt = false"
                         }
                     ],
-                    "text": "k",
                     "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Under Attack",
+                    "enabled": true,
+                    "id": 171,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": true,
+                    "text": "^(.*) moves in to attack you.$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.alert('Being attacked by: ' + args[1], 'Red')
+//set_variable('tar', args[1])
+if (MSys.health < MSys.maxHealth && MSys.useEscapeAggro) {
+    MSys.escapeFromCombat()
+} else if (MSys.systemEnabled) {
+    MSys.notice('Initating counterattack')
+    MSys.findTarget()
+    MSys.offenseEnabled = true
+    MSys.huntingAttack()
+}"
+                        }
+                    ]
+                },
+                {
+                    "type": "trigger",
+                    "name": "You Died",
+                    "enabled": true,
+                    "id": 178,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": true,
+                    "text": "^You collapse to the ground, killed by",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.stateReset()
+MSys.buffReset()"
+                        }
+                    ]
+                },
+                {
+                    "type": "trigger",
+                    "name": "Landing",
+                    "enabled": true,
+                    "id": 180,
+                    "matching": "substring",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You descend to the ground, steadying yourself upon the solid surface.",
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "LOOK"
+                        }
+                    ]
                 }
             ],
             "actions": []
@@ -844,51 +1031,24 @@ MSys.huntingAttack()"
             "id": 4,
             "items": [
                 {
-                    "type": "group",
-                    "name": "Interrupts",
-                    "enabled": true,
-                    "id": 147,
-                    "items": [
-                        {
-                            "type": "trigger",
-                            "name": "Super - Interrupt",
-                            "enabled": true,
-                            "id": 148,
-                            "matching": "regexp",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "text": "^Throwing back its grizzled head, a sly cania lets out a high-pitched, wavering howl.$|^A sluggish atzaparaki shakes off some of its torpor and draws in a deep breath, its sides beginning to swell alarmingly.$|^Light begins to focus deep within the body of a salt-crusted quartz creeper, growing to an almost painful radiance.$|^Staggering backwards, shoulder joint grinding, a crystal-clawed rock giant draws back one of its massive, stony limbs, preparing to swing it.$",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.interrupt = true
-
-MSys.alert('interrupting super', 'white', 'blue')
-MSys.huntingAttack()
-"
-                                }
-                            ],
-                            "items": []
-                        }
-                    ],
-                    "actions": []
-                },
-                {
                     "type": "trigger",
-                    "name": "Left battle",
+                    "name": "Add Damage Per Kill",
                     "enabled": true,
-                    "id": 6,
-                    "matching": "exact",
+                    "id": 57,
+                    "matching": "regexp",
                     "whole_words": true,
                     "case_sensitive": true,
-                    "text": "You are no longer in the throes of battle.",
+                    "text": "Damage Dealt: (.+) .+",
                     "actions": [
                         {
-                            "action": "highlight",
-                            "highlight": "match",
-                            "highlight_backref": "1",
-                            "highlight_fg": "#9488f6",
-                            "highlight_bg": "#000000"
+                            "action": "script",
+                            "script": "if (MSys.ttk == 0) {
+    var now = new Date()
+    MSys.ttk = now.getTime()
+}
+MSys.damageThisFight += parseInt(args[1])
+
+colorize_current_line(0, args['input'].length, MSys.color.dealt, 'black')"
                         }
                     ],
                     "items": []
@@ -911,29 +1071,6 @@ MSys.huntingAttack()
                 },
                 {
                     "type": "trigger",
-                    "name": "Add Damage Per Kill",
-                    "enabled": true,
-                    "id": 57,
-                    "matching": "regexp",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "text": "Damage Dealt: (.+) .+",
-                    "actions": [
-                        {
-                            "action": "script",
-                            "script": "if (MSys.ttk == 0) {
-    var now = new Date()
-    MSys.ttk = now.getTime()
-}
-MSys.damageThisFight += parseInt(args[1])
-
-colorize_current_line(0, args['input'].length, MSys.color.info, 'black')"
-                        }
-                    ],
-                    "items": []
-                },
-                {
-                    "type": "trigger",
                     "name": "Not following",
                     "enabled": true,
                     "id": 87,
@@ -945,6 +1082,30 @@ colorize_current_line(0, args['input'].length, MSys.color.info, 'black')"
                         {
                             "action": "script",
                             "script": "MSys.log(args[1] + ' Stopped Following!', 'darkred')"
+                        }
+                    ],
+                    "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Left battle",
+                    "enabled": true,
+                    "id": 6,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "You are no longer in the throes of battle.",
+                    "actions": [
+                        {
+                            "action": "highlight",
+                            "highlight": "match",
+                            "highlight_backref": "1",
+                            "highlight_fg": "#9488f6",
+                            "highlight_bg": "#000000"
+                        },
+                        {
+                            "action": "script",
+                            "script": "MSys.stateReset()"
                         }
                     ],
                     "items": []
@@ -985,45 +1146,92 @@ send_command('crash ' + args[1])"
                     ],
                     "text": "^js (.+)$",
                     "items": []
-                }
-            ],
-            "actions": []
-        },
-        {
-            "type": "group",
-            "name": "Combat",
-            "enabled": true,
-            "id": 64,
-            "items": [
+                },
                 {
-                    "type": "group",
-                    "name": "Chat",
+                    "type": "alias",
+                    "name": "Kill",
                     "enabled": true,
-                    "id": 65,
-                    "items": [
+                    "id": 120,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
                         {
-                            "type": "alias",
-                            "name": "Target call - tt <name>",
-                            "enabled": false,
-                            "id": 67,
-                            "matching": "regexp",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.target = args[1]
-set_variable('tar', args[1])
-send_command('st ' + args[1])
-send_command('crt Target: ' + args[1])"
-                                }
-                            ],
-                            "text": "tt (.+)",
-                            "items": []
+                            "action": "script",
+                            "script": "if (get_variable('debug') == true) {MSys.log('I am attacking ' + get_variable('tar'), 'white')}
+MSys.systemEnabled = true
+MSys.offenseEnabled = true
+MSys.huntingAttack()"
                         }
                     ],
-                    "actions": []
+                    "text": "k",
+                    "items": []
+                },
+                {
+                    "type": "alias",
+                    "name": "Target call - tt <name>",
+                    "enabled": false,
+                    "id": 67,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.target = args[1]
+set_variable('tar', args[1])
+send_command('st ' + args[1])
+//send_command('crt Target: ' + args[1])"
+                        }
+                    ],
+                    "text": "tt (.+)",
+                    "items": []
+                },
+                {
+                    "type": "keybind",
+                    "name": "",
+                    "enabled": true,
+                    "id": 10,
+                    "key": 96,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (get_variable('debug') == true) {MSys.log('I am attacking ' + get_variable('tar'), 'white')}
+MSys.systemEnabled = true
+MSys.offenseEnabled = true
+MSys.grappling = false
+MSys.huntingAttack()"
+                        }
+                    ],
+                    "key_alt": false,
+                    "key_ctrl": false,
+                    "key_shift": false,
+                    "items": []
+                },
+                {
+                    "type": "keybind",
+                    "name": "",
+                    "enabled": true,
+                    "id": 32,
+                    "key": 111,
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "if (MSys.systemEnabled === true) {
+  MSys.systemEnabled = false
+  display_notice(\"Combat implant disabled\", 'white', 'black')
+} else {
+  MSys.systemEnabled = true
+  display_notice(\"Combat implant enabled\", 'white', 'black')
+}"
+                        }
+                    ],
+                    "key_alt": false,
+                    "key_ctrl": false,
+                    "key_shift": false,
+                    "items": []
                 }
             ],
             "actions": []

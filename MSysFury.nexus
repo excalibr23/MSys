@@ -23,14 +23,50 @@ MSys.stance = ''
 MSys.bladeshape = false
 MSys.rage = 0
 MSys.maxRage = 0
-MSys.unstoppable = false
-MSys.berserk = false
+MSys.flightCommand = 'KITH FLIGHT'
+//MSys.goal = \"hunt4\"
+
+// Config
 MSys.useBerserk = get_variable('useBerserk')
-MSys.fever = false
 MSys.useFever = get_variable('useFever')
-MSys.hypertension = false
+
+// Buffs
+MSys.buffReset = function () {
+\tMSys.harden = false
+\tMSys.warmth = false
+\tMSys.balancing = false
+\tMSys.firewreathe = false
+}
+MSys.buffReset()
+
+MSys.stateReset = function() {
+    // Reset all combat variables
+    MSys.escaping      = false
+    MSys.fever         = false
+    MSys.hypertension  = false
+    MSys.interrupt     = false
+    MSys.bleeding      = false
+    MSys.prone         = false
+    MSys.grappling     = false
+}
+MSys.stateReset()
+
+// Status
+MSys.unstoppable = false
+MSys.unstoppableReady = false
+MSys.berserk = false
 MSys.infernoCharging = false
+MSys.resistant = false
+MSys.judgement = false
+
+// Target status
+MSys.hypertension = false
+MSys.bleeding = false
+MSys.prone = false
+
 MSys.huntingAttack = function() {
+    if (!MSys.systemEnabled || MSys.grappling) { return }
+    
     //Fury
     var command = 'combo '
 
@@ -45,6 +81,10 @@ MSys.huntingAttack = function() {
     }else if (!MSys.bladeshape && get_variable('kithbladeshape') !== undefined && get_variable('kithbladeshape') !== '') {
         send_command(get_variable('kithbladeshape'))
         return;
+    }else if (!MSys.harden)      { command = 'kith harden'
+\t}else if (!MSys.warmth)      { command = 'kith warmth'
+\t}else if (!MSys.balancing)   { command = 'kith balancing'
+\t}else if (!MSys.firewreathe) { command = 'kith firewreathe'
     }else if (get_variable('tar') == '' || MSys.offenseEnabled == false) {
         return;
     }else if (!MSys.fever && MSys.useFever) {
@@ -52,109 +92,142 @@ MSys.huntingAttack = function() {
     }else if (MSys.goal == 'hunt1') {
         //Battleflow attack
         if (MSys.stance == 'Symmetry') {
-            command += 'swiftcut '
+            command += 'gutrend '
         } else if (MSys.stance == 'Flare') {
             command += 'wound '
         } else if (MSys.stance == 'Eruption') {
             if (MSys.hypertension) {
-                command += 'bloodburn '
+                command += 'bloodsinge '
             } else {
                 command += 'hypertension '
             }
-        } else if (MSys.stance == 'Ember') {
-            command += 'legspike '
         }
 
         //Rage Attack
-        if (MSys.unstoppable) {
+        if (MSys.unstoppableReady) {
+            command += 'unstoppable '
+        } else if (MSys.unstoppable) {
             command += 'slice '
         } else if (MSys.stance == 'Symmetry') {
-            if (MSys.rage / MSys.maxRage > .13 && !MSys.berserk && MSys.useBerserk) {
+            if (MSys.rage / MSys.maxRage > .05 && !MSys.berserk && MSys.useBerserk) {
                 command += 'berserk '
             } else {
                 command += 'flyinglash '
             }
         } else if (MSys.stance == 'Flare') {
-            command += 'rend '
+            command += 'deepstrike '
         } else if (MSys.stance == 'Eruption') {
-            if (MSys.health / MSys.maxHealth < .7) {
-                command += 'resistant '
-            } else {
-                command += 'upperlash '
-            }
-        } else if (MSys.stance == 'Ember') {
-            if (MSys.rage / MSys.maxRage > .73  && MSys.unstoppable == false) {
-                command += 'unstoppable '
-            } else {
-                command += 'strike '
-            }
+            command += 'flyinglash '
         }
-    }else if (MSys.goal == 'hunt2' && MSys.first_name != 'Oga') {
+    }else if (MSys.goal == 'hunt2') {
         //Battleflow attack
         if (MSys.stance == 'Symmetry') {
-            command += 'swiftcut '
+            command += 'gutrend '
         } else if (MSys.stance == 'Flare') {
-            command += 'wound '
+            if (MSys.bleeding) {
+            \tcommand += 'sear '
+            } else {
+            \tcommand += 'wound '
+            }
         } else if (MSys.stance == 'Eruption') {
             command += 'rupture '
         }
 
         //Rage Attack
-        if (MSys.unstoppable) {
+        if (MSys.unstoppableReady) {
+            command += 'unstoppable '
+        } else if (MSys.unstoppable) {
             command += 'slice '
         } else if (MSys.stance == 'Symmetry') {
-            if (MSys.rage / MSys.maxRage > .13 && !MSys.berserk && MSys.useBerserk) {
+            if (MSys.rage / MSys.maxRage >= .05 && !MSys.berserk && MSys.useBerserk) {
                 command += 'berserk '
             } else {
                 command += 'flyinglash '
             }
         } else if (MSys.stance == 'Flare') {
-            command += 'rend '
-        } else if (MSys.stance == 'Eruption') {
-            if (MSys.rage / MSys.maxRage > .73  && MSys.unstoppable == false) {
-                command += 'unstoppable '
+            if (MSys.bleeding) {
+            \tcommand += 'strike '
             } else {
-                command += 'strike '
+            \tcommand += 'deepstrike '
             }
+        } else if (MSys.stance == 'Eruption') {
+            command += 'flyinglash '
         }
-    }else if (MSys.first_name == 'Oga') {
+    }else if (MSys.goal == 'hunt3') {
         var next = ''
-        command = 'combo '
+        command = 'COMBO '
 
         //Battleflow attack
         if (MSys.stance == 'Symmetry') {
-            command += 'gutrend '
+            command += 'SWIFTCUT '
             next = 'Ember'
         } else if (MSys.stance == 'Ember') {
-            command += 'legspike '
+            command += 'LEGSPIKE '
             next = 'Symmetry'
         } else if (MSys.stance == 'Flare') {
-            command += 'sear '
+            command += 'SEAR '
             next = 'Symmetry'
         }
 
         //Rage Attack
-        if (MSys.unstoppable) {
-            command += 'slice '
+        if (MSys.unstoppableReady && MSys.unstoppable == false) {
+            command += 'UNSTOPPABLE '
+        } else if (MSys.unstoppable && !MSys.judgement) {
+            command += 'JUDGEMENT '
+            MSys.judgement = true;
+        } else if (MSys.unstoppable) {
+          \tcommand += 'SLICE '
         } else if (next == 'Symmetry') {
-            if (MSys.rage / MSys.maxRage > .8  && MSys.unstoppable == false) {
-                command += 'unstoppable '
-            } else {
-                command += 'deflect '
-            }
+            command += 'DEFLECT '
         } else if (next == 'Ember') {
-            command += 'resistant '
+            command += 'RESISTANT '
         } else if (next == 'Flare') {
-            command += 'reel '
+            command += 'REEL '
+        }
+    } else if (MSys.goal == 'hunt4') {
+        var next = ''
+        command = 'COMBO '
+
+        //Battleflow attack
+        if (MSys.stance == 'Symmetry') {
+            command += 'SWIFTCUT '
+            next = 'Ember'
+        } else if (MSys.stance == 'Ember') {
+            command += 'SWEEP '
+            next = 'Spark'
+        } else if (MSys.stance == 'Spark') {
+            command += 'HEW '
+            next = 'Ember'
+        }
+
+        //Rage Attack
+        if (MSys.unstoppableReady && MSys.unstoppable == false) {
+            command += 'UNSTOPPABLE '
+        } else if (MSys.unstoppable && !MSys.judgement) {
+           \tcommand += 'JUDGEMENT '
+            MSys.judgement = true;
+        } else if (next == 'Symmetry') {
+            command += 'DEFLECT '
+        } else if (next == 'Ember') {
+            command += 'RESISTANT '
+        } else if (next == 'Spark') {
+            if (MSys.rage / MSys.maxRage >= .12) {
+            \tcommand += 'GRAPPLE '
+            \tMSys.grappling = true;
+            } else {
+            \tcommand += 'TOPPLE '
+            }
         }
     }
 
-    command += get_variable('tar')
+    if (command[command.length - 1] == ' ') {
+    \tcommand += get_variable('tar')
+    }
     send_command(command)
 }
 
 MSys.loaded(\"Starwraith Fury Combat Implant v\" + MSys.SFCIversion + \" Loaded. See HFURY and HSETUP for config options. Good hunting, and good death.\");
-send_command('wakeup')",
+//send_command('wakeup')",
             "items": []
         },
         {
@@ -181,7 +254,9 @@ if (args.gmcp_method == \"Char.Vitals\") {
 
 //Add items when items enter
 if (args.gmcp_method == \"Char.Items.Add\") {
-    if (MSys.infernoCharging && itemJoining.attrib === 'm') {
+    let itemJoining = args.gmcp_args['item']
+    
+    if (MSys.infernoCharging && itemJoining.attrib == 'm') {
     \tsend_command('asdf')
         MSys.infernoCharging = false
         MSys.alert('mob entered - inferno cancelled', 'white', 'red')
@@ -441,6 +516,7 @@ MSys.interrupt = false"
                                 {
                                     "action": "script",
                                     "script": "MSys.unstoppable = true
+MSys.unstoppableReady = false
 MSys.log('YES UNSTOPPABLE', MSys.color.info)
 
 if (MSys.systemEnabled) {
@@ -471,6 +547,46 @@ if (MSys.systemEnabled) {
                                 }
                             ],
                             "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Unstoppable Ready",
+                            "enabled": true,
+                            "id": 151,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "Rage flows through you - you are now able to activate the Unstoppable stance!",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.unstoppableReady = true
+
+if (MSys.systemEnabled) {
+\tMSys.huntingAttack()
+}"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Unstoppable Not Ready",
+                            "enabled": true,
+                            "id": 152,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You haven't used enough rage attacks to become unstoppable!",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.unstoppableReady = false
+
+if (MSys.systemEnabled) {
+\tMSys.huntingAttack()
+}"
+                                }
+                            ]
                         },
                         {
                             "type": "trigger",
@@ -600,6 +716,251 @@ MSys.huntingAttack()"
                                 }
                             ],
                             "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Harden On",
+                            "enabled": true,
+                            "id": 147,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You focus on hardening your skin with kith energy.$|^Your internals are already hardened.$|^That requires the Harden ability in the Fulmination skill, which you haven't learned.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.harden = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Warmth On",
+                            "enabled": true,
+                            "id": 148,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You focus on warming up your skin with kith energy.$|^You're already protected from being frozen.$|^That requires the Warmth ability in the Fulmination skill, which you haven't learned.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.warmth = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Balancing On",
+                            "enabled": true,
+                            "id": 149,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You focus on your kith to prevent falling.$|^You're already balancing.$|^That requires the Balancing ability in the Fulmination skill, which you haven't learned.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.balancing = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Fireweathe On",
+                            "enabled": true,
+                            "id": 150,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You form a wreathe of kith-induced fire around yourself.$|^You are already wreathed in fire.$|^That requires the Firewreathe ability in the Fulmination skill, which you haven't learned.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.firewreathe = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Resistant On",
+                            "enabled": true,
+                            "id": 155,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You focus your rage to become more resistant to damage.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.resistant = true"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Resistant Off",
+                            "enabled": true,
+                            "id": 156,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You are less resistant.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.resistant = false"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Judgement On",
+                            "enabled": true,
+                            "id": 157,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "The crystalline stillness of implacable judgement descends across your soul as you use your rage to clarify and measure each target you strike with a merciless exploitation of any weakness, precise and deadly.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.judgement = true
+"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Judgement Off",
+                            "enabled": true,
+                            "id": 158,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "The opportunity to judge your foe has passed.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.judgement = false
+"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Grapple Off",
+                            "enabled": true,
+                            "id": 159,
+                            "matching": "begins",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "You lose your grip on",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.grappling = false;
+MSys.huntingAttack();"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Grapple On",
+                            "enabled": false,
+                            "id": 163,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "With an abrupt, swift maneuver, you swing your arm around .* neck, gripping it close with your .* poised, burning and dangerous, at its throat.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "send_command(\"CQ\")
+MSys.grappling = true"
+                                }
+                            ]
+                        }
+                    ],
+                    "actions": []
+                },
+                {
+                    "type": "group",
+                    "name": "Target Status",
+                    "enabled": true,
+                    "id": 160,
+                    "items": [
+                        {
+                            "type": "trigger",
+                            "name": "Bleeding On",
+                            "enabled": true,
+                            "id": 153,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": ".* hums and sparks ominously as you cut .* multiple times, the blade flashing brightly as wounds open all over .* body.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.bleeding = true"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Bleeding Off",
+                            "enabled": true,
+                            "id": 154,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": ".* has cured the effects of Bleeding.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.bleeding = false
+
+if (MSys.systemEnabled) {
+\tMSys.huntingAttack()
+}"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Prone On",
+                            "enabled": true,
+                            "id": 161,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": ".* falls to the ground!",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.prone = true"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Prone Off",
+                            "enabled": true,
+                            "id": 162,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": ".* has cured the effects of Prone.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.prone = false"
+                                }
+                            ]
                         }
                     ],
                     "actions": []
@@ -607,7 +968,7 @@ MSys.huntingAttack()"
                 {
                     "type": "alias",
                     "name": "Awaken Fury",
-                    "enabled": true,
+                    "enabled": false,
                     "id": 143,
                     "matching": "exact",
                     "whole_words": true,
@@ -679,6 +1040,23 @@ MSys.huntingAttack()"
                         }
                     ],
                     "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "Wrong Stance",
+                    "enabled": true,
+                    "id": 164,
+                    "matching": "regexp",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "text": "The .* maneuver requires the .* stance, but you are currently in the .* one.",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.grappling = false
+MSys.huntingAttack()"
+                        }
+                    ]
                 }
             ],
             "actions": []

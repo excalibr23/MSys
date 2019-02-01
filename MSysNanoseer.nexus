@@ -14,41 +14,86 @@
     return;
 }
 
-//Nano
-MSys.shortname = 'SNCI'
-MSys.nanites = 0
+//Nanoseer Character Information
+MSys.shortname  = 'SNCI'
+MSys.nanites    = 0
 MSys.maxNanites = 0
-MSys.sanity = 0
-MSys.maxSanity = 0
-MSys.multistrike = false
-MSys.frenzy = false
-MSys.freeze = false
-MSys.delaySwarm = false
-MSys.pointZero = false
-MSys.speedup = false
-MSys.negation = false
-MSys.empyreal = ''
-MSys.useDelay = get_variable('useDelay')
-MSys.useMultistrike = get_variable('useMultistrike')
-MSys.useFrenzy = get_variable('useFrenzy')
-MSys.usePointZero = get_variable('usePointZero')
-MSys.useSpeedup = get_variable('useSpeedup')
-MSys.useFreeze = get_variable('useFreeze')
-MSys.useNegation = get_variable('useNegation')
+MSys.sanity     = 0
+MSys.maxSanity  = 0
+
+//Configuration
+MSys.useDelay           = get_variable('useDelay')
+MSys.useFreeze          = get_variable('useFreeze')
+MSys.useFrenzy          = get_variable('useFrenzy')
+MSys.useMark            = get_variable('useMark')
+MSys.useMiniaturization = get_variable('useMiniaturization')
+MSys.useMultistrike     = get_variable('useMultistrike')
+MSys.useNegation        = get_variable('useNegation')
+MSys.usePointZero       = get_variable('usePointZero')
+MSys.useProtection      = get_variable('useProtection')
+MSys.useRush            = get_variable('useRush')
+MSys.useSoothe          = get_variable('useSoothe')
+MSys.useSpeedup         = get_variable('useSpeedup')
+MSys.useSuffocate       = get_variable('useSuffocate')
+
+//Active Abilities
+MSys.empyreal         = ''
+MSys.delaySwarm       = false
+MSys.freeze           = false
+MSys.frenzy           = false
+MSys.mark             = false
+MSys.miniaturization  = false
+MSys.multistrike      = false
+MSys.negation         = false
+MSys.pointZero        = false
+MSys.protection       = false
+MSys.rush             = false
+MSys.soothing         = false
+MSys.sootheNeeded     = false
+MSys.speedup          = false
+MSys.speedupAvailable = true
+MSys.suffocation      = false
+
 MSys.huntingAttack = function() {
-    if (!this.systemEnabled) {return}
+    if (!this.systemEnabled || MSys.escaping) {return}
+    
     var command = ''
+    
+    if (MSys.interrupt && MSys.offenseEnabled) {
+        this.debugMessage('Attempting eyestrike interrupt')
+        send_command('nano eyestrike ' + get_variable('tar'))
+        return
+
+    // Do not interrupt channel
+    } else if (this.soothing) {
+        this.debugMessage('Channeling Soothe')
+        return
 
     //Self heal
-    if (this.health / this.maxHealth < .8 && this.healReady && this.useHeal) {
+    } else if (this.healthPct < .8 && this.healReady && this.useHeal) {
         this.debugMessage('Nano repair')
         send_command('nano repair')
         return
 
-        //Out of combat buffs
-        //Casting and channeling are separated to enable the buff to be executed
-        //immediately if already channeling one of the required empyreals
-        //This prevents unnecessary swapping of empyreal channels after combat
+    //Out of combat buffs
+    //Casting and channeling are separated to enable the buff to be executed
+    //immediately if already channeling one of the required empyreals
+    //This prevents unnecessary swapping of empyreal channels after combat
+    } else if (!this.rush && this.useRush) {
+        this.debugMessage('Cast Rush')
+        send_command('Rush')
+        return
+
+    } else if (!this.miniaturization && this.useMiniaturization && MSys.nanites >= 350) {
+        this.debugMessage('Cast Miniaturization')
+        send_command('nano miniaturisation')
+        return
+
+    } else if (!this.protection && this.useProtection && MSys.nanites >= 100) {
+        this.debugMessage('Cast Protection')
+        send_command('nano protect')
+        return
+
     } else if (!this.negation && this.useNegation && this.empyreal == 'Progenitor') {
         this.debugMessage('Cast Negation')
         send_command('negation')
@@ -69,20 +114,35 @@ MSys.huntingAttack = function() {
         send_command('oblivion channel progenitor')
         return
 
+    } else if (this.sootheNeeded && !this.soothing) {
+        this.debugMessage('Soothing needed after combat')
+        send_command('void soothe')
+        return
+
         //Abort execution of offensive actions if disabled
     } else if (!this.offenseEnabled || get_variable('tar') == '') {
         this.debugMessage('No target or offense disabled')
         return
 
-        //Combat buffs
-    } else if (!this.speedup && this.useSpeedup && this.empyreal != 'Traveller') {
+        //Combat preparation
+    } else if (!this.speedup && this.useSpeedup && MSys.speedupAvailable && this.empyreal != 'Traveller') {
         this.debugMessage('Channel Traveller')
         send_command('oblivion channel Traveller')
         return
 
-    } else if (!this.speedup && this.useSpeedup && this.empyreal == 'Traveller') {
+    } else if (!this.speedup && this.useSpeedup && MSys.speedupAvailable && this.empyreal == 'Traveller') {
         this.debugMessage('Cast Speedup')
-        send_command('speedup')
+        send_command('oblivion speedup')
+        return
+
+    } else if (!this.mark && this.useMark && this.empyreal != 'Traveller') {
+        this.debugMessage('Channel Traveller')
+        send_command('oblivion channel Traveller')
+        return
+
+    } else if (!this.mark && this.useMark && this.empyreal == 'Traveller') {
+        this.debugMessage('Cast Mark')
+        send_command('oblivion mark')
         return
 
     } else if (!this.pointZero && this.usePointZero) {
@@ -90,13 +150,14 @@ MSys.huntingAttack = function() {
         send_command('void pointzero')
         return
 
+        //Attacks
     } else if (!this.delaySwarm && this.useDelay) {
         this.debugMessage('Delay Attack')
         command =  'delay '
         command += get_variable('delayAttack')
         command += ' '
 
-    } else if (!this.multistrike && this.targetHealth > 40 && this.useMultistrike) {
+    } else if (!this.multistrike && this.targetHealth > 80 && this.useMultistrike) {
         this.debugMessage('Multistrike')
         command = 'multistrike '
 
@@ -104,13 +165,23 @@ MSys.huntingAttack = function() {
         this.debugMessage('Freeze')
         command = 'freeze '
 
+    } else if (!this.suffocation && this.useSuffocate) {
+        this.debugMessage('Cast Suffocate')
+        command = 'void suffocate '
+
+    } else if (this.suffocation && this.useSuffocate) {
+        this.debugMessage('Suffocate active, no action required')
+        return
+
     } else {
         this.debugMessage('Default Attack')
         command = this.attack + ' '
     }
 
-    command += get_variable('tar')
-    send_command(command)          
+    if (command[command.length - 1] == ' ') {command += get_variable('tar')}
+    
+    this.debugMessage('Attempting command: ' + command)
+    send_command(command)
 }
 
 MSys.loaded(\"Starwraith Nanoseer Combat Implant v1.3\");
@@ -179,76 +250,39 @@ if (args.gmcp_method == 'Char.Defences.Add') {
                                 {
                                     "action": "script",
                                     "script": "var abilities = ''
-abilities += 'Freeze: ' + get_variable('useFreeze') + '\\n'
-abilities += 'Multistrike: ' + get_variable('useMultistrike') + '\\n'
-abilities += 'DelaySwarm: ' + get_variable('useDelay') + '\\n'
-abilities += 'UseFrenzy: ' + get_variable('useFrenzy') + '\\n'
-abilities += 'Frenzy Status: ' + MSys.frenzy + '\\n'
-abilities += 'Use Point Zero: ' + get_variable('usePointZero') + '\\n'
-abilities += 'Point Zero Status: ' + MSys.pointZero + '\\n'
-abilities += 'Use Speedup: ' + get_variable('useSpeedup') + '\\n'
-abilities += 'Speedup Status: ' + MSys.speedUp + '\\n'
-abilities += 'Use Negation: ' + get_variable('useNegation') + '\\n'
-abilities += 'Negation Status: ' + MSys.negation + '\\n'
+abilities += 'Use Delay Swarm: '     + get_variable('useDelay') + '\\n'
+abilities += 'Use Freeze: '          + get_variable('useFreeze') + '\\n'
+abilities += 'Use Frenzy: '          + get_variable('useFrenzy') + '\\n'
+abilities += 'Use Mark: '            + get_variable('useMark') + '\\n'
+abilities += 'Use Miniaturization: ' + get_variable('useMiniaturization') + '\\n'
+abilities += 'Use Multistrike: '     + get_variable('useMultistrike') + '\\n'
+abilities += 'Use Negation: '        + get_variable('useNegation') + '\\n'
+abilities += 'Use Point Zero: '      + get_variable('usePointZero') + '\\n'
+abilities += 'Use Protection: '      + get_variable('useProtection') + '\\n'
+abilities += 'Use Rush: '            + get_variable('useRush') + '\\n'
+abilities += 'Use Soothe: '          + get_variable('useSoothe') + '\\n'
+abilities += 'Use Speedup: '         + get_variable('useSpeedup') + '\\n'
+abilities += 'Use Suffocate: '       + get_variable('useSuffocate') + '\\n'
+MSys.log(abilities, 'white')
 
-MSys.log(abilities, 'white')"
+var debugMessages = ''
+debugMessages += 'Empyreal: '               + MSys.empyreal + '\\n'
+debugMessages += 'Frenzy Status: '          + MSys.frenzy + '\\n'
+debugMessages += 'Mark Status: '            + MSys.mark + '\\n'
+debugMessages += 'Miniaturization Status: ' + MSys.miniaturization + '\\n'
+debugMessages += 'Negation Status: '        + MSys.negation + '\\n'
+debugMessages += 'Point Zero Status: '      + MSys.pointZero + '\\n'
+debugMessages += 'Protection Status: '      + MSys.protection + '\\n'
+debugMessages += 'Rush Status: '            + MSys.rush + '\\n'
+debugMessages += 'Soothing Status: '        + MSys.soothing + '\\n'
+debugMessages += 'Soothe Needed Status: '   + MSys.sootheNeeded + '\\n'
+debugMessages += 'Speedup Available: '      + MSys.speedupAvailable + '\\n'
+debugMessages += 'Speedup Status: '         + MSys.speedup + '\\n'
+debugMessages += 'Suffocation Status: '     + MSys.suffocation + '\\n'
+MSys.debugMessage(debugMessages)"
                                 }
                             ],
                             "text": "hnano",
-                            "items": []
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Enable/Disable Freeze",
-                            "enabled": true,
-                            "id": 42,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.useFreeze = MSys.toggle('useFreeze', 'Freeze');"
-                                }
-                            ],
-                            "text": "hfreeze",
-                            "items": []
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Enable/Disable Multistrike",
-                            "enabled": true,
-                            "id": 43,
-                            "matching": "regexp",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.useMultistrike = MSys.toggle('useMultistrike', 'Multistrike');"
-                                }
-                            ],
-                            "text": "^hmulti(strike)?$",
-                            "items": []
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Enable/Disable Frenzy",
-                            "enabled": true,
-                            "id": 45,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.useFrenzy = MSys.toggle('useFrenzy', 'Frenzy');"
-                                }
-                            ],
-                            "text": "hfrenzy",
                             "items": []
                         },
                         {
@@ -283,6 +317,111 @@ MSys.log(abilities, 'white')"
                         },
                         {
                             "type": "alias",
+                            "name": "Enable/Disable Freeze",
+                            "enabled": true,
+                            "id": 42,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useFreeze = MSys.toggle('useFreeze', 'Freeze');"
+                                }
+                            ],
+                            "text": "hfreeze",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Frenzy",
+                            "enabled": true,
+                            "id": 45,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useFrenzy = MSys.toggle('useFrenzy', 'Frenzy');"
+                                }
+                            ],
+                            "text": "hfrenzy",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Mark",
+                            "enabled": true,
+                            "id": 175,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useMark = MSys.toggle('useMark', 'Marking room before combat');"
+                                }
+                            ],
+                            "text": "hmark"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Miniaturization",
+                            "enabled": true,
+                            "id": 173,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useMiniaturization = MSys.toggle('useMiniaturization', 'Miniaturization');"
+                                }
+                            ],
+                            "text": "hmini"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Multistrike",
+                            "enabled": true,
+                            "id": 43,
+                            "matching": "regexp",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useMultistrike = MSys.toggle('useMultistrike', 'Multistrike');"
+                                }
+                            ],
+                            "text": "^hmulti(strike)?$",
+                            "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Negation",
+                            "enabled": true,
+                            "id": 164,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useNegation = MSys.toggle('useNegation', 'Negation');"
+                                }
+                            ],
+                            "text": "hnegation"
+                        },
+                        {
+                            "type": "alias",
                             "name": "Enable/Disable Point Zero",
                             "enabled": true,
                             "id": 162,
@@ -297,6 +436,57 @@ MSys.log(abilities, 'white')"
                                 }
                             ],
                             "text": "hpointzero"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Protection",
+                            "enabled": true,
+                            "id": 170,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useProtection = MSys.toggle('useProtection', 'Protection');"
+                                }
+                            ],
+                            "text": "hProtection"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Rush",
+                            "enabled": true,
+                            "id": 169,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useRush = MSys.toggle('useRush', 'Rush');"
+                                }
+                            ],
+                            "text": "hrush"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Soothe",
+                            "enabled": true,
+                            "id": 183,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.useSoothe = MSys.toggle('useSoothe', 'Soothe between combat');"
+                                }
+                            ],
+                            "text": "hsoothe"
                         },
                         {
                             "type": "alias",
@@ -317,9 +507,9 @@ MSys.log(abilities, 'white')"
                         },
                         {
                             "type": "alias",
-                            "name": "Enable/Disable Negation",
+                            "name": "Enable/Disable Suffocate",
                             "enabled": true,
-                            "id": 164,
+                            "id": 184,
                             "matching": "exact",
                             "whole_words": true,
                             "case_sensitive": false,
@@ -327,10 +517,10 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.useNegation = MSys.toggle('useNegation', 'Negation');"
+                                    "script": "MSys.useSuffocate = MSys.toggle('useSuffocate', 'Suffocate');"
                                 }
                             ],
-                            "text": "hnegation"
+                            "text": "hsuffocate"
                         }
                     ],
                     "actions": []
@@ -422,8 +612,8 @@ send_command('limbdrain ' + get_variable('tar') + ' ' + limbs[args[1]])"
                             "enabled": true,
                             "id": 44,
                             "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": true,
+                            "whole_words": false,
+                            "case_sensitive": false,
                             "prefix_suffix": true,
                             "actions": [
                                 {
@@ -492,12 +682,14 @@ send_command('delay ' + command[args[1]])"
                             "matching": "regexp",
                             "whole_words": false,
                             "case_sensitive": false,
-                            "text": "^You walk to the",
+                            "text": "^You walk to the|^You fly to the",
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.speedup = false
-MSys.pointZero = false"
+                                    "script": "MSys.speedup     = false
+MSys.pointZero   = false
+MSys.mark        = false
+MSys.suffocation = false"
                                 }
                             ]
                         },
@@ -520,6 +712,24 @@ MSys.pointZero = false"
                         },
                         {
                             "type": "trigger",
+                            "name": "Empyreal Channeling",
+                            "enabled": true,
+                            "id": 165,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^You reach into your connection to the void",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('my_combat')) {
+    MSys.huntingAttack()
+}"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
                             "name": "Freeze on",
                             "enabled": true,
                             "id": 29,
@@ -531,24 +741,6 @@ MSys.pointZero = false"
                                 {
                                     "action": "script",
                                     "script": "MSys.freeze = true"
-                                }
-                            ],
-                            "items": []
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Freeze off",
-                            "enabled": false,
-                            "id": 30,
-                            "matching": "regexp",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "text": "^.+has cured the effects of Frozen.$",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.freeze = false
-MSys.huntingAttack()"
                                 }
                             ],
                             "items": []
@@ -573,7 +765,7 @@ MSys.huntingAttack()"
                         },
                         {
                             "type": "trigger",
-                            "name": "Rage off",
+                            "name": "Frenzy Inactive",
                             "enabled": false,
                             "id": 40,
                             "matching": "regexp",
@@ -590,54 +782,37 @@ MSys.huntingAttack()"
                         },
                         {
                             "type": "trigger",
-                            "name": "Frenzy Down",
-                            "enabled": false,
-                            "id": 38,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "text": "You break out of your frenzy.",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.alert('Frenzy Down', 'white', 'red')"
-                                }
-                            ],
-                            "items": []
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Negation Active",
+                            "name": "Mark Active",
                             "enabled": true,
-                            "id": 166,
+                            "id": 176,
                             "matching": "regexp",
                             "whole_words": false,
                             "case_sensitive": false,
-                            "text": "aura descends over you like a giant, protective shadow.$|^You are already prepared to negate damage.$",
+                            "text": "^You release your link with the previous room, and memorize this one.$|^You stoop to the ground and place your gauntleted palm upon it, concentrating intently upon the power of the Traveller. As you stand, a cryptic mark glows blue where you had touched before fading from sight.$",
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.negation = true
+                                    "script": "MSys.mark = true
 MSys.huntingAttack()"
                                 }
                             ]
                         },
                         {
                             "type": "trigger",
-                            "name": "Negation Down",
-                            "enabled": false,
-                            "id": 36,
-                            "matching": "exact",
-                            "whole_words": true,
+                            "name": "Miniaturization Active",
+                            "enabled": true,
+                            "id": 174,
+                            "matching": "regexp",
+                            "whole_words": false,
                             "case_sensitive": true,
-                            "text": "The shadow of the Progenitor's protection springs to life around you, absorbing the damaging attack before lifting away from you, the air around you growing subtly lighter.",
+                            "text": "^At your direction, your swarm begins to divide and subdivide|^You're already focusing on miniaturisation.$",
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.alert('Negation Down', 'white', 'red')"
+                                    "script": "MSys.miniaturization = true
+MSys.huntingAttack()"
                                 }
-                            ],
-                            "items": []
+                            ]
                         },
                         {
                             "type": "trigger",
@@ -677,34 +852,17 @@ MSys.huntingAttack()"
                         },
                         {
                             "type": "trigger",
-                            "name": "Speedup Active",
+                            "name": "Negation Active",
                             "enabled": true,
-                            "id": 157,
+                            "id": 166,
                             "matching": "regexp",
                             "whole_words": false,
-                            "case_sensitive": true,
-                            "text": "^You snap your fingers, and time starts flowing faster|^Time has already been distorted|^Time has been strangely distorted here.$",
+                            "case_sensitive": false,
+                            "text": "aura descends over you like a giant, protective shadow.$|^You are already prepared to negate damage.$",
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.speedup = true
-MSys.huntingAttack()"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Speedup Inactive",
-                            "enabled": true,
-                            "id": 159,
-                            "matching": "exact",
-                            "whole_words": false,
-                            "case_sensitive": true,
-                            "text": "The time distortion effect ends.",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.speedUp = false
+                                    "script": "MSys.negation = true
 MSys.huntingAttack()"
                                 }
                             ]
@@ -717,12 +875,28 @@ MSys.huntingAttack()"
                             "matching": "regexp",
                             "whole_words": false,
                             "case_sensitive": true,
-                            "text": "^The air crackles and contracts|^Lifting your hand, you call upon the void within|^Air swirls around a point of absolute coldness here.$",
+                            "text": "^The air crackles and contracts|^Lifting your hand, you call upon the void within",
                             "actions": [
                                 {
                                     "action": "script",
                                     "script": "MSys.pointZero = true
 MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Point Zero Exists",
+                            "enabled": true,
+                            "id": 179,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^Air swirls around a point of absolute coldness here.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.pointZero = true"
                                 }
                             ]
                         },
@@ -738,25 +912,25 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.pointZero = false"
+                                    "script": "MSys.pointZero = false
+MSys.huntingAttack()"
                                 }
                             ]
                         },
                         {
                             "type": "trigger",
-                            "name": "Empyreal Channeling",
+                            "name": "Protection Active",
                             "enabled": true,
-                            "id": 165,
+                            "id": 172,
                             "matching": "regexp",
                             "whole_words": false,
-                            "case_sensitive": false,
-                            "text": "^You reach into your connection to the void",
+                            "case_sensitive": true,
+                            "text": "^Your goggles flash as you instruct your swarm to protect you from incoming damage|^Your nanites are already protecting you from harm.$",
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "if (get_variable('my_combat')) {
-    MSys.huntingAttack()
-}"
+                                    "script": "MSys.protection = true
+MSys.huntingAttack()"
                                 }
                             ]
                         },
@@ -800,6 +974,159 @@ MSys.huntingAttack()"
                                     "highlight_bg": "#000000"
                                 }
                             ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Rush Active",
+                            "enabled": true,
+                            "id": 171,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^Inhaling a cloud of your swarm, you enable a wetwiring augmentation subroutine. Your muscles tighten, adrenaline pouring through your body as your movements grow unnaturally swift.$|^Your nanites are already boosting your movement.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.rush = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Soothe Active",
+                            "enabled": true,
+                            "id": 181,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^Placing the tips of your gauntleted fingers against the fingers of your other hand, you assume a meditative stance|^You remain steady and still in your meditative stance",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.soothing = true"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Soothe Complete",
+                            "enabled": true,
+                            "id": 182,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^Opening your eyes, you relax your posture, satisfied with your current current state of health.$|^You cease concentrating on soothing your body.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.soothing     = false
+MSys.sootheNeeded = false
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Speedup Active",
+                            "enabled": true,
+                            "id": 157,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^You snap your fingers, and time starts flowing faster|^Time has already been distorted",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.speedup          = true
+MSys.speedupAvailable = false
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Speedup Exists",
+                            "enabled": true,
+                            "id": 180,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^Time has been strangely distorted here.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.speedup = true"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Speedup Available",
+                            "enabled": true,
+                            "id": 178,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^You can again speed up the passage of time.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.speedupAvailable = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Speedup Inactive",
+                            "enabled": true,
+                            "id": 159,
+                            "matching": "exact",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "The time distortion effect ends.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.speedup = false
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Suffocation Active",
+                            "enabled": true,
+                            "id": 185,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^Lifting your arm and flexing your gauntleted fist.*squeezing the life from its throat.$|^A sense of power and control rushes through you.*funneling away its air supply.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.suffocation = true
+MSys.huntingAttack()"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Suffocation Inactive",
+                            "enabled": true,
+                            "id": 186,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^You are unable to continue your suffocation attempt.$",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.suffocation = false
+MSys.huntingAttack()"
+                                }
+                            ]
                         }
                     ],
                     "actions": []
@@ -818,35 +1145,27 @@ MSys.huntingAttack()"
                             "action": "command",
                             "command": "nano charge",
                             "prefix_suffix": true
-                        },
-                        {
-                            "action": "waitfor",
-                            "text": "^You start generating nanites.$|^You're already repairing your nanites.$",
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": false,
-                            "expire": "6"
-                        },
-                        {
-                            "action": "command",
-                            "command": "nano rush on",
-                            "prefix_suffix": true
-                        },
-                        {
-                            "action": "waitfor",
-                            "text": "^Inhaling a cloud of your swarm|^Your nanites are already boosting|haven.t learned",
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": false,
-                            "expire": "6"
-                        },
-                        {
-                            "action": "command",
-                            "command": "nano protect on",
-                            "prefix_suffix": true
                         }
                     ],
                     "text": "wakeup"
+                },
+                {
+                    "type": "trigger",
+                    "name": "Target Slain",
+                    "enabled": false,
+                    "id": 177,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": false,
+                    "text": "^(You) have slain a.*$|^.*has been slain by (.+)\\.$",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.frenzy       = false
+MSys.negation     = false
+MSys.sootheNeeded = true"
+                        }
+                    ]
                 },
                 {
                     "type": "trigger",
@@ -864,6 +1183,34 @@ MSys.huntingAttack()"
                         }
                     ],
                     "items": []
+                },
+                {
+                    "type": "trigger",
+                    "name": "You Died",
+                    "enabled": true,
+                    "id": 187,
+                    "matching": "regexp",
+                    "whole_words": false,
+                    "case_sensitive": true,
+                    "text": "^You collapse to the ground, killed by",
+                    "actions": [
+                        {
+                            "action": "script",
+                            "script": "MSys.delaySwarm       = false
+MSys.freeze           = false
+MSys.frenzy           = false
+MSys.miniaturization  = false
+MSys.multistrike      = false
+MSys.negation         = false
+MSys.pointZero        = false
+MSys.protection       = false
+MSys.rush             = false
+MSys.soothing         = false
+MSys.sootheNeeded     = false
+MSys.speedup          = false
+MSys.suffocation      = false"
+                        }
+                    ]
                 }
             ],
             "actions": []

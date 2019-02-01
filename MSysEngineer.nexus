@@ -18,45 +18,62 @@
 MSys.shortname = 'SECI'
 MSys.parts = 0
 MSys.repeat = true
-MSys.wormDeployed = false
+MSys.turretUnpowered = false
+MSys.repeatAvailable = true
+MSys.magnotronActivated = false
+MSys.flightCommand = 'operate hoverboard'
 MSys.huntingAttack = function() {
     if (!MSys.systemEnabled) {return}
-    var command = ''
-
+    var command = ''    
+    
     //Engineer
     if (MSys.health / MSys.maxHealth < .8 && MSys.healReady && MSys.useHeal) {
         MSys.debugMessage('Activating stimjector')
         send_command('operate stimjector')
+        
+    } else if (MSys.escaping) {
+        return
 
-    }else if (get_variable('tar') == '' || MSys.offenseEnabled == false) {
+    } else if (get_variable('tar') == '' || MSys.offenseEnabled == false) {
         return;
 
-    }else if (!MSys.repeat && get_variable('useRepeat') && get_variable('repeatAttack') != '') {
+    } else if (MSys.interrupt) {
+        MSys.debugMessage('Executing interrupt')
+        command = 'bot swing '
+        
+    } else if (MSys.targetHealth > 90 && MSys.repeatAvailable && get_variable('useRepeat') && get_variable('engineerRepeatAttack') != '') {
         MSys.debugMessage('Initiating repeat')
         command =  'bot repeat '
         command += get_variable('engineerRepeatAttack')
         command += ' '
 
-    } else if (get_variable('useWorm') && MSys.targetHealth > 0.7 && !MSys.wormDeployed) {
-        MSys.debugMessage('Executing burrowbot worm attack')
-        command = 'bot worm '
-
-    } else if (get_variable('useRelease') && MSys.wormDeployed && MSys.targetHealth < 0.3) {
-        MSys.debugMessage('Releasing burrowbot')
-        command = 'bot release '
+    } else if (MSys.turretUnpowered) {
+        MSys.debugMessage('Recharging turret')
+        command = 'qpcboost'
+     
+    } else if (!MSys.magnotronActivated && get_variable('useMagnotron') && MSys.targetHealth < 50) {
+        MSys.debugMessage('Firing magnotron!')
+        command = 'magnotron '
+        
+    } else if (get_variable('useJunkjet') && MSys.parts > 0) {
+        MSys.debugMessage('Firing junkjet')
+        command = 'junkjet '
+        
     } else {
-        MSys.debugMessage('Executing default engineer attack')
         command = 'bot claw '
     }
 
-    MSys.debugMessage('Attempting command: ' + command) 
-    command += get_variable('tar')
+    if (command[command.length - 1] == ' ') {
+        MSys.debugMessage('Appending target')
+    \tcommand += get_variable('tar')
+    }
+    
+    MSys.debugMessage('Attempting command: ' + command)
     send_command(command)
 }
 
 MSys.loaded(\"Starwraith Engineer Combat Implant v1.3\");
-send_command('wakeup')
-",
+send_command('wakeup')",
             "items": []
         },
         {
@@ -110,15 +127,18 @@ if (args.gmcp_method == \"Char.Vitals\") {
                                     "action": "script",
                                     "script": "var abilities = ''
 abilities += 'Heal:          ' + get_variable('useHeal') + '\\n'
-abilities += 'Repeat Attack: ' + get_variable('engineerRepeatAttack') + '\\n'
 abilities += 'Use Repeat:    ' + get_variable('useRepeat') + '\\n'
-abilities += 'Repeat Avail:  ' + MSys.repeat + '\\n'
-abilities += 'Use Worm:      ' + get_variable('useWorm') + '\\n'
-abilities += 'Worm Deployed: ' + MSys.wormDeployed + '\\n'
-abilities += 'Use Release:   ' + get_variable('useRelease') + '\\n'
+abilities += 'Repeat Attack: ' + get_variable('engineerRepeatAttack') + '\\n'
 abilities += 'QPC Boost:     ' + get_variable('useQPCBoost') + '\\n'
+abilities += 'Magnotron:     ' + get_variable('useMagnotron') + '\\n'
 
-MSys.log(abilities, 'white')"
+var debugMessages = ''
+debugMessages += 'Repeat Avail:   ' + MSys.repeatAvailable + '\\n'
+debugMessages += 'Target Bleeding:' + MSys.targetBleeding + '\\n'
+debugMessages += 'Magnotron Avail:' + MSys.magnotronAvailable + '\\n'
+
+MSys.log(abilities, 'white')
+MSys.debugMessage(debugMessages)"
                                 }
                             ],
                             "text": "hengineer",
@@ -136,7 +156,7 @@ MSys.log(abilities, 'white')"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "if (args[1] != 'clear') {
+                                    "script": "if (args[1] != '') {
     set_variable('engineerRepeatAttack', args[1])
     set_variable('useRepeat', true)
     MSys.notice('Enabled bot repeat with attack: ' + args[1])
@@ -147,43 +167,7 @@ MSys.log(abilities, 'white')"
 }"
                                 }
                             ],
-                            "text": "hrepeat (.+)",
-                            "items": []
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Enable/Disable Worm",
-                            "enabled": true,
-                            "id": 141,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.toggle('useWorm','Burrowbot Worm Attack');"
-                                }
-                            ],
-                            "text": "hworm",
-                            "items": []
-                        },
-                        {
-                            "type": "alias",
-                            "name": "Enable/Disable Worm Release",
-                            "enabled": true,
-                            "id": 142,
-                            "matching": "exact",
-                            "whole_words": true,
-                            "case_sensitive": true,
-                            "prefix_suffix": true,
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.toggle('useRelease','Burrowbot Worm Release Attack');"
-                                }
-                            ],
-                            "text": "hrelease",
+                            "text": "hrepeat[ ]?(.*)",
                             "items": []
                         },
                         {
@@ -202,6 +186,40 @@ MSys.log(abilities, 'white')"
                                 }
                             ],
                             "text": "hqpcboost"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Magnotron",
+                            "enabled": true,
+                            "id": 160,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.toggle('useMagnotron','Activating magnotron!');"
+                                }
+                            ],
+                            "text": "hmagnotron"
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Enable/Disable Junkjet",
+                            "enabled": true,
+                            "id": 162,
+                            "matching": "exact",
+                            "whole_words": true,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.toggle('useJunkjet','Use junkjet as default attack');"
+                                }
+                            ],
+                            "text": "hjunkjet"
                         }
                     ],
                     "actions": []
@@ -266,7 +284,7 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.repeat = false
+                                    "script": "MSys.repeatAvailable = false
 MSys.huntingAttack()"
                                 }
                             ],
@@ -284,7 +302,7 @@ MSys.huntingAttack()"
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.repeat = true"
+                                    "script": "MSys.repeatAvailable = true"
                                 },
                                 {
                                     "action": "highlight",
@@ -298,39 +316,20 @@ MSys.huntingAttack()"
                         },
                         {
                             "type": "trigger",
-                            "name": "Burrowbot Active",
+                            "name": "Turret Powered",
                             "enabled": true,
-                            "id": 139,
+                            "id": 158,
                             "matching": "regexp",
                             "whole_words": false,
                             "case_sensitive": false,
-                            "text": "and starts burrowing into its flesh.$",
+                            "text": "^This turret is already charged to max.$|^The turret is fully charged.$",
                             "actions": [
                                 {
                                     "action": "script",
-                                    "script": "MSys.wormDeployed = true
+                                    "script": "MSys.turretUnpowered = false
 MSys.huntingAttack()"
                                 }
-                            ],
-                            "items": []
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Burrowbot Returned",
-                            "enabled": true,
-                            "id": 140,
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": false,
-                            "text": "^A knife-mawed burrowbot violently emerges|ceases burrowing",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "MSys.wormDeployed = false
-MSys.huntingAttack()"
-                                }
-                            ],
-                            "items": []
+                            ]
                         },
                         {
                             "type": "trigger",
@@ -348,6 +347,27 @@ MSys.huntingAttack()"
                                     "highlight_backref": "1",
                                     "highlight_fg": "#f863df",
                                     "highlight_bg": "#000000"
+                                },
+                                {
+                                    "action": "script",
+                                    "script": "MSys.turretUnpowered = true"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Magnotron Fired",
+                            "enabled": true,
+                            "id": 161,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": true,
+                            "text": "^You point a gently humming magnotron",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "MSys.magnotronActivated = true
+MSys.huntingAttack()"
                                 }
                             ]
                         }
@@ -425,29 +445,7 @@ if (get_variable('turretMod').toUpperCase() == 'QPC') {
 } else {
     send_command('turret mod ' + get_variable('turretMod'))
     if (get_variable('turretFollowup') != '') {send_command(get_variable('turretFollowup'))}
-    set_variable('turretAlias', false)
-    MSys.log('Turret ready!', 'white')
 }"
-                                }
-                            ],
-                            "items": []
-                        },
-                        {
-                            "type": "trigger",
-                            "name": "Mod Mounted",
-                            "enabled": true,
-                            "id": 133,
-                            "matching": "regexp",
-                            "whole_words": false,
-                            "case_sensitive": false,
-                            "text": "^Metal ratchets satisfyingly into place and code whirrs down",
-                            "actions": [
-                                {
-                                    "action": "script",
-                                    "script": "if (get_variable('turretAlias') != true) {return;}
-send_command(get_variable('turretFollowup'))
-set_variable('turretAlias', false)
-MSys.log('Turret ready!', 'white')"
                                 }
                             ],
                             "items": []
@@ -469,6 +467,26 @@ MSys.log('Turret ready!', 'white')"
 } else if (get_variable('turretMod').toUpperCase() == 'QPC') {
     send_command('turret mod qpc')
 }"
+                                }
+                            ],
+                            "items": []
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Mod Mounted",
+                            "enabled": true,
+                            "id": 133,
+                            "matching": "regexp",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "text": "^Metal ratchets satisfyingly into place and code whirrs down",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "if (get_variable('turretAlias') != true) {return;}
+send_command(get_variable('turretFollowup'))
+set_variable('turretAlias', false)
+MSys.log('Turret ready!', 'white')"
                                 }
                             ],
                             "items": []
@@ -588,6 +606,24 @@ send_command('bot airdrop')
                             ],
                             "text": "^hfillParts$",
                             "items": []
+                        },
+                        {
+                            "type": "alias",
+                            "name": "Wakeup Engineer",
+                            "enabled": true,
+                            "id": 154,
+                            "matching": "exact",
+                            "whole_words": false,
+                            "case_sensitive": false,
+                            "prefix_suffix": true,
+                            "actions": [
+                                {
+                                    "action": "command",
+                                    "command": "operate stimjector on",
+                                    "prefix_suffix": true
+                                }
+                            ],
+                            "text": "wakeup"
                         }
                     ],
                     "actions": []
@@ -600,7 +636,7 @@ send_command('bot airdrop')
                     "matching": "regexp",
                     "whole_words": true,
                     "case_sensitive": true,
-                    "text": "^A crane-armed carrybot claws .* shredding .* skin.$",
+                    "text": "^A crane-armed carrybot claws .* shredding .* skin.$|^You set the polarity to positive",
                     "actions": [
                         {
                             "action": "script",
