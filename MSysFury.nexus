@@ -9,8 +9,8 @@
             "name": "onLoad",
             "enabled": true,
             "id": 2,
-            "code": "MSys.SFCIversion = 1.4
-MSys.SFCIrequiredCore = 1.4
+            "code": "MSys.SFCIversion = 1.5
+MSys.SFCIrequiredCore = 1.5
 
 if (MSys == undefined || MSys.coreVersion == undefined || MSys.coreVersion < MSys.SFCIrequiredCore) {
     display_notice('Starwraith Fury Combat Implant v' + MSys.SFCIversion + ' requires MSysCore v' + MSys.SFCIrequiredCore + ' or later','gold');
@@ -36,6 +36,8 @@ MSys.buffReset = function () {
 \tMSys.warmth = false
 \tMSys.balancing = false
 \tMSys.firewreathe = false
+    
+    MSys.judgement = false
 }
 MSys.buffReset()
 
@@ -172,9 +174,9 @@ MSys.huntingAttack = function() {
         //Rage Attack
         if (MSys.unstoppableReady && MSys.unstoppable == false) {
             command += 'UNSTOPPABLE '
-        } else if (MSys.unstoppable && !MSys.judgement) {
-            command += 'JUDGEMENT '
-            MSys.judgement = true;
+//        } else if (MSys.unstoppable && !MSys.judgement) {
+//            command += 'JUDGEMENT '
+//            MSys.judgement = true;
         } else if (MSys.unstoppable) {
           \tcommand += 'SLICE '
         } else if (next == 'Symmetry') {
@@ -201,12 +203,13 @@ MSys.huntingAttack = function() {
         }
 
         //Rage Attack
-        if (MSys.unstoppableReady && MSys.unstoppable == false) {
-            command += 'UNSTOPPABLE '
-        } else if (MSys.unstoppable && !MSys.judgement) {
-           \tcommand += 'JUDGEMENT '
-            MSys.judgement = true;
-        } else if (next == 'Symmetry') {
+        //if (MSys.unstoppableReady && MSys.unstoppable == false) {
+        //    command += 'UNSTOPPABLE '
+        //} else if (MSys.unstoppable && !MSys.judgement) {
+        //    command += 'JUDGEMENT '
+        //    MSys.judgement = true;
+        //} else 
+        if (next == 'Symmetry') {
             command += 'DEFLECT '
         } else if (next == 'Ember') {
             command += 'RESISTANT '
@@ -961,6 +964,23 @@ if (MSys.systemEnabled) {
                                     "script": "MSys.prone = false"
                                 }
                             ]
+                        },
+                        {
+                            "type": "trigger",
+                            "name": "Target gone",
+                            "enabled": true,
+                            "id": 165,
+                            "matching": "substring",
+                            "whole_words": true,
+                            "case_sensitive": true,
+                            "text": "Your target is no longer here.",
+                            "actions": [
+                                {
+                                    "action": "script",
+                                    "script": "// Can happen when fighting with someone else
+MSys.stateReset()"
+                                }
+                            ]
                         }
                     ],
                     "actions": []
@@ -1062,5 +1082,5 @@ MSys.huntingAttack()"
             "actions": []
         }
     ],
-    "description": "Starwraith Fury Combat Implant v1.4"
+    "description": "Starwraith Fury Combat Implant v1.5"
 }

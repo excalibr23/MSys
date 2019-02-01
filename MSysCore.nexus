@@ -11,9 +11,9 @@
             "id": 2,
             "code": "MSys = {
 //System Variables
-    coreVersion:     1.4,
+    coreVersion:     1.5,
     shortname:       'CORE',
-    goal:            'hunt2',
+    goal:            get_variable('goal') ? get_variable('goal') : 'hunt2',
     systemEnabled:   true,
     offenseEnabled:  true,
 
@@ -1237,5 +1237,5 @@ MSys.huntingAttack()"
             "actions": []
         }
     ],
-    "description": "MSysCore v1.4"
+    "description": "MSysCore v1.5"
 }
