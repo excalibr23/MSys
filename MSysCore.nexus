@@ -208,10 +208,16 @@ if (args.gmcp_method == \"Char.Vitals\") {
     MSys.healthPct = MSys.health / MSys.maxHealth * 100
 
     if (!MSys.offenseEnabled && MSys.healthPct >= get_variable('breakResume')) {
-        MSys.notice('Re-enabling aggression after break')
         MSys.offenseEnabled = true
-        MSys.findTarget()
-        MSys.huntingAttack()
+
+        if (MSys.flag == 'hunt' || MSys.flag == undefined) {
+            MSys.notice('BreakResume: Acquiring Target')
+            MSys.findTarget()
+            MSys.huntingAttack()
+        } else {
+            MSys.notice('BreakResume: Checking Next')
+            send_command('NextRoom')
+        }
     }
 
     if (MSys.healthPct < get_variable('escapeThreshold') && !MSys.escaping) {
@@ -828,7 +834,7 @@ MSys.notice('Attack set to: ' + args[1], 'white', 'black')"
                             "matching": "regexp",
                             "whole_words": true,
                             "case_sensitive": true,
-                            "text": "^Throwing back its grizzled head.*cania lets out a high-pitched, wavering howl.$|^.*atzaparaki shakes off some of its torpor and draws in a deep breath, its sides beginning to swell alarmingly.$|^Light begins to focus deep within the body of a salt-crusted quartz creeper, growing to an almost painful radiance.$|^Staggering backwards, shoulder joint grinding.*draws back one of its massive, stony limbs, preparing to swing it.$",
+                            "text": "^Throwing back its grizzled head.*cania lets out a high-pitched, wavering howl.$|^.*atzaparaki shakes off some of its torpor and draws in a deep breath, its sides beginning to swell alarmingly.$|^Light begins to focus deep within the body of a .+, growing to an almost painful radiance.$|^Staggering backwards, shoulder joint grinding.*draws back one of its massive, stony limbs, preparing to swing it.$|^A.+selakki grows still and concentrates on something",
                             "actions": [
                                 {
                                     "action": "script",
@@ -1048,7 +1054,7 @@ MSys.buffReset()"
 }
 MSys.damageThisFight += parseInt(args[1])
 
-colorize_current_line(0, args['input'].length, MSys.color.dealt, 'black')"
+//colorize_current_line(0, args['input'].length, MSys.color.dealt, 'black')"
                         }
                     ],
                     "items": []
