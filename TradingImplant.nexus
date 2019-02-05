@@ -81,7 +81,7 @@ STI = {
         \"Khayrat Station\": \"Vai,CS,56,38,150,130\",
         \"Kholod Station\": \"Kholod,RS,79,49,199,99\",
         // \"Lekknis
-        // \"Maqbahassum
+        \"Maqbahassum\": \"RS,42,45,242,5\",
         \"Nocturne Station\": \"Nocturne,RA,31,55,66,66\",
         \"Norpisa Station\": \"Norpisa,CA,40,37,104,137\",
         \"Omni Station\": \"Aleph,CA,40,40,125,125\",
@@ -100,6 +100,9 @@ STI = {
 
        \t// Planets
         \"Usum Usutti\": \"Iota,CS,38,38,38,104\",
+        \"Scorpii\": \"Eta Zeniah,RS,47,47,121,126\",
+        \"CS-4137-Sizirind\": \",CS,41,37,112,107\",
+        
         
         // Visited
         \"CS-4136-Rilvania\":\",CS,41,36,138,90\",
@@ -118,6 +121,9 @@ STI = {
         \"CS-4640-Katenuium\":\",CS,46,40,62,234\",
         \"CS-4640-Partica\":\",CS,46,40,48,156\",
         \"CS-4640-Sizoria\":\",CS,46,40,151,106\",
+        \"RS-4541-Delbel\":\",RS,45,41,32,61\",
+        \"RS-4541-Dymuria\":\",RS,45,41,40,33\",
+        \"RS-4541-Glakzar\":\",RS,45,41,180,92\",
 \t},
     parse_order_line: function(input) {
         var id     = STI.escape(input.substring(0,6).trim());
@@ -359,6 +365,29 @@ STI.content = \"\";"
                 },
                 {
                     "type": "alias",
+                    "name": "motf <id> <amt> - Market Order Take & Fulfill",
+                    "enabled": true,
+                    "id": 34,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": true,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "MARKET ORDER TAKE @id @amt",
+                            "prefix_suffix": true
+                        },
+                        {
+                            "action": "command",
+                            "command": "MARKET ORDER @id FULFILL",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "motf <id> <amt>"
+                },
+                {
+                    "type": "alias",
                     "name": "moa <qty> <cargo> <dest> <price> - Market Order Ask",
                     "enabled": true,
                     "id": 23,
@@ -458,6 +487,42 @@ STI.content = \"\";"
                 },
                 {
                     "type": "alias",
+                    "name": "ccs - Cargo Contents Ship",
+                    "enabled": true,
+                    "id": 32,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "CARGO CONTENTS SHIP",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "ccs"
+                },
+                {
+                    "type": "alias",
+                    "name": "cch - Cargo Contents Here",
+                    "enabled": true,
+                    "id": 33,
+                    "matching": "exact",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "CARGO CONTENTS HERE",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "cch"
+                },
+                {
+                    "type": "alias",
                     "name": "cl <qty> <cargo> - Cargo load",
                     "enabled": true,
                     "id": 20,
@@ -535,7 +600,7 @@ STI.content = \"\";"
                     "matching": "regexp",
                     "whole_words": false,
                     "case_sensitive": false,
-                    "text": "(\\d*) *(\\d*) *(\\d*) *(north|northeast|east|southeast|south|southwest|west) *a mineable asteroid",
+                    "text": "(\\d*) *(\\d*) *(\\d*) *(north|northeast|east|southeast|south|southwest|west|northwest) *a mineable asteroid",
                     "actions": [
                         {
                             "action": "script",
@@ -553,11 +618,11 @@ STI.content = \"\";"
                     "matching": "regexp",
                     "whole_words": false,
                     "case_sensitive": false,
-                    "text": "(\\d*) *(\\d*) *(\\d*) *(north|northeast|east|southeast|south|southwest|west) *a cloud of harvestable gas",
+                    "text": "(\\d*) *(\\d*) *(\\d*) *(north|northeast|east|southeast|south|southwest|west|northwest) *a cloud of harvestable (.*)",
                     "actions": [
                         {
                             "action": "script",
-                            "script": "display_notice(\"Gas: \" + MSys.zone + \" \" + args[1] + \" \" + args[2], \"white\");"
+                            "script": "display_notice(args[5] + \": \" + MSys.zone + \" \" + args[1] + \" \" + args[2], \"white\");"
                         }
                     ]
                 }
@@ -572,12 +637,48 @@ STI.content = \"\";"
             "items": [
                 {
                     "type": "alias",
+                    "name": "ac - Activate Cannon",
+                    "enabled": true,
+                    "id": 35,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "SHIP WEAPON ACTIVATE CANNON",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "ac"
+                },
+                {
+                    "type": "alias",
+                    "name": "dc - Deactivate Cannon",
+                    "enabled": true,
+                    "id": 36,
+                    "matching": "begins",
+                    "whole_words": true,
+                    "case_sensitive": false,
+                    "prefix_suffix": true,
+                    "actions": [
+                        {
+                            "action": "command",
+                            "command": "SHIP WEAPON DEACTIVATE CANNON",
+                            "prefix_suffix": true
+                        }
+                    ],
+                    "text": "dc"
+                },
+                {
+                    "type": "alias",
                     "name": "fc <target> - Fire cannon",
                     "enabled": true,
                     "id": 18,
                     "matching": "begins",
                     "whole_words": true,
-                    "case_sensitive": true,
+                    "case_sensitive": false,
                     "prefix_suffix": true,
                     "actions": [
                         {
@@ -587,26 +688,6 @@ STI.content = \"\";"
                         }
                     ],
                     "text": "fc <target>"
-                },
-                {
-                    "type": "alias",
-                    "name": "sl <target> - Ship lock target",
-                    "enabled": true,
-                    "id": 25,
-                    "matching": "begins",
-                    "whole_words": true,
-                    "case_sensitive": true,
-                    "prefix_suffix": true,
-                    "actions": [
-                        {
-                            "action": "variable",
-                            "varname": "shiptarget",
-                            "valtype": "variable",
-                            "value": "target",
-                            "op": "set"
-                        }
-                    ],
-                    "text": "sl <target>"
                 },
                 {
                     "type": "trigger",
