@@ -479,10 +479,15 @@ set_variable('break', true)"
                         {
                             "action": "script",
                             "script": "MSys.notice(\"Hunting list:\", MSys.color.config)
-let killList = get_variable('killList')
+let killList   = get_variable('killList')
+let noticeList = ''
+
 for (i=0; i<killList.length; i++) {
-\tdisplay_notice(killList[i], 'white', 'black')
-}"
+\tnoticeList += killList[i]
+    noticeList += '\\n'
+}
+
+MSys.log(noticeList, 'white')"
                         }
                     ],
                     "text": "hshow",
@@ -896,7 +901,7 @@ display_notice('AUTO OFF', 'white', 'black')"
                     "matching": "regexp",
                     "whole_words": true,
                     "case_sensitive": true,
-                    "text": "^(You) have slain a.*$|^.*has been slain by (.+)\\.$",
+                    "text": "^(You) have slain .*$|^.*has been slain by (.+)\\.$",
                     "actions": [
                         {
                             "action": "script",
